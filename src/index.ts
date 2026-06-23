@@ -1,17 +1,17 @@
-export type { PlanetLocale, PlanetPassOptions, PlanetPassEvent } from './types';
-export { PlanetPass } from './planetpass';
-export { PlanetPassElement } from './element';
+export type { PlanetLocale, PlanetLoginOptions, PlanetLoginEvent } from './types';
+export { PlanetLogin } from './planetlogin';
+export { PlanetLoginElement } from './element';
 
-import { PlanetPass } from './planetpass';
-import { PlanetPassElement } from './element';
-import type { PlanetPassOptions } from './types';
+import { PlanetLogin } from './planetlogin';
+import { PlanetLoginElement } from './element';
+import type { PlanetLoginOptions } from './types';
 
-/** Mount a PlanetPass globe into a DOM element. */
-export function createPlanetPass(target: HTMLElement, options?: PlanetPassOptions): PlanetPass {
-  return new PlanetPass(target, options);
+/** Mount a PlanetLogin globe into a DOM element. */
+export function createPlanetLogin(target: HTMLElement, options?: PlanetLoginOptions): PlanetLogin {
+  return new PlanetLogin(target, options);
 }
 
-// Auto-register the <planet-pass> custom element when loaded in a browser.
-if (typeof customElements !== 'undefined' && !customElements.get('planet-pass')) {
-  customElements.define('planet-pass', PlanetPassElement);
+// Auto-register the <planet-login> custom element when loaded in a browser.
+if (typeof customElements !== 'undefined' && !customElements.get('planet-login')) {
+  customElements.define('planet-login', PlanetLoginElement);
 }

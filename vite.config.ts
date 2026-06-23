@@ -8,8 +8,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'src/index.ts',
-      name: 'PlanetPass',
-      fileName: 'planetpass',
+      name: 'PlanetLogin',
+      fileName: 'planetlogin',
       formats: ['es', 'umd'],
     },
   },

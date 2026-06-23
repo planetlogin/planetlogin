@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PlanetPass — component demo</title>
+<title>PlanetLogin — component demo</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23f6a13c' d='M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2'/></svg>">
 <style>
   :root{ --accent:#f6a13c; --surface:#0d1422; --line:rgba(255,255,255,.12); --muted:#9aa7bd }
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{background:#070b16;color:#eef2fb;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
   .stage{display:flex;height:100vh}
-  planet-pass{flex:1 1 auto;min-width:0;height:100vh}
+  planet-login{flex:1 1 auto;min-width:0;height:100vh}
   .panel{flex:0 0 380px;max-width:42vw;background:var(--surface);border-left:1px solid var(--line);
     display:grid;place-items:center;padding:2rem}
   .card{width:100%;max-width:300px}
@@ -24,12 +24,12 @@
   .chip{background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:999px;padding:.2rem .6rem}
   .chip b{color:var(--accent)}
   pre{margin-top:1rem;font-size:.7rem;color:var(--muted);white-space:pre-wrap;word-break:break-all}
-  @media(max-width:820px){.stage{flex-direction:column}planet-pass{flex:none;height:50vh}.panel{max-width:none;border-left:0;border-top:1px solid var(--line)}}
+  @media(max-width:820px){.stage{flex-direction:column}planet-login{flex:none;height:50vh}.panel{max-width:none;border-left:0;border-top:1px solid var(--line)}}
 </style>
 </head>
 <body>
 <div class="stage">
-  <planet-pass accent="#f6a13c"></planet-pass>
+  <planet-login accent="#f6a13c"></planet-login>
   <aside class="panel">
     <div class="card">
       <h1 id="greet">Sign in</h1>
@@ -46,7 +46,7 @@
 </div>
 
 <script type="module">
-  import './src/index.ts';   // registers <planet-pass>
+  import './src/index.ts';   // registers <planet-login>
 
   // tiny demo i18n to show the panel switching language on locale change
   const T = {
@@ -60,7 +60,7 @@
     zh:{greet:'你好',cta:'登录',email:'邮箱',pass:'密码'},
   };
   const $ = (id) => document.getElementById(id);
-  document.querySelector('planet-pass').addEventListener('locale', (e) => {
+  document.querySelector('planet-login').addEventListener('locale', (e) => {
     const loc = e.detail; const t = T[loc.language] || T.en;
     document.documentElement.lang = loc.language;
     $('greet').textContent = t.greet;

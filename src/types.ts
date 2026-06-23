@@ -1,4 +1,4 @@
-/** The locale PlanetPass detects from a place. */
+/** The locale PlanetLogin detects from a place. */
 export interface PlanetLocale {
   /** Latitude of the picked place. */
   lat: number;
@@ -16,7 +16,7 @@ export interface PlanetLocale {
   approxTimezone?: boolean;
 }
 
-export interface PlanetPassOptions {
+export interface PlanetLoginOptions {
   /** Brand/accent color. Default "#f6a13c". */
   accent?: string;
   /** Show the built-in search box. Default true. */
@@ -33,4 +33,4 @@ export interface PlanetPassOptions {
   onLocale?: (locale: PlanetLocale) => void;
 }
 
-export type PlanetPassEvent = 'locale';
+export type PlanetLoginEvent = 'locale';

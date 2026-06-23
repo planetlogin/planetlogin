@@ -1,32 +1,32 @@
 <div align="center">
 
-# PlanetPass
+# PlanetLogin
 
 **Sign in with a planet.** A framework-agnostic globe component that detects your
 **timezone**, **language** and **location** — so your app greets a visitor in their
 tongue, in their hours, from the first second.
 
-**[Live demo →](https://rricajos.github.io/planetpass/)** · `@rricajos/planetpass`
+**[Live demo →](https://rricajos.github.io/planetlogin/)** · `@rricajos/planetlogin`
 
 </div>
 
 ---
 
 Spin the globe, drag it (with inertia), **zoom with the wheel**, **click a country**
-or search a postal code / city / country. PlanetPass flies to it and emits a
+or search a postal code / city / country. PlanetLogin flies to it and emits a
 `locale`. Works in **React, Vue, Svelte, Angular or plain HTML** — it's a Web Component.
 
 ## Install
 
 ```bash
-npm i @rricajos/planetpass
+npm i @rricajos/planetlogin
 ```
 
 …or drop it in with a `<script>` (no build):
 
 ```html
-<planet-pass style="display:block;width:100%;height:480px"></planet-pass>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@rricajos/planetpass"></script>
+<planet-login style="display:block;width:100%;height:480px"></planet-login>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@rricajos/planetlogin"></script>
 ```
 
 ## Use it
@@ -34,10 +34,10 @@ npm i @rricajos/planetpass
 **As a Web Component** (any framework / plain HTML):
 
 ```html
-<planet-pass accent="#f6a13c" resolution="110m"></planet-pass>
+<planet-login accent="#f6a13c" resolution="110m"></planet-login>
 <script type="module">
-  import '@rricajos/planetpass';
-  document.querySelector('planet-pass').addEventListener('locale', (e) => {
+  import '@rricajos/planetlogin';
+  document.querySelector('planet-login').addEventListener('locale', (e) => {
     const { language, timezone, country, lat, lon, label } = e.detail;
     setAppLanguage(language);
     setAppTimezone(timezone);
@@ -48,9 +48,9 @@ npm i @rricajos/planetpass
 **As a function** (full control, TypeScript types included):
 
 ```ts
-import { createPlanetPass, type PlanetLocale } from '@rricajos/planetpass';
+import { createPlanetLogin, type PlanetLocale } from '@rricajos/planetlogin';
 
-const globe = createPlanetPass(document.getElementById('globe')!, {
+const globe = createPlanetLogin(document.getElementById('globe')!, {
   accent: '#f6a13c',
   onLocale: (loc: PlanetLocale) => console.log(loc),
 });
@@ -99,7 +99,7 @@ npm run build      # dist/ (ESM + UMD + .d.ts)
 npm run typecheck
 ```
 
-Branches: `main` = the component · [`simple`](https://github.com/rricajos/planetpass/tree/simple) = a zero-build, single-file version to copy-paste.
+Branches: `main` = the component · [`simple`](https://github.com/rricajos/planetlogin/tree/simple) = a zero-build, single-file version to copy-paste.
 
 ## License & attribution
 
@@ -107,7 +107,7 @@ Branches: `main` = the component · [`simple`](https://github.com/rricajos/plane
 
 - **Free for any use, including commercial.**
 - Modify / host a modified version → **share your source** under the same license (copyleft).
-- **Keep the visible `PlanetPass · by Ricajos` credit** (→ [ricajos.com](https://ricajos.com)). Removing it needs written permission — a commercial / white-label license is available, open an issue.
+- **Keep the visible `PlanetLogin · by Ricajos` credit** (→ [ricajos.com](https://ricajos.com)). Removing it needs written permission — a commercial / white-label license is available, open an issue.
 
 ## Credits
 

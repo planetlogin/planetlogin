@@ -10,7 +10,7 @@ import {
 import { feature, mesh } from 'topojson-client';
 import { geocode, reverseMeta } from './geocode';
 import { countryToLanguage } from './locale';
-import type { PlanetLocale, PlanetPassOptions } from './types';
+import type { PlanetLocale, PlanetLoginOptions } from './types';
 
 type Mode = 'idle' | 'travel' | 'zoom';
 type Listener = (l: PlanetLocale) => void;
@@ -26,9 +26,9 @@ const dataUrl = (res: string) => `https://cdn.jsdelivr.net/npm/world-atlas@2/cou
  * box) into `target`, lets the user spin / drag / zoom / click a country, and
  * emits a {@link PlanetLocale} when a place is picked.
  */
-export class PlanetPass {
+export class PlanetLogin {
   private target: HTMLElement;
-  private opts: Required<Pick<PlanetPassOptions, 'accent' | 'search' | 'autoSpin' | 'resolution'>> & PlanetPassOptions;
+  private opts: Required<Pick<PlanetLoginOptions, 'accent' | 'search' | 'autoSpin' | 'resolution'>> & PlanetLoginOptions;
   private cv: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private input?: HTMLInputElement;
@@ -60,7 +60,7 @@ export class PlanetPass {
   private ro?: ResizeObserver;
   private lastX = 0; private lastY = 0; private moved = 0;
 
-  constructor(target: HTMLElement, options: PlanetPassOptions = {}) {
+  constructor(target: HTMLElement, options: PlanetLoginOptions = {}) {
     this.target = target;
     this.opts = {
       accent: options.accent ?? '#f6a13c',
@@ -154,7 +154,7 @@ export class PlanetPass {
   private buildWatermark(): void {
     const a = document.createElement('a');
     a.href = 'https://ricajos.com'; a.target = '_blank'; a.rel = 'noopener';
-    a.textContent = 'PlanetPass · by Ricajos';
+    a.textContent = 'PlanetLogin · by Ricajos';
     Object.assign(a.style, { position: 'absolute', left: '14px', bottom: '12px', zIndex: '20', fontSize: '12px', letterSpacing: '.3px', color: 'rgba(154,167,189,.85)', textDecoration: 'none', fontFamily: 'inherit' } as CSSStyleDeclaration);
     this.target.appendChild(a);
     this.wm = a;
@@ -168,7 +168,7 @@ export class PlanetPass {
       this.bordersMesh = mesh(world, world.objects.countries, (a: any, b: any) => a !== b);
     } catch (e) {
       // No data → a plain ocean globe still renders.
-      console.warn('[planetpass] country data failed to load', e);
+      console.warn('[planetlogin] country data failed to load', e);
     }
   }
 
