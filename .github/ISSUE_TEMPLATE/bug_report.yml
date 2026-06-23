@@ -1,0 +1,44 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report! A minimal reproduction (StackBlitz/CodeSandbox) is the fastest path to a fix.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Steps, or a link to a minimal repro.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: planetlogin version
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: usage
+    attributes:
+      label: How are you using it?
+      options:
+        - Web Component (<planet-login>)
+        - createPlanetLogin() / class
+        - single-file (simple branch)
+        - CDN <script>
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: e.g. Chrome 126 / React 19 / Vite 5

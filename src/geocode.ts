@@ -12,7 +12,8 @@ export interface GeoHit {
   approxTz?: boolean;
 }
 
-const utcOffset = (lon: number): string => {
+/** Rough IANA-less timezone label from longitude, e.g. 2.17 → "UTC+0". */
+export const utcOffset = (lon: number): string => {
   const off = Math.round(lon / 15);
   return `UTC${off >= 0 ? '+' : ''}${off}`;
 };

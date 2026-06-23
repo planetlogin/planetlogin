@@ -5,8 +5,9 @@
   "type": "module",
   "license": "AGPL-3.0-or-later",
   "author": "Ricard (Ricajos) (https://ricajos.com)",
-  "homepage": "https://github.com/rricajos/planetlogin#readme",
-  "repository": { "type": "git", "url": "git+https://github.com/rricajos/planetlogin.git" },
+  "homepage": "https://planetlogin.org",
+  "repository": { "type": "git", "url": "git+https://github.com/planetlogin/planetlogin.git" },
+  "bugs": { "url": "https://github.com/planetlogin/planetlogin/issues" },
   "keywords": ["globe","locale","i18n","timezone","geolocation","login","onboarding","web-component","d3-geo"],
   "files": ["dist"],
   "main": "./dist/planetlogin.umd.cjs",
@@ -23,7 +24,9 @@
     "dev": "vite",
     "build": "vite build && tsc -p tsconfig.dts.json",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "d3-geo": "^3.1.1",
@@ -33,6 +36,7 @@
     "@types/d3-geo": "^3.1.0",
     "@types/topojson-client": "^3.1.5",
     "typescript": "^5.6.0",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0"
   }
 }

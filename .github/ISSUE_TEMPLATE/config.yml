@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Live demo
+    url: https://planetlogin.org
+    about: Try PlanetLogin before filing — many questions answer themselves on the demo.
+  - name: Commercial / white-label license
+    url: https://ricajos.com
+    about: Need to remove the attribution watermark? Ask about a commercial license.
