@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planetpass — sign in with a planet</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23f6a13c' d='M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2'/></svg>">
+<style>
+  :root{
+    --bg:#070b16; --surface:#0d1422; --surface-2:#131c2e;
+    --accent:#f6a13c;
+    --ink:#10131c; --text:#eef2fb; --muted:#9aa7bd; --line:rgba(255,255,255,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2-variations');font-weight:100 900;font-style:normal;font-display:swap}
+  body{
+    background:var(--bg); color:var(--text); overflow:hidden;
+    font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .stage{display:flex; height:100vh; width:100vw}
+
+  /* ---- panel izquierdo: globo + localización ---- */
+  .globe-pane{position:relative; flex:1 1 auto; min-width:0; overflow:hidden}
+  canvas#globe{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab; touch-action:none}
+  canvas#globe.grabbing{cursor:grabbing}
+  .loc{position:absolute; left:50%; bottom:7vh; transform:translateX(-50%);
+    width:min(460px,90%); text-align:center; z-index:5}
+  .loc h1{font-size:1.2rem; font-weight:600; margin:0 0 .15rem}
+  .loc .sub{margin:0 0 1rem; color:var(--muted); font-size:.86rem}
+  .field{display:flex; gap:.5rem; background:rgba(255,255,255,.06); border:1px solid var(--line);
+    border-radius:14px; padding:.45rem .45rem .45rem .9rem; backdrop-filter:blur(8px);
+    transition:border-color .2s, box-shadow .2s}
+  .field:focus-within{border-color:var(--accent); box-shadow:0 0 0 4px rgba(246,161,60,.14)}
+  .field.shake{animation:shake .4s}
+  @keyframes shake{10%,90%{transform:translateX(-1px)}30%,70%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+  input{flex:1; background:none; border:0; outline:0; color:var(--text); font-size:1rem; min-width:0}
+  input::placeholder{color:var(--muted)}
+  button.go{border:0; cursor:pointer; border-radius:10px; padding:.55rem 1rem; font-weight:600; font-size:.95rem;
+    background:var(--accent); color:#231400; transition:filter .15s, transform .1s; white-space:nowrap}
+  button.go:hover{filter:brightness(1.07)} button.go:active{transform:scale(.97)}
+  button.go[disabled]{opacity:.6; cursor:progress}
+  .err{color:#ff9b9b; font-size:.8rem; min-height:1.1em; margin-top:.5rem}
+  .hint{margin-top:.5rem; font-size:.72rem; color:var(--muted)}
+
+  /* ---- caja "detectado" (aparece tras localizar) ---- */
+  .detected{display:none; align-items:center; gap:.7rem; text-align:left;
+    background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:14px;
+    padding:.6rem .8rem; margin-bottom:.8rem}
+  .detected.show{display:flex; animation:rise .5s ease}
+  @keyframes rise{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:translateY(0)}}
+  .det-greet{font-size:1.1rem; font-weight:700; line-height:1.1}
+  .chips{display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.3rem}
+  .chip{display:inline-flex; align-items:center; gap:.3rem; font-size:.7rem; color:var(--text);
+    background:rgba(255,255,255,.08); border:1px solid var(--line); border-radius:999px; padding:.15rem .5rem}
+  .chip b{color:var(--accent); font-weight:600}
+  .ci{width:13px; height:13px; color:var(--muted); flex:none}
+
+  /* ---- panel derecho: auth ---- */
+  .auth-pane{flex:0 0 420px; max-width:42vw; background:var(--surface);
+    border-left:1px solid var(--line); display:grid; place-items:center; padding:2rem}
+  .auth-card{width:100%; max-width:330px}
+  .brand{display:flex; align-items:center; gap:.55rem; margin-bottom:1.4rem}
+  .brand-icon{width:27px; height:27px; flex:none}
+  .brand-name{font-weight:700; font-size:1.15rem; letter-spacing:.2px}
+  .watermark{position:absolute; left:14px; bottom:12px; z-index:20; font-size:.72rem; letter-spacing:.3px;
+    color:var(--muted); text-decoration:none; opacity:.85; transition:opacity .15s, color .15s}
+  .watermark:hover{opacity:1; color:var(--text)}
+  @media (max-width:820px){ .watermark{left:10px; bottom:8px} }
+  .tabs{display:flex; gap:.25rem; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:12px; padding:.25rem; margin-bottom:1.1rem}
+  .tabs button{flex:1; border:0; background:none; color:var(--muted); cursor:pointer; font-size:.9rem;
+    font-weight:600; padding:.5rem; border-radius:9px; transition:background .15s, color .15s}
+  .tabs button.active{background:var(--accent); color:#231400}
+  label.fld{display:block; margin-bottom:.8rem}
+  label.fld span{display:block; font-size:.78rem; color:var(--muted); margin-bottom:.3rem}
+  label.fld input{width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+    padding:.6rem .7rem; color:var(--text); font-size:.95rem; transition:border-color .15s, box-shadow .15s}
+  label.fld input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(246,161,60,.13); outline:0}
+  .hidden{display:none!important}
+  button.primary{width:100%; border:0; cursor:pointer; border-radius:11px; padding:.7rem; font-weight:700;
+    font-size:.98rem; background:var(--accent); color:#231400; margin-top:.3rem; transition:filter .15s, transform .1s}
+  button.primary:hover{filter:brightness(1.07)} button.primary:active{transform:scale(.99)}
+  .divider{display:flex; align-items:center; gap:.7rem; color:var(--muted); font-size:.78rem; margin:1.1rem 0}
+  .divider::before,.divider::after{content:''; flex:1; height:1px; background:var(--line)}
+  button.google{width:100%; cursor:pointer; border:1px solid var(--line); background:var(--surface-2);
+    color:var(--text); border-radius:11px; padding:.65rem; font-size:.92rem; font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:.6rem; transition:border-color .15s, background .15s}
+  button.google:hover{border-color:var(--muted); background:#1a2438}
+  .gicon{width:17px;height:17px}
+  .switch{text-align:center; font-size:.82rem; color:var(--muted); margin:1.1rem 0 0}
+  .switch a{color:var(--accent); text-decoration:none; font-weight:600; cursor:pointer}
+  .switch a:hover{text-decoration:underline}
+
+  /* ---- móvil: apilado ---- */
+  @media (max-width:820px){
+    .stage{flex-direction:column; height:auto; min-height:100vh}
+    .globe-pane{flex:none; height:46vh}
+    .loc{bottom:2vh; width:92%}
+    .auth-pane{flex:none; max-width:none; width:100%; border-left:0; border-top:1px solid var(--line); padding:1.5rem 1.2rem 2.5rem}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <section class="globe-pane">
+    <canvas id="globe"></canvas>
+    <a class="watermark" href="https://ricajos.com" target="_blank" rel="noopener">Planetpass · by Ricajos</a>
+    <div class="loc">
+      <div class="detected" id="detected">
+        <div>
+          <div class="det-greet" id="det-greet">Hello</div>
+          <div class="chips" id="chips"></div>
+        </div>
+      </div>
+      <h1 id="t-title">¿Desde dónde entras?</h1>
+      <p class="sub" id="t-sub">Ajustaremos idioma y zona horaria a tu sitio.</p>
+      <div class="field" id="field">
+        <input id="q" autocomplete="off" placeholder="Código postal, ciudad o país…" autofocus>
+        <button class="go" id="go">Localizar</button>
+      </div>
+      <div class="err" id="err"></div>
+      <div class="hint">e.g. <i>90210</i> · <i>Barcelona</i> · <i>Japan</i> — or click a country</div>
+    </div>
+  </section>
+
+  <aside class="auth-pane">
+    <div class="auth-card">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="var(--accent)" d="M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+        <span class="brand-name">Planetpass</span>
+      </div>
+      <div class="tabs">
+        <button id="tab-in" class="active">Entrar</button>
+        <button id="tab-up">Crear cuenta</button>
+      </div>
+      <form id="auth-form">
+        <label class="fld hidden" id="fld-name"><span id="t-name">Nombre</span><input type="text" autocomplete="name"></label>
+        <label class="fld"><span id="t-email">Email</span><input type="email" autocomplete="email" placeholder="tu@email.com"></label>
+        <label class="fld"><span id="t-pass">Contraseña</span><input type="password" autocomplete="current-password" placeholder="••••••••"></label>
+        <button type="submit" class="primary" id="auth-cta">Entrar</button>
+      </form>
+      <div class="divider"><span id="t-or">o</span></div>
+      <button class="google" id="t-google" type="button">
+        <svg class="gicon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84Z"/><path fill="#EA4335" d="M12 4.75c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.4 14.97.5 12 .5A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 6.68 9.14 4.75 12 4.75Z"/></svg>
+        <span>Continuar con Google</span>
+      </button>
+      <p class="switch" id="switch"></p>
+    </div>
+  </aside>
+</div>
+
+<script>
+//==================================================================
+// Planetpass — sign in with a planet · interactive globe locale picker (i18n)
+//==================================================================
+const cv = document.getElementById('globe');
+const ctx = cv.getContext('2d');
+let W, H, DPR, cx, cy, baseR, R;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  cx = W/2; cy = H*0.5;
+  baseR = Math.min(W,H)*0.34;
+  if(mode==='idle') R = baseR*zoomK;
+}
+window.addEventListener('resize', resize);
+
+const stars = Array.from({length:140},()=>({
+  x:Math.random(), y:Math.random(), r:Math.random()*1.3+.2, a:Math.random()*.6+.2, p:Math.random()*6
+}));
+
+// ---- d3-geo + países (CDN; si falla → globo liso) ----
+let d3=null, countriesFC=null, bordersMesh=null, graticule=null, lastProjection=null, hoverFeat=null;
+(async ()=>{
+  try{
+    const [geo, tj] = await Promise.all([
+      import('https://cdn.jsdelivr.net/npm/d3-geo@3/+esm'),
+      import('https://cdn.jsdelivr.net/npm/topojson-client@3/+esm')
+    ]);
+    d3 = geo; graticule = d3.geoGraticule10();
+    const world = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r=>r.json());
+    countriesFC = tj.feature(world, world.objects.countries);
+    bordersMesh = tj.mesh(world, world.objects.countries, (a,b)=>a!==b);
+  }catch(e){ console.warn('sin d3/topojson, globo liso', e); }
+})();
+
+// ---- estado / animación ----
+let mode='idle';                 // idle | travel | zoom
+let lon0=20, lat0=25;
+let fromLon, fromLat, toLon, toLat, t0=0, zStart=1, zTarget=2.6, zFrom=1;
+let dragging=false, vlon=0.12, vlat=0;
+let zoomK=1;
+let autoSpin=true, selectedFeat=null;   // tras seleccionar país: se queda fijo + resaltado
+const AUTO=0.12;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const TRAVEL=1100, ZOOM=750;
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOut=t=>1-(1-t)*(1-t);
+
+function draw(now){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#070b16'; ctx.fillRect(0,0,W,H);
+  for(const s of stars){
+    const tw=.6+.4*Math.sin(now/700+s.p);
+    ctx.globalAlpha=s.a*tw; ctx.fillStyle='#cdd8f0';
+    ctx.beginPath(); ctx.arc(s.x*W,s.y*H,s.r,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  const halo=ctx.createRadialGradient(cx,cy,R*0.9,cx,cy,R*1.25);
+  halo.addColorStop(0,'rgba(120,170,255,.18)'); halo.addColorStop(1,'rgba(120,170,255,0)');
+  ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(cx,cy,R*1.25,0,7); ctx.fill();
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip();
+  const og=ctx.createRadialGradient(cx-R*.3,cy-R*.35,R*.1,cx,cy,R);
+  og.addColorStop(0,'#2a5e90'); og.addColorStop(1,'#0c2138');
+  ctx.fillStyle=og; ctx.fillRect(cx-R,cy-R,2*R,2*R);
+  if(d3){
+    const projection=d3.geoOrthographic().translate([cx,cy]).scale(R).clipAngle(90).rotate([-lon0,-lat0]);
+    lastProjection=projection;
+    const path=d3.geoPath(projection, ctx);
+    ctx.beginPath(); path(graticule); ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=1; ctx.stroke();
+    if(countriesFC){ ctx.beginPath(); path(countriesFC); ctx.fillStyle='rgba(70,160,116,.92)'; ctx.fill(); }
+    if(selectedFeat){ ctx.beginPath(); path(selectedFeat); ctx.fillStyle='rgba(246,161,60,.7)'; ctx.fill(); ctx.strokeStyle='#f6a13c'; ctx.lineWidth=1.4; ctx.stroke(); }
+    if(hoverFeat && hoverFeat!==selectedFeat){ ctx.beginPath(); path(hoverFeat); ctx.fillStyle='rgba(246,161,60,.5)'; ctx.fill(); }
+    if(bordersMesh){ ctx.beginPath(); path(bordersMesh); ctx.strokeStyle='rgba(10,28,48,.85)'; ctx.lineWidth=.6; ctx.stroke(); }
+  }
+  ctx.restore();
+  ctx.strokeStyle='rgba(150,200,255,.25)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
+}
+
+function loop(now){
+  if(mode==='idle'){
+    if(!dragging){
+      vlon += ((autoSpin?AUTO:0) - vlon)*(autoSpin?0.035:0.08); vlat += (0 - vlat)*0.06;
+      lon0 += vlon; lat0 = clamp(lat0 + vlat, -82, 82);
+    }
+  } else if(mode==='travel'){
+    const k=Math.min(1,(now-t0)/TRAVEL), e=ease(k);
+    lon0=fromLon+shortLon(fromLon,toLon)*e; lat0=fromLat+(toLat-fromLat)*e;
+    zoomK=zFrom+(1-zFrom)*e; R=baseR*zoomK;            // de-zoom mientras recentra
+    if(k>=1){ mode='zoom'; t0=now; zStart=1; zTarget=2.6; }
+  } else if(mode==='zoom'){
+    const k=Math.min(1,(now-t0)/ZOOM), e=easeOut(k);
+    zoomK=zStart+(zTarget-zStart)*e; R=baseR*zoomK; lon0=toLon; lat0=toLat;
+    if(k>=1){ mode='idle'; onLocated(); }
+  }
+  draw(now);
+  requestAnimationFrame(loop);
+}
+function shortLon(a,b){ return ((b-a)%360+540)%360-180; }
+
+//================= geocoding =================
+async function geocode(q){
+  try{
+    const u=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=es&format=json`;
+    const r=await fetch(u).then(r=>r.json());
+    if(r.results&&r.results.length){ const g=r.results[0];
+      return{lat:g.latitude, lon:g.longitude, cc:(g.country_code||'').toUpperCase(),
+             label:[g.name,g.admin1,g.country].filter(Boolean).slice(0,2).join(', '), tz:g.timezone}; }
+  }catch(e){}
+  try{
+    const u=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&q=${encodeURIComponent(q)}`;
+    const r=await fetch(u,{headers:{'Accept-Language':'es'}}).then(r=>r.json());
+    if(r&&r.length){ const g=r[0], lon=+g.lon, off=Math.round(lon/15);
+      return{lat:+g.lat, lon, cc:(g.address?.country_code||'').toUpperCase(),
+             label:(g.display_name||q).split(',').slice(0,2).join(', '),
+             tz:`UTC${off>=0?'+':''}${off}`, approxTz:true}; }
+  }catch(e){}
+  return null;
+}
+async function reverseMeta(lon,lat){
+  const off=Math.round(lon/15); let cc='';
+  try{
+    const u=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=3&lat=${lat}&lon=${lon}`;
+    const r=await fetch(u,{headers:{'Accept-Language':'es'}}).then(r=>r.json());
+    cc=(r?.address?.country_code||'').toUpperCase();
+  }catch(e){}
+  return {cc, tz:`UTC${off>=0?'+':''}${off}`, approxTz:true};
+}
+
+//================= idioma =================
+const LANG_BY_CC={ES:'es',MX:'es',AR:'es',CO:'es',CL:'es',PE:'es',VE:'es',
+  US:'en',GB:'en',IE:'en',AU:'en',CA:'en',NZ:'en',IN:'en',
+  FR:'fr',BE:'fr',DE:'de',AT:'de',CH:'de',IT:'it',PT:'pt',BR:'pt',
+  NL:'nl',JP:'ja',CN:'zh',TW:'zh',HK:'zh'};
+const GREET={es:'¡Hola!',ca:'Hola!',en:'Hello!',fr:'Bonjour !',de:'Hallo!',it:'Ciao!',pt:'Olá!',nl:'Hallo!',ja:'こんにちは',zh:'你好！'};
+const LANGNAME={es:'Español',ca:'Català',en:'English',fr:'Français',de:'Deutsch',it:'Italiano',pt:'Português',nl:'Nederlands',ja:'日本語',zh:'中文'};
+// strings de la UI (panel + auth) por idioma; fallback 'en'
+const I18N={
+  es:{title:'¿Desde dónde entras?',sub:'Ajustaremos idioma y zona horaria a tu sitio.',ph:'Código postal, ciudad o país…',locate:'Localizar',searching:'Buscando…',signin:'Entrar',signup:'Crear cuenta',name:'Nombre',email:'Email',password:'Contraseña',ctaIn:'Entrar',ctaUp:'Crear cuenta',or:'o',google:'Continuar con Google',noAcc:'¿No tienes cuenta?',reg:'Regístrate',haveAcc:'¿Ya tienes cuenta?',login:'Entra'},
+  ca:{title:"Des d'on entres?",sub:"Adaptarem l'idioma i la zona horària al teu lloc.",ph:'Codi postal, ciutat o país…',locate:'Localitzar',searching:'Cercant…',signin:'Entrar',signup:'Crear compte',name:'Nom',email:'Correu',password:'Contrasenya',ctaIn:'Entrar',ctaUp:'Crear compte',or:'o',google:'Continua amb Google',noAcc:'No tens compte?',reg:"Registra't",haveAcc:'Ja tens compte?',login:'Entra'},
+  en:{title:'Where are you signing in from?',sub:"We'll match language and timezone to your place.",ph:'Postal code, city or country…',locate:'Locate',searching:'Searching…',signin:'Sign in',signup:'Sign up',name:'Name',email:'Email',password:'Password',ctaIn:'Sign in',ctaUp:'Create account',or:'or',google:'Continue with Google',noAcc:'No account?',reg:'Sign up',haveAcc:'Already have an account?',login:'Sign in'},
+  fr:{title:'D’où vous connectez-vous ?',sub:'Nous adapterons la langue et le fuseau horaire à votre lieu.',ph:'Code postal, ville ou pays…',locate:'Localiser',searching:'Recherche…',signin:'Se connecter',signup:'Créer un compte',name:'Nom',email:'E-mail',password:'Mot de passe',ctaIn:'Se connecter',ctaUp:'Créer un compte',or:'ou',google:'Continuer avec Google',noAcc:'Pas de compte ?',reg:'Inscrivez-vous',haveAcc:'Déjà un compte ?',login:'Connectez-vous'},
+  de:{title:'Von wo meldest du dich an?',sub:'Wir passen Sprache und Zeitzone an deinen Ort an.',ph:'PLZ, Stadt oder Land…',locate:'Finden',searching:'Suche…',signin:'Anmelden',signup:'Konto erstellen',name:'Name',email:'E-Mail',password:'Passwort',ctaIn:'Anmelden',ctaUp:'Konto erstellen',or:'oder',google:'Mit Google fortfahren',noAcc:'Kein Konto?',reg:'Registrieren',haveAcc:'Schon ein Konto?',login:'Anmelden'},
+  it:{title:'Da dove accedi?',sub:'Adatteremo lingua e fuso orario al tuo luogo.',ph:'CAP, città o paese…',locate:'Localizza',searching:'Ricerca…',signin:'Accedi',signup:'Crea account',name:'Nome',email:'Email',password:'Password',ctaIn:'Accedi',ctaUp:'Crea account',or:'o',google:'Continua con Google',noAcc:'Non hai un account?',reg:'Registrati',haveAcc:'Hai già un account?',login:'Accedi'},
+  pt:{title:'De onde você entra?',sub:'Vamos ajustar o idioma e o fuso horário ao seu local.',ph:'Código postal, cidade ou país…',locate:'Localizar',searching:'Buscando…',signin:'Entrar',signup:'Criar conta',name:'Nome',email:'Email',password:'Senha',ctaIn:'Entrar',ctaUp:'Criar conta',or:'ou',google:'Continuar com Google',noAcc:'Não tem conta?',reg:'Cadastre-se',haveAcc:'Já tem conta?',login:'Entrar'},
+  nl:{title:'Vanwaar log je in?',sub:'We stemmen taal en tijdzone af op jouw plek.',ph:'Postcode, stad of land…',locate:'Zoeken',searching:'Zoeken…',signin:'Inloggen',signup:'Account aanmaken',name:'Naam',email:'E-mail',password:'Wachtwoord',ctaIn:'Inloggen',ctaUp:'Account aanmaken',or:'of',google:'Doorgaan met Google',noAcc:'Geen account?',reg:'Aanmelden',haveAcc:'Al een account?',login:'Inloggen'},
+  ja:{title:'どこからサインインしますか？',sub:'言語とタイムゾーンをあなたの場所に合わせます。',ph:'郵便番号・都市・国…',locate:'検索',searching:'検索中…',signin:'ログイン',signup:'アカウント作成',name:'名前',email:'メール',password:'パスワード',ctaIn:'ログイン',ctaUp:'アカウント作成',or:'または',google:'Google で続行',noAcc:'アカウントがない？',reg:'登録',haveAcc:'アカウントをお持ちですか？',login:'ログイン'},
+  zh:{title:'您从哪里登录？',sub:'我们会根据您的位置调整语言和时区。',ph:'邮编、城市或国家…',locate:'定位',searching:'搜索中…',signin:'登录',signup:'注册',name:'姓名',email:'邮箱',password:'密码',ctaIn:'登录',ctaUp:'创建账户',or:'或',google:'使用 Google 继续',noAcc:'没有账户？',reg:'注册',haveAcc:'已有账户？',login:'登录'}
+};
+
+let currentLang='es', authMode='in', detected=null;
+const $=id=>document.getElementById(id);
+const setText=(id,s)=>{ const el=$(id); if(el) el.textContent=s; };
+// iconos MDI (mismo set que la app) como SVG inline — sin emojis
+const MDI={
+  pin:'M12 2c-3.87 0-7 3.13-7 7c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7m0 9.5a2.5 2.5 0 0 1 0-5a2.5 2.5 0 0 1 0 5',
+  clock:'M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z',
+  lang:'M12.87 15.07l-2.54-2.51l.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35C8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5l3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7l1.62-4.33L19.12 17z'
+};
+const mdi=d=>`<svg class="ci" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${d}"/></svg>`;
+
+function applyLang(lang){
+  currentLang = I18N[lang] ? lang : 'en';
+  const t=I18N[currentLang];
+  document.documentElement.lang=currentLang;
+  setText('t-title',t.title); setText('t-sub',t.sub); input.placeholder=t.ph;
+  if(!goBtn.disabled) goBtn.textContent=t.locate;
+  setText('tab-in',t.signin); setText('tab-up',t.signup);
+  setText('t-name',t.name); setText('t-email',t.email); setText('t-pass',t.password);
+  setText('t-or',t.or); $('t-google').querySelector('span').textContent=t.google;
+  renderAuthMode();
+}
+function renderAuthMode(){
+  const t=I18N[currentLang];
+  $('fld-name').classList.toggle('hidden', authMode!=='up');
+  $('tab-in').classList.toggle('active', authMode==='in');
+  $('tab-up').classList.toggle('active', authMode==='up');
+  setText('auth-cta', authMode==='in'?t.ctaIn:t.ctaUp);
+  const sw=$('switch');
+  sw.innerHTML = authMode==='in'
+    ? `${t.noAcc} <a id="switch-link">${t.reg}</a>`
+    : `${t.haveAcc} <a id="switch-link">${t.login}</a>`;
+  $('switch-link').onclick=e=>{ e.preventDefault(); authMode=authMode==='in'?'up':'in'; renderAuthMode(); };
+}
+$('tab-in').onclick=()=>{ authMode='in'; renderAuthMode(); };
+$('tab-up').onclick=()=>{ authMode='up'; renderAuthMode(); };
+
+//================= localizar → idioma en vivo + persistir =================
+function persistLocale(){
+  const lang = detected ? (LANG_BY_CC[detected.cc]||'en') : currentLang;
+  const out = detected
+    ? {lat:detected.lat,lon:detected.lon,country:detected.cc,timezone:detected.tz,language:lang,label:detected.label}
+    : {language:lang};
+  try{ localStorage.setItem('planetpass.locale', JSON.stringify(out)); }catch(e){}
+  try{ document.cookie='planetpass_locale='+encodeURIComponent(JSON.stringify(out))+'; path=/; max-age=31536000; samesite=lax'; }catch(e){}
+  try{ window.parent&&window.parent.postMessage({type:'planetpass:locale',payload:out},'*'); }catch(e){}
+  window.dispatchEvent(new CustomEvent('planetpass:locale',{detail:out}));
+  return out;
+}
+function onLocated(){
+  if(!detected) return;
+  autoSpin=false;   // se queda fijo: no recupera la rotación
+  // resalta de forma persistente el país detectado (color activo)
+  selectedFeat = (d3 && countriesFC)
+    ? countriesFC.features.find(f=>d3.geoContains(f,[detected.lon,detected.lat])) || null
+    : null;
+  const lang=LANG_BY_CC[detected.cc]||'en';
+  applyLang(lang);                                  // ← el idioma de TODA la UI cambia en vivo
+  setText('det-greet', GREET[lang]||GREET.en);
+  $('chips').innerHTML =
+    `<span class="chip">${mdi(MDI.pin)}<b>${detected.label}</b></span>`+
+    `<span class="chip">${mdi(MDI.clock)}<b>${detected.tz}</b>${detected.approxTz?' ~':''}</span>`+
+    `<span class="chip">${mdi(MDI.lang)}<b>${LANGNAME[lang]||lang}</b></span>`;
+  $('detected').classList.add('show');
+  persistLocale();
+}
+
+//================= UI: localización =================
+const input=$('q'), err=$('err'), goBtn=$('go'), field=$('field');
+function startTravelTo(lon,lat){ fromLon=lon0; fromLat=lat0; toLon=lon; toLat=lat; zFrom=zoomK; selectedFeat=null; t0=performance.now(); mode='travel'; }
+async function run(){
+  const q=input.value.trim(); if(!q) return;
+  err.textContent=''; goBtn.disabled=true; goBtn.textContent=I18N[currentLang].searching;
+  const res=await geocode(q);
+  goBtn.disabled=false; goBtn.textContent=I18N[currentLang].locate;
+  if(!res){ err.textContent='✕'; field.classList.add('shake'); setTimeout(()=>field.classList.remove('shake'),450); return; }
+  detected=res; startTravelTo(res.lon, res.lat);
+}
+goBtn.addEventListener('click',run);
+input.addEventListener('keydown',e=>{ if(e.key==='Enter') run(); });
+
+function featureCenter(f){
+  const g=f.geometry;
+  if(g.type==='Polygon') return d3.geoCentroid(f);
+  let best=null,bestA=-1;
+  for(const coords of g.coordinates){ const poly={type:'Polygon',coordinates:coords}; const a=d3.geoArea(poly); if(a>bestA){bestA=a;best=poly;} }
+  return d3.geoCentroid(best||f);
+}
+async function locateFeature(f){
+  const name=f.properties.name, c=featureCenter(f);
+  startTravelTo(c[0], c[1]);
+  const meta=await reverseMeta(c[0], c[1]);
+  detected={lat:c[1], lon:c[0], cc:meta.cc, tz:meta.tz, label:name, approxTz:meta.approxTz};
+}
+
+//================= UI: auth =================
+function enterApp(){
+  persistLocale();   // asegura cookie (gate) con el locale detectado o por defecto
+  /* demo open-source: no navega a ninguna app */
+}
+$('auth-form').addEventListener('submit', e=>{ e.preventDefault(); enterApp(); });
+$('t-google').addEventListener('click', enterApp);
+
+
+//================= globo: arrastrar · hover · click · rueda =================
+let lastX=0, lastY=0, moved=0;
+function countryAt(clientX, clientY){
+  if(!d3||!countriesFC||!lastProjection) return null;
+  const r=cv.getBoundingClientRect();
+  const p=lastProjection.invert([clientX-r.left, clientY-r.top]);
+  if(!p || isNaN(p[0])) return null;
+  for(const f of countriesFC.features) if(d3.geoContains(f,p)) return f;
+  return null;
+}
+cv.addEventListener('pointerdown', e=>{
+  if(mode!=='idle'){ mode='idle'; autoSpin=false; }   // arrastrar cancela la animación en curso
+  dragging=true; moved=0; lastX=e.clientX; lastY=e.clientY; vlon=0; vlat=0;
+  cv.classList.add('grabbing'); cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', e=>{
+  if(dragging){
+    const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    const k=0.26/zoomK, dlon=-dx*k, dlat=dy*k;   // a más zoom, giro más lento por píxel
+    lon0+=dlon; lat0=clamp(lat0+dlat,-82,82);
+    vlon=clamp(dlon,-8,8); vlat=clamp(dlat,-8,8);
+  } else if(mode==='idle'){
+    hoverFeat=countryAt(e.clientX,e.clientY);
+    cv.style.cursor = hoverFeat ? 'pointer' : 'grab';
+  }
+});
+function endDrag(e){ if(!dragging) return; dragging=false; cv.classList.remove('grabbing'); try{ cv.releasePointerCapture(e.pointerId); }catch(_){} }
+cv.addEventListener('pointerup', e=>{
+  const wasClick = dragging && moved<6; endDrag(e);
+  if(wasClick && mode==='idle'){ const f=countryAt(e.clientX,e.clientY); if(f){ hoverFeat=null; input.value=f.properties.name; locateFeature(f); } }
+});
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('pointerleave', e=>{ endDrag(e); hoverFeat=null; });
+cv.addEventListener('wheel', e=>{
+  e.preventDefault();
+  if(mode!=='idle'){ mode='idle'; autoSpin=false; }   // el scroll cancela la animación en curso
+  zoomK = clamp(zoomK*Math.exp(-e.deltaY*0.0012), 0.7, 9);
+  R = baseR*zoomK; hoverFeat = countryAt(e.clientX, e.clientY);
+}, {passive:false});
+
+// idioma inicial: el del navegador si lo soportamos (si no, español)
+applyLang((navigator.language||'es').slice(0,2));
+resize(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
