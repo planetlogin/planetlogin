@@ -1,19 +1,19 @@
 <div align="center">
 
-# PlanetPass
+# PlanetLogin
 
 **Sign in with a planet.** A login screen with an interactive globe that detects
 your **timezone**, sets the **language**, and collects location metadata — so an
 app greets you in your tongue, in your hours, from the first second.
 
-**[Live demo →](https://rricajos.github.io/planetpass/)**
+**[Live demo →](https://rricajos.github.io/planetlogin/)**
 
 </div>
 
 ---
 
 Spin the globe, drag it (with inertia), **zoom with the wheel**, **click a country**
-or type a postal code / city / country. PlanetPass flies to it, and the whole UI —
+or type a postal code / city / country. PlanetLogin flies to it, and the whole UI —
 including the sign-in panel — **re-localizes live** into that place's language.
 
 One self-contained `index.html`. No build step, no framework, no API key.
@@ -32,11 +32,11 @@ One self-contained `index.html`. No build step, no framework, no API key.
 
 Drop `index.html` and `fonts/` on any static host. On a successful pick it:
 
-- writes `localStorage.planetpass_locale` and a `planetpass_locale` cookie,
-- emits a `planetpass:locale` **CustomEvent** and a `postMessage` (for iframe embeds):
+- writes `localStorage.planetlogin_locale` and a `planetlogin_locale` cookie,
+- emits a `planetlogin:locale` **CustomEvent** and a `postMessage` (for iframe embeds):
 
 ```js
-window.addEventListener('planetpass:locale', (e) => {
+window.addEventListener('planetlogin:locale', (e) => {
   // { lat, lon, country, timezone, language, label }
   applyLanguage(e.detail.language);
   applyTimezone(e.detail.timezone);
@@ -47,7 +47,7 @@ Embedding it in an iframe? Listen for the message on the parent:
 
 ```js
 window.addEventListener('message', (e) => {
-  if (e.data?.type === 'planetpass:locale') console.log(e.data.payload);
+  if (e.data?.type === 'planetlogin:locale') console.log(e.data.payload);
 });
 ```
 
@@ -68,7 +68,7 @@ Vanilla JS · [d3-geo](https://github.com/d3/d3-geo) · [topojson-client](https:
 - **Free for any use, including commercial.**
 - If you modify, redistribute, or host a modified version, you must **share your
   source** under the same license (copyleft).
-- You must **keep the visible `PlanetPass · by Ricajos` credit** (linking to
+- You must **keep the visible `PlanetLogin · by Ricajos` credit** (linking to
   [ricajos.com](https://ricajos.com)). Removing it requires written permission.
 
 Want it without copyleft or without the credit? Open an issue — a commercial /

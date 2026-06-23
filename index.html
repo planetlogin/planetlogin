@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PlanetPass — sign in with a planet</title>
+<title>PlanetLogin — sign in with a planet</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23f6a13c' d='M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2'/></svg>">
 <style>
   :root{
@@ -106,7 +106,7 @@
 <div class="stage">
   <section class="globe-pane">
     <canvas id="globe"></canvas>
-    <a class="watermark" href="https://ricajos.com" target="_blank" rel="noopener">PlanetPass · by Ricajos</a>
+    <a class="watermark" href="https://ricajos.com" target="_blank" rel="noopener">PlanetLogin · by Ricajos</a>
     <div class="loc">
       <div class="detected" id="detected">
         <div>
@@ -129,7 +129,7 @@
     <div class="auth-card">
       <div class="brand">
         <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="var(--accent)" d="M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
-        <span class="brand-name">PlanetPass</span>
+        <span class="brand-name">PlanetLogin</span>
       </div>
       <div class="tabs">
         <button id="tab-in" class="active">Entrar</button>
@@ -153,7 +153,7 @@
 
 <script>
 //==================================================================
-// PlanetPass — sign in with a planet · interactive globe locale picker (i18n)
+// PlanetLogin — sign in with a planet · interactive globe locale picker (i18n)
 //==================================================================
 const cv = document.getElementById('globe');
 const ctx = cv.getContext('2d');
@@ -349,10 +349,10 @@ function persistLocale(){
   const out = detected
     ? {lat:detected.lat,lon:detected.lon,country:detected.cc,timezone:detected.tz,language:lang,label:detected.label}
     : {language:lang};
-  try{ localStorage.setItem('planetpass.locale', JSON.stringify(out)); }catch(e){}
-  try{ document.cookie='planetpass_locale='+encodeURIComponent(JSON.stringify(out))+'; path=/; max-age=31536000; samesite=lax'; }catch(e){}
-  try{ window.parent&&window.parent.postMessage({type:'planetpass:locale',payload:out},'*'); }catch(e){}
-  window.dispatchEvent(new CustomEvent('planetpass:locale',{detail:out}));
+  try{ localStorage.setItem('planetlogin.locale', JSON.stringify(out)); }catch(e){}
+  try{ document.cookie='planetlogin_locale='+encodeURIComponent(JSON.stringify(out))+'; path=/; max-age=31536000; samesite=lax'; }catch(e){}
+  try{ window.parent&&window.parent.postMessage({type:'planetlogin:locale',payload:out},'*'); }catch(e){}
+  window.dispatchEvent(new CustomEvent('planetlogin:locale',{detail:out}));
   return out;
 }
 function onLocated(){
