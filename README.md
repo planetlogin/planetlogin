@@ -2,77 +2,112 @@
 
 # PlanetPass
 
-**Sign in with a planet.** A login screen with an interactive globe that detects
-your **timezone**, sets the **language**, and collects location metadata — so an
-app greets you in your tongue, in your hours, from the first second.
+**Sign in with a planet.** A framework-agnostic globe component that detects your
+**timezone**, **language** and **location** — so your app greets a visitor in their
+tongue, in their hours, from the first second.
 
-**[Live demo →](https://rricajos.github.io/planetpass/)**
+**[Live demo →](https://rricajos.github.io/planetpass/)** · `@rricajos/planetpass`
 
 </div>
 
 ---
 
 Spin the globe, drag it (with inertia), **zoom with the wheel**, **click a country**
-or type a postal code / city / country. PlanetPass flies to it, and the whole UI —
-including the sign-in panel — **re-localizes live** into that place's language.
+or search a postal code / city / country. PlanetPass flies to it and emits a
+`locale`. Works in **React, Vue, Svelte, Angular or plain HTML** — it's a Web Component.
 
-One self-contained `index.html`. No build step, no framework, no API key.
+## Install
 
-## Features
+```bash
+npm i @rricajos/planetpass
+```
 
-- **Real orthographic globe** (continents, borders, graticule) via [d3-geo](https://github.com/d3/d3-geo) — correct hemisphere clipping, no projection hacks.
-- **Drag to rotate** with inertia; **wheel to zoom**; drag sensitivity scales with zoom.
-- **Click a country** → flies, de-zooms, re-centers and zooms in; stays put, highlighted. Interruptible (scroll/drag cancels mid-flight).
-- **Search** postal code / city / country (Open-Meteo + Nominatim — free, no key).
-- Detects **language + timezone + coordinates**; demo re-localizes ~10 languages live.
-- **Login panel** (sign in / sign up, social) included — it's a drop-in auth screen, not just a picker.
-- Self-hosted [Inter](https://rsms.me/inter/) font, [MDI](https://pictogrammers.com/library/mdi/) icons. No emojis.
+…or drop it in with a `<script>` (no build):
+
+```html
+<planet-pass style="display:block;width:100%;height:480px"></planet-pass>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@rricajos/planetpass"></script>
+```
 
 ## Use it
 
-Drop `index.html` and `fonts/` on any static host. On a successful pick it:
+**As a Web Component** (any framework / plain HTML):
 
-- writes `localStorage.planetpass_locale` and a `planetpass_locale` cookie,
-- emits a `planetpass:locale` **CustomEvent** and a `postMessage` (for iframe embeds):
-
-```js
-window.addEventListener('planetpass:locale', (e) => {
-  // { lat, lon, country, timezone, language, label }
-  applyLanguage(e.detail.language);
-  applyTimezone(e.detail.timezone);
-});
+```html
+<planet-pass accent="#f6a13c" resolution="110m"></planet-pass>
+<script type="module">
+  import '@rricajos/planetpass';
+  document.querySelector('planet-pass').addEventListener('locale', (e) => {
+    const { language, timezone, country, lat, lon, label } = e.detail;
+    setAppLanguage(language);
+    setAppTimezone(timezone);
+  });
+</script>
 ```
 
-Embedding it in an iframe? Listen for the message on the parent:
+**As a function** (full control, TypeScript types included):
 
-```js
-window.addEventListener('message', (e) => {
-  if (e.data?.type === 'planetpass:locale') console.log(e.data.payload);
+```ts
+import { createPlanetPass, type PlanetLocale } from '@rricajos/planetpass';
+
+const globe = createPlanetPass(document.getElementById('globe')!, {
+  accent: '#f6a13c',
+  onLocale: (loc: PlanetLocale) => console.log(loc),
 });
+globe.flyTo(2.17, 41.39);   // fly to Barcelona
+// globe.destroy() when done
 ```
 
-## Customize
+## Options
 
-- **Colors:** CSS variables at the top of `index.html` (`--accent`, `--surface`, …).
-- **Languages:** the `I18N` object — add a locale, it's picked up automatically.
-- **Globe data:** swap `countries-110m` for `countries-50m` for finer borders.
+| Option | Type | Default | |
+|---|---|---|---|
+| `accent` | `string` | `#f6a13c` | Brand color (highlight, button). |
+| `search` | `boolean` | `true` | Show the built-in search box. |
+| `placeholder` | `string` | — | Search box placeholder. |
+| `autoSpin` | `boolean` | `true` | Gentle rotation until the first pick. |
+| `resolution` | `'110m' \| '50m'` | `'110m'` | Border detail. |
+| `dataUrl` | `string` | — | Override the world-atlas TopoJSON URL. |
+| `onLocale` | `(l: PlanetLocale) => void` | — | Callback on every pick. |
 
-## Stack
+## The `locale` payload
 
-Vanilla JS · [d3-geo](https://github.com/d3/d3-geo) · [topojson-client](https://github.com/topojson/topojson-client) · [world-atlas](https://github.com/topojson/world-atlas) (from jsDelivr) · [Inter](https://rsms.me/inter/) (self-hosted).
+```ts
+interface PlanetLocale {
+  lat: number; lon: number;
+  country: string;       // ISO alpha-2
+  timezone: string;      // IANA, or approximate "UTC±N"
+  language: string;      // e.g. "es"
+  label: string;         // "Barcelona, Spain"
+  approxTimezone?: boolean;
+}
+```
+
+## How it works
+
+Real orthographic globe via [d3-geo](https://github.com/d3/d3-geo) (correct hemisphere
+clipping). Geocoding with **no API key** — [Open-Meteo](https://open-meteo.com) (precise
+IANA timezone) with an [OSM Nominatim](https://nominatim.org) fallback. Country borders
+from [world-atlas](https://github.com/topojson/world-atlas), fetched at runtime.
+
+## Develop
+
+```bash
+npm i
+npm run dev        # demo at localhost:5173
+npm run build      # dist/ (ESM + UMD + .d.ts)
+npm run typecheck
+```
+
+Branches: `main` = the component · [`simple`](https://github.com/rricajos/planetpass/tree/simple) = a zero-build, single-file version to copy-paste.
 
 ## License & attribution
 
 **[AGPL-3.0](LICENSE)** with an **attribution term** (AGPLv3 §7b).
 
 - **Free for any use, including commercial.**
-- If you modify, redistribute, or host a modified version, you must **share your
-  source** under the same license (copyleft).
-- You must **keep the visible `PlanetPass · by Ricajos` credit** (linking to
-  [ricajos.com](https://ricajos.com)). Removing it requires written permission.
-
-Want it without copyleft or without the credit? Open an issue — a commercial /
-white-label license is available.
+- Modify / host a modified version → **share your source** under the same license (copyleft).
+- **Keep the visible `PlanetPass · by Ricajos` credit** (→ [ricajos.com](https://ricajos.com)). Removing it needs written permission — a commercial / white-label license is available, open an issue.
 
 ## Credits
 
