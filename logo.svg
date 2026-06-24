@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="44%" r="55%">
+      <stop offset="55%" stop-color="rgba(120,170,255,.18)"/>
+      <stop offset="100%" stop-color="rgba(120,170,255,0)"/>
+    </radialGradient>
+  </defs>
+  <!-- dark rounded tile (works as avatar / social mark) -->
+  <rect width="512" height="512" rx="112" fill="#070b16"/>
+  <circle cx="256" cy="232" r="190" fill="url(#halo)"/>
+  <!-- mdi globe, accent, centred and scaled -->
+  <g transform="translate(116 116) scale(11.67)">
+    <path fill="#f6a13c" d="M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/>
+  </g>
+  <text x="256" y="476" fill="#9aa7bd" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="600" text-anchor="middle">PlanetLogin</text>
+</svg>

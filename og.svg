@@ -1,15 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="Inter, system-ui, sans-serif">
   <defs>
-    <radialGradient id="globe" cx="42%" cy="38%" r="70%">
-      <stop offset="0%" stop-color="#2a5e90"/>
-      <stop offset="100%" stop-color="#0c2138"/>
-    </radialGradient>
     <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-      <stop offset="60%" stop-color="rgba(120,170,255,.18)"/>
+      <stop offset="55%" stop-color="rgba(120,170,255,.20)"/>
       <stop offset="100%" stop-color="rgba(120,170,255,0)"/>
     </radialGradient>
   </defs>
-
   <rect width="1200" height="630" fill="#070b16"/>
   <!-- stars -->
   <g fill="#cdd8f0">
@@ -18,22 +13,13 @@
     <circle cx="1010" cy="520" r="1.5" opacity=".6"/><circle cx="200" cy="540" r="1.2" opacity=".5"/>
     <circle cx="80" cy="360" r="1.3" opacity=".5"/><circle cx="1130" cy="380" r="1.1" opacity=".5"/>
   </g>
-
-  <!-- globe -->
-  <g transform="translate(330 315)">
-    <circle r="250" fill="url(#halo)"/>
-    <circle r="200" fill="url(#globe)" stroke="rgba(150,200,255,.25)" stroke-width="1.5"/>
-    <g fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1">
-      <ellipse rx="200" ry="66"/><ellipse rx="200" ry="132"/>
-      <ellipse rx="66" ry="200"/><ellipse rx="132" ry="200"/>
-    </g>
-    <!-- a couple of accented "countries" -->
-    <path d="M-70-40 q40-30 90-10 q20 40-10 70 q-50 25-90-5 q-25-35 10-55z" fill="rgba(70,160,116,.92)"/>
-    <path d="M20 40 q55-10 80 30 q5 45-45 55 q-55 0-60-45 q5-30 25-40z" fill="#f6a13c" opacity=".85"/>
+  <!-- brand globe (mdi) on the left -->
+  <circle cx="320" cy="315" r="230" fill="url(#halo)"/>
+  <g transform="translate(170 165) scale(12.5)">
+    <path fill="#f6a13c" d="M17.9 17.39c-.26-.8-1.01-1.39-1.9-1.39h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41A7.984 7.984 0 0 1 20 12c0 2.08-.81 3.98-2.1 5.39M11 19.93C7.05 19.44 4 16.08 4 12c0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2m1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/>
   </g>
-
   <!-- text -->
-  <g transform="translate(660 250)">
+  <g transform="translate(620 250)">
     <text x="0" y="0" fill="#eef2fb" font-size="92" font-weight="700" letter-spacing="-1">PlanetLogin</text>
     <text x="0" y="64" fill="#9aa7bd" font-size="36" font-weight="500">Sign in with a planet.</text>
     <text x="0" y="150" fill="#cdd8f0" font-size="27" font-weight="400">Detects timezone, language &amp; location</text>
