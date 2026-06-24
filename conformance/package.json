@@ -1,0 +1,8 @@
+{
+  "name": "planetlogin-conformance",
+  "private": true,
+  "type": "module",
+  "description": "Black-box conformance suite — every PlanetLogin flavor must pass it.",
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "jose": "^5.9.6", "vitest": "^2.1.0" }
+}
