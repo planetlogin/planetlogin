@@ -17,7 +17,7 @@ lives in the white-label config ([`config.schema.json`](config.schema.json));
 
 | Var | Required | Meaning |
 |---|---|---|
-| `PLANETLOGIN_JWT_PRIVATE_KEY` | yes | PEM/JWK private key (EdDSA or RSA). Signs session tokens. Keep secret. |
+| `PLANETLOGIN_JWT_PRIVATE_KEY` | yes | EdDSA private key that signs session tokens — the **PEM itself** or a **path** to a PEM file (e.g. a Docker secret). Generate one with `npx planetlogin-keygen`. Keep it secret; without it the portal falls back to an ephemeral key (tokens die on restart) and logs a warning. |
 | `PLANETLOGIN_JWT_KID` | no | Key id surfaced in JWKS (enables rotation). |
 | `PLANETLOGIN_JWT_ISSUER` | no | `iss` claim (default `PLANETLOGIN_BASE_URL`). |
 | `PLANETLOGIN_JWT_AUDIENCE` | no | `aud` claim. |

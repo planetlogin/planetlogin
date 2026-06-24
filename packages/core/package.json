@@ -12,11 +12,13 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": { "planetlogin-keygen": "./dist/keygen.js" },
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "prepare": "tsup",
     "prepublishOnly": "tsup",
+    "keygen": "tsx bin/keygen.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "mock": "tsx mock-downstream/server.ts"

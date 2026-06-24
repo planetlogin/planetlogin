@@ -4,6 +4,7 @@ import {
   SignJWT, jwtVerify, exportJWK, generateKeyPair, importPKCS8,
   createLocalJWKSet, type KeyLike, type JWK,
 } from 'jose';
+import { readFileSync } from 'node:fs';
 
 export interface Locale { language?: string; timezone?: string; country?: string }
 export interface SessionClaims {
@@ -13,14 +14,24 @@ export interface SessionClaims {
 interface Keys { priv: KeyLike; pubJwk: JWK; kid: string }
 let cache: Keys | null = null;
 
+/** PLANETLOGIN_JWT_PRIVATE_KEY is either the PEM itself or a path to a PEM file
+ *  (e.g. a Docker/K8s secret). _PEM is kept as a back-compat alias. */
+function loadPrivatePem(): string | null {
+  const v = process.env.PLANETLOGIN_JWT_PRIVATE_KEY ?? process.env.PLANETLOGIN_JWT_PRIVATE_KEY_PEM;
+  if (!v) return null;
+  return v.includes('-----BEGIN') ? v : readFileSync(v, 'utf8');
+}
+
 async function getKeys(): Promise<Keys> {
   if (cache) return cache;
   let priv: KeyLike;
-  const pem = process.env.PLANETLOGIN_JWT_PRIVATE_KEY_PEM;
+  const pem = loadPrivatePem();
   if (pem) {
     priv = await importPKCS8(pem, 'EdDSA');
   } else {
-    // Dev fallback: ephemeral keypair. Production MUST set the PEM env var.
+    // Dev fallback: ephemeral keypair — tokens die on restart and can't be verified
+    // across instances. Production MUST set PLANETLOGIN_JWT_PRIVATE_KEY (run `keygen`).
+    console.warn('[planetlogin] WARNING: no PLANETLOGIN_JWT_PRIVATE_KEY — using an EPHEMERAL keypair. Do not use in production.');
     priv = (await generateKeyPair('EdDSA', { extractable: true })).privateKey;
   }
   const full = await exportJWK(priv);
