@@ -8,6 +8,13 @@ describe('countryToLanguage', () => {
     expect(countryToLanguage('FR')).toBe('fr');
     expect(countryToLanguage('BR')).toBe('pt');
     expect(countryToLanguage('JP')).toBe('ja');
+    // expanded coverage
+    expect(countryToLanguage('KR')).toBe('ko');
+    expect(countryToLanguage('RU')).toBe('ru');
+    expect(countryToLanguage('SA')).toBe('ar');
+    expect(countryToLanguage('IN')).toBe('en');
+    expect(countryToLanguage('SE')).toBe('sv');
+    expect(countryToLanguage('VN')).toBe('vi');
   });
 
   it('is case-insensitive', () => {

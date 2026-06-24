@@ -80,10 +80,11 @@ export class PlanetLogin {
     target.style.overflow = 'hidden';
 
     this.cv = document.createElement('canvas');
-    // The globe is interactive but not keyboard-focusable; expose it to AT and
-    // point users at the (fully keyboard-accessible) search box.
-    this.cv.setAttribute('role', 'img');
-    this.cv.setAttribute('aria-label', 'Interactive globe. Drag to rotate, click a country, or use the search box below to pick a place.');
+    // Keyboard-accessible: focusable, arrow keys rotate, +/- zoom, Enter/Space
+    // picks the country at the centre. Also usable via the search box below.
+    this.cv.tabIndex = 0;
+    this.cv.setAttribute('role', 'application');
+    this.cv.setAttribute('aria-label', 'Interactive globe. Arrow keys rotate, plus and minus zoom, Enter selects the country at the centre. Or use the search box below.');
     Object.assign(this.cv.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block', cursor: 'grab', touchAction: 'none' } as CSSStyleDeclaration);
     target.appendChild(this.cv);
     this.ctx = this.cv.getContext('2d')!;
@@ -217,6 +218,13 @@ export class PlanetLogin {
     return null;
   }
 
+  /** The country under the globe's centre point (current rotation). */
+  private countryAtCenter(): any {
+    if (!this.countriesFC) return null;
+    for (const f of this.countriesFC.features) if (geoContains(f, [this.lon0, this.lat0])) return f;
+    return null;
+  }
+
   private async pickFeature(f: any): Promise<void> {
     const [lon, lat] = this.featureCenter(f);
     this.flyTo(lon, lat);
@@ -273,6 +281,30 @@ export class PlanetLogin {
       this.zoomK = clamp(this.zoomK * Math.exp(-e.deltaY * 0.0012), 0.7, 9);
       this.R = this.baseR * this.zoomK; this.hoverFeat = this.countryAt(e.clientX, e.clientY);
     }, { passive: false });
+
+    // Keyboard: rotate with arrows, zoom with +/-, pick the centre with Enter.
+    cv.addEventListener('focus', () => { cv.style.outline = `2px solid ${this.opts.accent}`; cv.style.outlineOffset = '-2px'; });
+    cv.addEventListener('blur', () => { cv.style.outline = 'none'; this.hoverFeat = null; });
+    cv.addEventListener('keydown', (e) => {
+      const step = 6 / this.zoomK;
+      let handled = true;
+      switch (e.key) {
+        case 'ArrowLeft': this.lon0 -= step; break;
+        case 'ArrowRight': this.lon0 += step; break;
+        case 'ArrowUp': this.lat0 = clamp(this.lat0 + step, -82, 82); break;
+        case 'ArrowDown': this.lat0 = clamp(this.lat0 - step, -82, 82); break;
+        case '+': case '=': this.zoomK = clamp(this.zoomK * 1.15, 0.7, 9); this.R = this.baseR * this.zoomK; break;
+        case '-': case '_': this.zoomK = clamp(this.zoomK / 1.15, 0.7, 9); this.R = this.baseR * this.zoomK; break;
+        case 'Enter': case ' ': { const f = this.countryAtCenter(); if (f) { this.hoverFeat = null; this.pickFeature(f); } break; }
+        default: handled = false;
+      }
+      if (handled) {
+        e.preventDefault();
+        this.autoSpin = false;
+        if (this.mode !== 'idle') this.mode = 'idle';
+        if (e.key !== 'Enter' && e.key !== ' ') this.hoverFeat = this.countryAtCenter();
+      }
+    });
   }
 
   private loop(now: number): void {
