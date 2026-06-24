@@ -1,7 +1,7 @@
-<!-- PlanetLogin in Svelte. npm i planetlogin -->
+<!-- PlanetLogin in Svelte. npm i @planetlogin/planetlogin -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { createPlanetLogin, type PlanetLogin, type PlanetLocale } from 'planetlogin';
+  import { createPlanetLogin, type PlanetLogin, type PlanetLocale } from '@planetlogin/planetlogin';
 
   export let accent = '#f6a13c';
   export let onlocale: (l: PlanetLocale) => void = () => {};

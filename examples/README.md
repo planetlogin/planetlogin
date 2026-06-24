@@ -3,7 +3,7 @@
 Minimal, copy-pasteable integrations. All of them install the same package:
 
 ```bash
-npm i planetlogin
+npm i @planetlogin/planetlogin
 ```
 
 | File | Stack | Notes |

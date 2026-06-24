@@ -1,7 +1,7 @@
 // PlanetLogin in React — a thin wrapper around the factory API.
-// npm i planetlogin
+// npm i @planetlogin/planetlogin
 import { useEffect, useRef } from 'react';
-import { createPlanetLogin, type PlanetLocale, type PlanetLoginOptions } from 'planetlogin';
+import { createPlanetLogin, type PlanetLocale, type PlanetLoginOptions } from '@planetlogin/planetlogin';
 
 type Props = Omit<PlanetLoginOptions, 'onLocale'> & {
   onLocale?: (locale: PlanetLocale) => void;

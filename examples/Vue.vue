@@ -1,7 +1,7 @@
-<!-- PlanetLogin in Vue 3. npm i planetlogin -->
+<!-- PlanetLogin in Vue 3. npm i @planetlogin/planetlogin -->
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue';
-import { createPlanetLogin, type PlanetLogin, type PlanetLocale } from 'planetlogin';
+import { createPlanetLogin, type PlanetLogin, type PlanetLocale } from '@planetlogin/planetlogin';
 
 const props = withDefaults(defineProps<{ accent?: string }>(), { accent: '#f6a13c' });
 const emit = defineEmits<{ locale: [PlanetLocale] }>();

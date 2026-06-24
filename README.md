@@ -6,12 +6,12 @@
 visitor's **timezone**, **language** and **location** — so your app greets them in
 their tongue, in their hours, from the first second.
 
-[![npm](https://img.shields.io/npm/v/planetlogin?color=f6a13c)](https://www.npmjs.com/package/planetlogin)
+[![npm](https://img.shields.io/npm/v/@planetlogin/planetlogin?color=f6a13c)](https://www.npmjs.com/package/@planetlogin/planetlogin)
 [![license](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/planetlogin/planetlogin/actions/workflows/ci.yml/badge.svg)](https://github.com/planetlogin/planetlogin/actions/workflows/ci.yml)
-[![bundle](https://img.shields.io/bundlephobia/minzip/planetlogin?label=gzip)](https://bundlephobia.com/package/planetlogin)
+[![bundle](https://img.shields.io/bundlephobia/minzip/@planetlogin/planetlogin?label=gzip)](https://bundlephobia.com/package/@planetlogin/planetlogin)
 
-**[Live demo → planetlogin.org](https://planetlogin.org)** · `npm i planetlogin`
+**[Live demo → planetlogin.org](https://planetlogin.org)** · `npm i @planetlogin/planetlogin`
 
 </div>
 
@@ -31,14 +31,14 @@ standard Web Component, a class, and a factory.
 ## Install
 
 ```bash
-npm i planetlogin
+npm i @planetlogin/planetlogin
 ```
 
 …or drop it in with a `<script>` (no build step):
 
 ```html
 <planet-login style="display:block;width:100%;height:480px"></planet-login>
-<script type="module" src="https://cdn.jsdelivr.net/npm/planetlogin"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@planetlogin/planetlogin"></script>
 ```
 
 ## Quickstart
@@ -48,7 +48,7 @@ npm i planetlogin
 ```html
 <planet-login accent="#f6a13c" resolution="110m"></planet-login>
 <script type="module">
-  import 'planetlogin';
+  import '@planetlogin/planetlogin';
   document.querySelector('planet-login').addEventListener('locale', (e) => {
     const { language, timezone, country, lat, lon, label } = e.detail;
     setAppLanguage(language);
@@ -60,7 +60,7 @@ npm i planetlogin
 ### Function API (full control, typed)
 
 ```ts
-import { createPlanetLogin, type PlanetLocale } from 'planetlogin';
+import { createPlanetLogin, type PlanetLocale } from '@planetlogin/planetlogin';
 
 const globe = createPlanetLogin(document.getElementById('globe')!, {
   accent: '#f6a13c',
@@ -76,7 +76,7 @@ globe.search('Tokyo');      // or search by name / postal code
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import { createPlanetLogin, type PlanetLocale } from 'planetlogin';
+import { createPlanetLogin, type PlanetLocale } from '@planetlogin/planetlogin';
 
 export function GlobeLogin({ onLocale }: { onLocale: (l: PlanetLocale) => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -93,7 +93,7 @@ export function GlobeLogin({ onLocale }: { onLocale: (l: PlanetLocale) => void }
 ```vue
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue';
-import { createPlanetLogin, type PlanetLogin } from 'planetlogin';
+import { createPlanetLogin, type PlanetLogin } from '@planetlogin/planetlogin';
 
 const el = ref<HTMLElement>();
 let globe: PlanetLogin;
@@ -110,7 +110,7 @@ const emit = defineEmits<{ locale: [unknown] }>();
 ```svelte
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { createPlanetLogin, type PlanetLogin, type PlanetLocale } from 'planetlogin';
+  import { createPlanetLogin, type PlanetLogin, type PlanetLocale } from '@planetlogin/planetlogin';
   let el: HTMLElement;
   let globe: PlanetLogin;
   export let onlocale: (l: PlanetLocale) => void = () => {};
