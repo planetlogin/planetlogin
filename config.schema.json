@@ -4,104 +4,228 @@
   "title": "PlanetLogin white-label config",
   "description": "Single source of truth for branding, providers, copy and layout. Loaded identically from env vars (self-host) or the admin studio. The public subset is served at GET /auth/config; secrets (client secrets, downstream URL/secret, signing keys) are NEVER part of this schema.",
   "type": "object",
-  "required": ["spec", "brand", "providers"],
+  "required": [
+    "spec",
+    "brand",
+    "providers"
+  ],
   "additionalProperties": false,
   "properties": {
-    "spec": { "const": 1, "description": "Spec version this config targets." },
-
+    "spec": {
+      "const": 1,
+      "description": "Spec version this config targets."
+    },
     "brand": {
       "type": "object",
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "description": "Display name, e.g. \"Acme\"." },
-        "logoUrl": { "type": "string", "format": "uri" },
-        "accent": { "type": "string", "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$", "default": "#f6a13c" },
-        "background": { "type": "string", "default": "#070b16" },
+        "name": {
+          "type": "string",
+          "description": "Display name, e.g. \"Acme\"."
+        },
+        "logoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "default": "#f6a13c"
+        },
+        "background": {
+          "type": "string",
+          "default": "#070b16"
+        },
         "theme": {
           "type": "object",
           "description": "Optional semantic token overrides.",
-          "additionalProperties": { "type": "string" }
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
-
     "providers": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "password": {
-          "type": "object", "additionalProperties": false,
+          "type": "object",
+          "additionalProperties": false,
           "properties": {
-            "enabled": { "type": "boolean", "default": true },
-            "allowRegister": { "type": "boolean", "default": false }
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "allowRegister": {
+              "type": "boolean",
+              "default": false
+            }
           }
         },
         "oauth": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false,
             "properties": {
-              "id": { "type": "string", "enum": ["google", "github", "apple", "microsoft", "gitlab", "discord"] },
-              "label": { "type": "string" },
-              "clientIdEnv": { "type": "string", "description": "Name of the env var holding the client id (secret stays in env)." }
+              "id": {
+                "type": "string",
+                "enum": [
+                  "google",
+                  "github",
+                  "apple",
+                  "microsoft",
+                  "gitlab",
+                  "discord"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "clientIdEnv": {
+                "type": "string",
+                "description": "Name of the env var holding the client id (secret stays in env)."
+              }
             }
           },
           "default": []
         },
         "magicLink": {
-          "type": "object", "additionalProperties": false,
-          "properties": { "enabled": { "type": "boolean", "default": false }, "ttlSeconds": { "type": "integer", "default": 900 } }
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "ttlSeconds": {
+              "type": "integer",
+              "default": 900
+            }
+          }
         },
         "passkeys": {
-          "type": "object", "additionalProperties": false,
-          "properties": { "enabled": { "type": "boolean", "default": false } }
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            }
+          }
         },
         "totp": {
-          "type": "object", "additionalProperties": false,
-          "properties": { "enabled": { "type": "boolean", "default": false } }
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            }
+          }
         },
         "saml": {
-          "type": "object", "additionalProperties": false,
+          "type": "object",
+          "additionalProperties": false,
           "description": "Enterprise SSO (optional, later tier). PlanetLogin acts as SP via an audited library.",
           "properties": {
-            "enabled": { "type": "boolean", "default": false },
-            "idpMetadataUrl": { "type": "string", "format": "uri" }
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "idpMetadataUrl": {
+              "type": "string",
+              "format": "uri"
+            }
           }
         }
       }
     },
-
     "copy": {
       "type": "object",
       "description": "Per-language string overrides. Key = BCP-47 language code; value = a map of copy keys to strings.",
       "additionalProperties": {
         "type": "object",
-        "additionalProperties": { "type": "string" }
+        "additionalProperties": {
+          "type": "string"
+        }
       },
       "default": {}
     },
-
     "layout": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "globePosition": { "type": "string", "enum": ["left", "right", "full"], "default": "left" },
-        "showSearch": { "type": "boolean", "default": true },
-        "autoSpin": { "type": "boolean", "default": true }
+        "globePosition": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "full"
+          ],
+          "default": "left"
+        },
+        "showSearch": {
+          "type": "boolean",
+          "default": true
+        },
+        "autoSpin": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
-
     "token": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "issuer": { "type": "string", "format": "uri" },
-        "audience": { "type": "string" },
-        "ttlSeconds": { "type": "integer", "default": 3600 },
-        "algorithm": { "type": "string", "enum": ["EdDSA", "RS256"], "default": "EdDSA" }
+        "issuer": {
+          "type": "string",
+          "format": "uri"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "ttlSeconds": {
+          "type": "integer",
+          "default": 3600
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "EdDSA",
+            "RS256",
+            "ES256",
+            "HS256"
+          ],
+          "default": "EdDSA",
+          "description": "Asymmetric (EdDSA/RS256/ES256) \u2192 multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional state. Default none = fully stateless (single-use/refresh/revocation degrade to short TTLs). A LOCAL store (memory/sqlite) makes the instance stateful (no horizontal scale); use redis or downstream when running >1.",
+      "properties": {
+        "store": {
+          "type": "string",
+          "enum": [
+            "none",
+            "memory",
+            "redis",
+            "sqlite",
+            "downstream"
+          ],
+          "default": "none"
+        }
       }
     }
   }

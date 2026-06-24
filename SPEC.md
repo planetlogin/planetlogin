@@ -120,7 +120,28 @@ A flavor is **conformant** when, against this spec:
 flavor and publishes the matrix. `bench/` runs the same scenario for the perf
 leaderboard.
 
-## 8. Versioning
+## 8. Crypto profiles & optional state (all-terrain)
+
+PlanetLogin adapts to the consumer's and the store's existing crypto — within a
+safe envelope (no `alg:none`, no MD5/SHA1 for passwords).
+
+- **Token signing is configurable** (`token.algorithm`): `EdDSA`/`RS256`/`ES256`
+  (asymmetric → multi-service verification via JWKS) or `HS256` (symmetric "simple
+  mode", single trust domain, no JWKS). Optional JWE for encrypted claims. The JWT
+  is the *default issued session*; a consumer MAY ignore it and mint its own from
+  the verified identity.
+- **Password verification auto-detects the stored hash format** (argon2id, bcrypt,
+  scrypt, pbkdf2 — by the PHC prefix), so PlanetLogin drops in front of an existing
+  user store without rehashing. New hashes default to argon2id.
+- **State is optional** (`session.store`, default `none`):
+  - `none` → fully stateless; single-use / revocation degrade to short TTLs.
+  - `memory` / `sqlite` → local store; enables true single-use & revocation but
+    makes the instance **stateful** (no horizontal scale).
+  - `redis` / `downstream` → shared state; preserves multi-instance.
+  - Refresh tokens & revocation are **opt-in** capabilities of a store, never
+    required of the downstream contract.
+
+## 9. Versioning
 
 This spec is versioned (`spec: 1`). A flavor declares the spec version it targets
 in its `GET /auth/config` (`{ "spec": 1 }`). Breaking changes bump the major.
