@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] — 2026-06-24
+
+### Added
+- **Accessibility:** respects `prefers-reduced-motion` (no idle auto-rotation, near-instant fly-to); `role`/`aria-label` on the globe canvas; `aria-label` + `type=search` on the search input and an `aria-label` on the Locate button.
+
+### Changed
+- Published as the scoped package **`@planetlogin/planetlogin`** under the `planetlogin` org (mirrors the GitHub repo). The previous `@rricajos/planetpass` is deprecated.
+
 ## [Unreleased]
 
 ### Changed

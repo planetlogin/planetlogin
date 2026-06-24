@@ -54,6 +54,7 @@ export class PlanetLogin {
   private t0 = 0; private zStart = 1; private zTarget = 2.6; private zFrom = 1;
   private dragging = false; private vlon = 0.12; private vlat = 0; private zoomK = 1;
   private autoSpin: boolean;
+  private reduceMotion = false;
   private detected: PlanetLocale | null = null;
 
   private raf = 0;
@@ -69,12 +70,20 @@ export class PlanetLogin {
       resolution: options.resolution ?? '110m',
       ...options,
     };
-    this.autoSpin = this.opts.autoSpin;
+    // Respect the user's motion preference: no idle auto-rotation for users
+    // who asked for reduced motion (fly-to is also shortened in the loop).
+    this.reduceMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.autoSpin = this.reduceMotion ? false : this.opts.autoSpin;
 
     if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
     target.style.overflow = 'hidden';
 
     this.cv = document.createElement('canvas');
+    // The globe is interactive but not keyboard-focusable; expose it to AT and
+    // point users at the (fully keyboard-accessible) search box.
+    this.cv.setAttribute('role', 'img');
+    this.cv.setAttribute('aria-label', 'Interactive globe. Drag to rotate, click a country, or use the search box below to pick a place.');
     Object.assign(this.cv.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block', cursor: 'grab', touchAction: 'none' } as CSSStyleDeclaration);
     target.appendChild(this.cv);
     this.ctx = this.cv.getContext('2d')!;
@@ -138,9 +147,14 @@ export class PlanetLogin {
     Object.assign(wrap.style, { position: 'absolute', left: '50%', bottom: '7%', transform: 'translateX(-50%)', zIndex: '5', display: 'flex', gap: '8px', width: 'min(440px,90%)', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: '14px', padding: '7px 7px 7px 14px', backdropFilter: 'blur(8px)' } as CSSStyleDeclaration);
     const input = document.createElement('input');
     input.placeholder = this.opts.placeholder ?? 'Postal code, city or country…';
+    input.setAttribute('aria-label', 'Search by postal code, city or country');
+    input.type = 'search';
+    input.autocomplete = 'off';
     Object.assign(input.style, { flex: '1', background: 'none', border: '0', outline: '0', color: '#eef2fb', fontSize: '1rem', minWidth: '0', fontFamily: 'inherit' } as CSSStyleDeclaration);
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.textContent = 'Locate';
+    btn.setAttribute('aria-label', 'Locate and select this place');
     Object.assign(btn.style, { border: '0', cursor: 'pointer', borderRadius: '10px', padding: '9px 16px', fontWeight: '600', background: this.opts.accent, color: '#231400', fontFamily: 'inherit' } as CSSStyleDeclaration);
     const go = () => this.search(input.value);
     btn.addEventListener('click', go);
@@ -269,13 +283,13 @@ export class PlanetLogin {
         this.lon0 += this.vlon; this.lat0 = clamp(this.lat0 + this.vlat, -82, 82);
       }
     } else if (this.mode === 'travel') {
-      const k = Math.min(1, (now - this.t0) / 1100), e = ease(k);
+      const k = Math.min(1, (now - this.t0) / (this.reduceMotion ? 120 : 1100)), e = ease(k);
       this.lon0 = this.fromLon + shortLon(this.fromLon, this.toLon) * e;
       this.lat0 = this.fromLat + (this.toLat - this.fromLat) * e;
       this.zoomK = this.zFrom + (1 - this.zFrom) * e; this.R = this.baseR * this.zoomK;
       if (k >= 1) { this.mode = 'zoom'; this.t0 = now; this.zStart = 1; this.zTarget = 2.6; }
     } else {
-      const k = Math.min(1, (now - this.t0) / 750), e = easeOut(k);
+      const k = Math.min(1, (now - this.t0) / (this.reduceMotion ? 100 : 750)), e = easeOut(k);
       this.zoomK = this.zStart + (this.zTarget - this.zStart) * e; this.R = this.baseR * this.zoomK;
       this.lon0 = this.toLon; this.lat0 = this.toLat;
       if (k >= 1) { this.mode = 'idle'; this.onLocated(); }
