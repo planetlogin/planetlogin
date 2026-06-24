@@ -1,0 +1,160 @@
+openapi: 3.1.0
+info:
+  title: PlanetLogin — Exposed API
+  version: "1.0.0"
+  description: >
+    The REST surface a PlanetLogin flavor serves (spec §3). Stateless; all
+    identity persistence is delegated downstream (spec §4). Base path is
+    configurable (default /auth).
+  license:
+    name: AGPL-3.0-or-later
+servers:
+  - url: "{baseUrl}{basePath}"
+    variables:
+      baseUrl: { default: "https://login.example.com" }
+      basePath: { default: "/auth" }
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [invalid_credentials, account_disabled, provider_error,
+                     invalid_token, expired_token, rate_limited, downstream_unavailable,
+                     not_enabled, bad_request]
+            message: { type: string }
+    Locale:
+      type: object
+      properties:
+        language: { type: string, example: "es" }
+        timezone: { type: string, example: "Europe/Madrid" }
+        country: { type: string, example: "ES" }
+    Session:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, description: "Signed JWT (also set as HttpOnly cookie)." }
+        user: { type: object, properties: { id: {type: string}, email: {type: string}, name: {type: string} } }
+    PublicConfig:
+      type: object
+      description: "Public white-label subset (no secrets). See config.schema.json."
+      properties:
+        spec: { type: integer, const: 1 }
+        brand: { type: object }
+        providers: { type: object }
+        copy: { type: object }
+        layout: { type: object }
+
+  responses:
+    Unauthorized:
+      description: Invalid or missing credentials/token
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+paths:
+  /config:
+    get:
+      summary: Public white-label config for the front
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/PublicConfig" } } }
+  /.well-known/jwks.json:
+    get:
+      summary: Public keys to verify issued session tokens
+      responses:
+        "200": { description: JWK Set, content: { application/json: { schema: { type: object } } } }
+
+  /password/login:
+    post:
+      summary: Email/identifier + password login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string }
+                password: { type: string }
+                locale: { $ref: "#/components/schemas/Locale" }
+      responses:
+        "200": { description: Session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /password/register:
+    post:
+      summary: Register (only if providers.password.allowRegister)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties: { identifier: {type: string}, password: {type: string}, name: {type: string} }
+      responses:
+        "200": { description: Session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
+        "403": { description: Registration disabled, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+
+  /oauth/{provider}/start:
+    get:
+      summary: Begin an OAuth/OIDC login (PKCE)
+      parameters:
+        - { name: provider, in: path, required: true, schema: { type: string } }
+      responses:
+        "302": { description: Redirect to the provider }
+  /oauth/{provider}/callback:
+    get:
+      summary: OAuth callback → session
+      parameters:
+        - { name: provider, in: path, required: true, schema: { type: string } }
+        - { name: code, in: query, schema: { type: string } }
+        - { name: state, in: query, schema: { type: string } }
+      responses:
+        "302": { description: Redirect back to the app with the session cookie set }
+        "400": { description: Provider error, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+
+  /magic/request:
+    post:
+      summary: Request a magic link (always 202 — no account enumeration)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [identifier], properties: { identifier: {type: string} } } } }
+      responses:
+        "202": { description: Accepted (link delivered downstream if the account exists) }
+  /magic/verify:
+    get:
+      summary: Verify a magic link token → session
+      parameters: [ { name: token, in: query, required: true, schema: { type: string } } ]
+      responses:
+        "200": { description: Session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /passkey/challenge:
+    post:
+      summary: WebAuthn challenge (register or assert)
+      responses: { "200": { description: PublicKeyCredential options, content: { application/json: { schema: { type: object } } } } }
+  /passkey/verify:
+    post:
+      summary: Verify a WebAuthn ceremony → session
+      responses:
+        "200": { description: Session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /session:
+    get:
+      summary: Validate the current session token
+      responses:
+        "200": { description: Claims, content: { application/json: { schema: { type: object } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /logout:
+    post:
+      summary: Revoke the session and clear the cookie
+      responses: { "204": { description: Logged out } }
