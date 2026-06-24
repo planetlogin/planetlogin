@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlanetLogin — Whitepaper</title>
+<meta name="description" content="PlanetLogin: a professional, white-label login portal you own — stateless, no database, integrates over REST, delivered as per-framework flavors. The vision, in full.">
+<link rel="canonical" href="https://planetlogin.org/whitepaper.html">
+<meta name="theme-color" content="#070b16">
+<meta property="og:title" content="PlanetLogin — Whitepaper">
+<meta property="og:description" content="A login portal you own: stateless, no DB, REST-first, white-label, multi-flavor.">
+<meta property="og:image" content="https://planetlogin.org/og.png">
+<meta property="og:url" content="https://planetlogin.org/whitepaper.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2-variations');font-weight:100 900;font-display:swap}
+  :root{--bg:#070b16;--surface:#0d1422;--surface-2:#131c2e;--accent:#f6a13c;--ink:#231400;--text:#eef2fb;--muted:#9aa7bd;--line:rgba(255,255,255,.12)}
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
+  a{color:var(--accent)} .wrap{max-width:860px;margin:0 auto;padding:0 24px}
+  header{position:sticky;top:0;z-index:30;background:rgba(7,11,22,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:18px;height:58px;max-width:1080px;margin:0 auto;padding:0 24px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;text-decoration:none;color:var(--text)}
+  .brand img{width:24px;height:24px} .nav .sp{flex:1}
+  .nav a.l{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:500}.nav a.l:hover{color:var(--text)}
+  .btn{display:inline-flex;gap:8px;border:1px solid var(--line);border-radius:11px;padding:.45rem .9rem;font-weight:600;font-size:.88rem;text-decoration:none;color:var(--text)}
+  .btn.primary{background:var(--accent);color:var(--ink);border:0}
+  @media(max-width:640px){.nav a.l{display:none}}
+  /* hero */
+  .hero{border-bottom:1px solid var(--line);padding:54px 0 16px}
+  .eyebrow{color:var(--accent);font-weight:700;font-size:.78rem;letter-spacing:1.6px;text-transform:uppercase;margin:0 0 12px}
+  h1.hero-h{font-size:clamp(2rem,5vw,3rem);line-height:1.06;letter-spacing:-1.2px;margin:0 0 14px}
+  h1.hero-h .g{background:linear-gradient(90deg,#f6a13c,#ffd9a3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);font-size:1.12rem;max-width:48ch;margin:0 0 22px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:30px}
+  .stage{height:420px;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#05080f;box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
+  planet-login{display:block;width:100%;height:100%}
+  .demo-cap{color:var(--muted);font-size:.82rem;text-align:center;margin:.6rem 0 0}
+  /* rendered markdown */
+  #paper{padding:40px 0 80px}
+  #paper h1{font-size:1.9rem;letter-spacing:-.5px;margin:2.4rem 0 1rem;padding-bottom:.4rem;border-bottom:1px solid var(--line)}
+  #paper h1:first-child{display:none} /* the doc's own title; hero already shows it */
+  #paper h2{font-size:1.4rem;margin:2.2rem 0 .8rem}
+  #paper h3{font-size:1.1rem;margin:1.6rem 0 .5rem}
+  #paper p,#paper li{color:#dce3f1}
+  #paper code{background:var(--surface-2);padding:.12rem .4rem;border-radius:6px;font-size:.88em;font-family:ui-monospace,Menlo,monospace}
+  #paper pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto}
+  #paper pre code{background:none;padding:0}
+  #paper blockquote{margin:1rem 0;padding:.4rem 1rem;border-left:3px solid var(--accent);color:var(--muted);background:rgba(246,161,60,.06);border-radius:0 8px 8px 0}
+  #paper table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.92rem}
+  #paper th,#paper td{border:1px solid var(--line);padding:.5rem .7rem;text-align:left}
+  #paper th{background:var(--surface-2)}
+  #paper a{color:var(--accent)}
+  .loading{color:var(--muted);text-align:center;padding:40px}
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:.9rem}
+  footer a{color:var(--muted);text-decoration:none;margin-right:16px}footer a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <a class="brand" href="/"><img src="/favicon.svg" alt="">PlanetLogin</a>
+    <span class="sp"></span>
+    <a class="l" href="/">Home</a>
+    <a class="l" href="/demo.html">Live demo</a>
+    <a class="l" href="https://github.com/planetlogin/planetlogin" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn" href="https://github.com/planetlogin/planetlogin/blob/main/WHITEPAPER.md" target="_blank" rel="noopener">Markdown ↗</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Whitepaper</p>
+    <h1 class="hero-h">A login portal <span class="g">you own</span>.</h1>
+    <p>Stateless, no database, integrates over REST, brandable, and built for a global audience. Delivered as the same app in every framework. Here's the whole idea — and it's running right below.</p>
+    <div class="cta">
+      <a class="btn primary" href="#paper">Read the whitepaper ↓</a>
+      <a class="btn" href="/demo.html">Full login demo →</a>
+    </div>
+    <div class="stage"><planet-login accent="#f6a13c"></planet-login></div>
+    <p class="demo-cap">↑ the actual component — spin it, search a place; this is the face every flavor wears.</p>
+  </div>
+</section>
+
+<main class="wrap">
+  <article id="paper"><p class="loading">Loading the whitepaper…</p></article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="/">PlanetLogin</a>
+    <a href="/demo.html">Demo</a>
+    <a href="https://github.com/planetlogin/planetlogin" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.npmjs.com/package/@planetlogin/planetlogin" target="_blank" rel="noopener">npm</a>
+    <a href="https://ricajos.com" target="_blank" rel="noopener">by Ricajos</a>
+  </div>
+</footer>
+
+<!-- the live component (the face every flavor wears) -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/@planetlogin/planetlogin"></script>
+<!-- render the CANONICAL WHITEPAPER.md (single source of truth, no drift) -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  const SRC = 'https://cdn.jsdelivr.net/gh/planetlogin/planetlogin@main/WHITEPAPER.md';
+  fetch(SRC)
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(md => { document.getElementById('paper').innerHTML = marked.parse(md); })
+    .catch(() => {
+      document.getElementById('paper').innerHTML =
+        '<p class="loading">Couldn\'t load the whitepaper. Read it on ' +
+        '<a href="https://github.com/planetlogin/planetlogin/blob/main/WHITEPAPER.md">GitHub</a>.</p>';
+    });
+</script>
+</body>
+</html>
