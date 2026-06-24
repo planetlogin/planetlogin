@@ -1,0 +1,7 @@
+{
+  "name": "planetlogin-downstream-example",
+  "private": true,
+  "type": "module",
+  "description": "Reference downstream (spec §4) — SQLite-backed. Adapt into your own app.",
+  "scripts": { "start": "node --experimental-sqlite server.mjs" }
+}

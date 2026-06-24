@@ -1,5 +1,8 @@
 # PlanetLogin — Flavors
 
+> **Using it in your app?** See [INTEGRATION.md](INTEGRATION.md) (verify the token via
+> JWKS, deploy) and the runnable [`examples/downstream`](examples/downstream) (your §4 store).
+
 The auth logic lives **once**, in [`@planetlogin/core`](https://github.com/planetlogin/planetlogin)
 (framework-agnostic: flows, JWT/JWKS, all-terrain password verify, the downstream
 contract, the pluggable store — and the test suite). A **flavor** adds only its
