@@ -4,7 +4,7 @@ Black-box load over a running flavor → the performance leaderboard. Same scena
 for every flavor, so the numbers are comparable.
 
 ```bash
-./run.sh node ../../planetlogin-svelte/build/index.js
+./run.sh node ../../flavors/svelte/build/index.js
 # tune: BENCH_CONCURRENCY=50 BENCH_DURATION_MS=5000 ./run.sh <cmd>
 ```
 

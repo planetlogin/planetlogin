@@ -9,7 +9,7 @@ what makes "the same app in N frameworks" verifiable, not a claim.
 ```bash
 ./run.sh <command that starts the flavor server>
 # e.g.
-./run.sh node ../../planetlogin-svelte/build/index.js
+./run.sh node ../../flavors/svelte/build/index.js
 ```
 
 `run.sh` starts the reference downstream (`mock-downstream.mjs`, seeds

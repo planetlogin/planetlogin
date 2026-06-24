@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the conformance suite against ANY flavor.
 #   ./run.sh <command to start the flavor's server...>
-# e.g. ./run.sh node /path/to/planetlogin-svelte/build/index.js
+# e.g. ./run.sh node ../../flavors/svelte/build/index.js
 # We start the reference mock downstream + the flavor (pointed at it) + the suite.
 set -e
 cd "$(dirname "$0")"

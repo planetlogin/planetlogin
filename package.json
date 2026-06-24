@@ -9,6 +9,7 @@
   "repository": { "type": "git", "url": "git+https://github.com/planetlogin/planetlogin.git" },
   "bugs": { "url": "https://github.com/planetlogin/planetlogin/issues" },
   "keywords": ["globe","locale","i18n","timezone","geolocation","login","onboarding","web-component","d3-geo"],
+  "workspaces": ["packages/*", "flavors/*"],
   "files": ["dist"],
   "main": "./dist/planetlogin.umd.cjs",
   "module": "./dist/planetlogin.js",

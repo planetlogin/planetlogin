@@ -1,0 +1,6 @@
+{
+  "spec": 1,
+  "brand": { "name": "Acme", "accent": "#f6a13c" },
+  "providers": { "password": { "enabled": true, "allowRegister": false } },
+  "layout": { "globePosition": "left" }
+}

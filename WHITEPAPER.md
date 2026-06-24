@@ -146,15 +146,16 @@ What keeps "the same app ×N" honest — **not good faith, but verification:**
 ## 9. Project structure
 
 ```
-planetlogin/                 ← ROOT = the canonical definition (this repo)
+planetlogin/                 ← ROOT = the canonical definition (this repo, an npm workspace)
 ├─ WHITEPAPER.md             ← this document (the why + the what)
 ├─ SPEC.md / openapi.yaml / config.schema.json / ENV.md   ← the exact contract
 ├─ conformance/              ← e2e suite every flavor must pass
 ├─ bench/                    ← performance harness
-└─ whitepaper.html           ← branded page of this doc, embedding the live demo
-
-planetlogin-svelte           ← reference flavor (defines the spec by implementing it)
-planetlogin-react / -vue / -vanilla / -kotlin / -flutter …   ← conforming flavors
+├─ packages/core/            ← @planetlogin/core: the framework-agnostic auth logic (published to npm)
+└─ flavors/                  ← thin HTTP bindings over the core, one per runtime
+   ├─ svelte/                ← SvelteKit flavor + globe login front
+   ├─ vanilla/               ← plain Node http() flavor
+   └─ react / vue / kotlin / flutter …   ← planned
 ```
 
 The flavors are **not** the project — they implement it. The project *is* the

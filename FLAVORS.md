@@ -18,6 +18,14 @@ it as a dependency — neither owns the logic.
 Planned: react/next, vue/nuxt, and native (Kotlin Multiplatform, Flutter) sharing one
 view-model contract.
 
+## Monorepo (npm workspaces)
+
+Everything lives in one repo: `packages/core` (published to npm), `flavors/*`, plus
+`conformance/` and `bench/`. `npm install` at the root links the core into each flavor
+(no `file:`, no publish-to-test loop) and builds it via the core's `prepare`. A spec
+change touches the contract, the core, the conformance suite and the flavors in **one
+commit**. External consumers who don't clone just `npm i @planetlogin/core`.
+
 ## Add a flavor
 1. Depend on `@planetlogin/core`; bind its flows to your runtime's HTTP layer (spec §3
    endpoints over the §4 downstream contract).

@@ -1,5 +1,8 @@
 node_modules/
 dist/
+build/
+.svelte-kit/
 *.log
 .DS_Store
+.env
 conformance/node_modules/
