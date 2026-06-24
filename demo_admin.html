@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlanetLogin — White-label studio</title>
+<meta name="description" content="Brand your PlanetLogin portal visually — colors, logo, providers — preview it live, and export the config or .env. No code.">
+<meta name="robots" content="noindex, follow">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2-variations');font-weight:100 900;font-display:swap}
+  :root{--bg:#070b16;--surface:#0d1422;--surface-2:#131c2e;--accent:#f6a13c;--ink:#231400;--text:#eef2fb;--muted:#9aa7bd;--line:rgba(255,255,255,.12)}
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)}
+  header{display:flex;align-items:center;gap:14px;height:56px;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(7,11,22,.7);backdrop-filter:blur(8px)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;text-decoration:none;color:var(--text)} .brand img{width:24px}
+  header .sp{flex:1} header .tag{color:var(--muted);font-size:.85rem} header a.l{color:var(--muted);text-decoration:none;font-size:.88rem;margin-left:16px}
+  .grid{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 56px)}
+  /* controls */
+  .controls{overflow:auto;border-right:1px solid var(--line);padding:18px 18px 60px}
+  .sec{margin-bottom:22px}
+  .sec h3{font-size:.78rem;letter-spacing:1.3px;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;font-size:.9rem}
+  .row label{color:var(--text)} .row .hint{color:var(--muted);font-size:.75rem}
+  input[type=text],input[type=url]{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:.4rem .55rem;font-size:.85rem;width:160px}
+  input[type=color]{width:38px;height:28px;border:1px solid var(--line);border-radius:6px;background:none;padding:0;cursor:pointer}
+  select{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:.35rem .5rem;font-size:.85rem}
+  /* toggle */
+  .sw{position:relative;width:38px;height:22px;flex:none}
+  .sw input{opacity:0;width:0;height:0} .sw span{position:absolute;inset:0;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;transition:.15s;cursor:pointer}
+  .sw span::before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:.15s}
+  .sw input:checked+span{background:var(--accent);border-color:transparent} .sw input:checked+span::before{transform:translateX(16px);background:var(--ink)}
+  /* preview */
+  .preview{position:relative;display:flex;flex-direction:column;min-width:0}
+  .stage{flex:1;display:flex;min-height:0}
+  #globe-wrap{flex:1 1 auto;min-width:0}
+  planet-login{display:block;width:100%;height:100%}
+  .lpanel{flex:0 0 340px;max-width:46%;background:var(--pv-surface,#0d1422);border-left:1px solid var(--line);display:grid;place-items:center;padding:1.6rem}
+  .lcard{width:100%;max-width:290px}
+  .lbrand{display:flex;align-items:center;gap:9px;margin-bottom:1.2rem;font-weight:700;font-size:1.1rem}
+  .lbrand img{width:26px;height:26px;border-radius:6px}
+  .lfield{margin-bottom:.7rem} .lfield label{display:block;font-size:.74rem;color:var(--muted);margin-bottom:.25rem}
+  .lfield input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:.5rem .6rem;color:var(--text);font-size:.9rem}
+  .lbtn{width:100%;border:0;border-radius:10px;padding:.6rem;font-weight:700;cursor:default;margin-top:.5rem}
+  .ldiv{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:.72rem;margin:.9rem 0}.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--line)}
+  .lsocial{display:flex;flex-direction:column;gap:.45rem}
+  .lsoc{border:1px solid var(--line);background:var(--surface-2);color:var(--text);border-radius:10px;padding:.5rem;font-size:.85rem;font-weight:600;text-align:center}
+  /* export */
+  .export{border-top:1px solid var(--line);background:#05080f;max-height:38%;display:flex;flex-direction:column}
+  .tabs{display:flex;gap:6px;padding:10px 14px 0}
+  .tabs button{background:var(--surface-2);border:1px solid var(--line);color:var(--muted);border-radius:8px 8px 0 0;padding:.35rem .8rem;font-weight:600;font-size:.82rem;cursor:pointer;border-bottom:0}
+  .tabs button.on{background:#05080f;color:var(--text)}
+  .tabs .sp{flex:1} .copy{background:var(--accent);color:var(--ink);border:0;border-radius:8px;padding:.35rem .8rem;font-weight:700;font-size:.8rem;cursor:pointer;align-self:center}
+  pre.out{margin:0;padding:12px 16px;overflow:auto;font-size:.78rem;line-height:1.5;font-family:ui-monospace,Menlo,monospace;color:#cdd8f0}
+  @media(max-width:900px){.grid{grid-template-columns:1fr;height:auto}.controls{border-right:0;border-bottom:1px solid var(--line)}.stage{height:60vh}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/"><img src="/favicon.svg" alt="">PlanetLogin</a>
+  <span class="tag">· White-label studio</span>
+  <span class="sp"></span>
+  <a class="l" href="/whitepaper.html">Whitepaper</a>
+  <a class="l" href="https://github.com/planetlogin/planetlogin/blob/main/config.schema.json" target="_blank" rel="noopener">Schema ↗</a>
+</header>
+
+<div class="grid">
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="sec">
+      <h3>Brand</h3>
+      <div class="row"><label>Name</label><input type="text" id="c-name" value="Acme"></div>
+      <div class="row"><label>Accent</label><input type="color" id="c-accent" value="#f6a13c"></div>
+      <div class="row"><label>Background</label><input type="color" id="c-bg" value="#0d1422"></div>
+      <div class="row"><label>Logo URL</label><input type="url" id="c-logo" placeholder="https://…"></div>
+    </div>
+    <div class="sec">
+      <h3>Providers</h3>
+      <div class="row"><label>Email + password</label><span class="sw"><input type="checkbox" id="p-password" checked><span></span></span></div>
+      <div class="row"><label>↳ allow register</label><span class="sw"><input type="checkbox" id="p-register"><span></span></span></div>
+      <div class="row"><label>Google</label><span class="sw"><input type="checkbox" id="p-google" checked><span></span></span></div>
+      <div class="row"><label>GitHub</label><span class="sw"><input type="checkbox" id="p-github"><span></span></span></div>
+      <div class="row"><label>Apple</label><span class="sw"><input type="checkbox" id="p-apple"><span></span></span></div>
+      <div class="row"><label>Magic link</label><span class="sw"><input type="checkbox" id="p-magic"><span></span></span></div>
+      <div class="row"><label>Passkeys</label><span class="sw"><input type="checkbox" id="p-passkeys" checked><span></span></span></div>
+      <div class="row"><label>2FA (TOTP)</label><span class="sw"><input type="checkbox" id="p-totp"><span></span></span></div>
+    </div>
+    <div class="sec">
+      <h3>Layout</h3>
+      <div class="row"><label>Globe position</label>
+        <select id="l-pos"><option value="left">left</option><option value="right">right</option><option value="full">full</option></select></div>
+      <div class="row"><label>Search box</label><span class="sw"><input type="checkbox" id="l-search" checked><span></span></span></div>
+      <div class="row"><label>Auto-spin</label><span class="sw"><input type="checkbox" id="l-spin" checked><span></span></span></div>
+    </div>
+  </div>
+
+  <!-- PREVIEW + EXPORT -->
+  <div class="preview">
+    <div class="stage" id="stage">
+      <div id="globe-wrap"></div>
+      <aside class="lpanel" id="lpanel">
+        <div class="lcard">
+          <div class="lbrand"><img id="pv-logo" src="/favicon.svg" alt=""><span id="pv-name">Acme</span></div>
+          <div id="pv-pwd">
+            <div class="lfield"><label>Email</label><input type="email" placeholder="you@email.com" disabled></div>
+            <div class="lfield"><label>Password</label><input type="password" placeholder="••••••••" disabled></div>
+            <button class="lbtn" id="pv-cta">Sign in</button>
+          </div>
+          <div id="pv-social-wrap">
+            <div class="ldiv" id="pv-div">or</div>
+            <div class="lsocial" id="pv-social"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="export">
+      <div class="tabs">
+        <button class="on" data-t="json">config.json</button>
+        <button data-t="env">.env</button>
+        <span class="sp"></span>
+        <button class="copy" id="copy">Copy</button>
+      </div>
+      <pre class="out" id="out"></pre>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="https://cdn.jsdelivr.net/npm/@planetlogin/planetlogin"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let tab = 'json';
+
+  function readConfig() {
+    const oauth = [];
+    if ($('p-google').checked) oauth.push({ id: 'google', clientIdEnv: 'PLANETLOGIN_OAUTH_GOOGLE_CLIENT_ID' });
+    if ($('p-github').checked) oauth.push({ id: 'github', clientIdEnv: 'PLANETLOGIN_OAUTH_GITHUB_CLIENT_ID' });
+    if ($('p-apple').checked)  oauth.push({ id: 'apple',  clientIdEnv: 'PLANETLOGIN_OAUTH_APPLE_CLIENT_ID' });
+    const c = {
+      spec: 1,
+      brand: { name: $('c-name').value || 'Acme', accent: $('c-accent').value, background: $('c-bg').value },
+      providers: {
+        password: { enabled: $('p-password').checked, allowRegister: $('p-register').checked },
+        oauth,
+        magicLink: { enabled: $('p-magic').checked },
+        passkeys: { enabled: $('p-passkeys').checked },
+        totp: { enabled: $('p-totp').checked },
+      },
+      layout: { globePosition: $('l-pos').value, showSearch: $('l-search').checked, autoSpin: $('l-spin').checked },
+    };
+    if ($('c-logo').value) c.brand.logoUrl = $('c-logo').value;
+    return c;
+  }
+
+  function toEnv(c) {
+    const lines = [
+      'PLANETLOGIN_BASE_URL=https://login.' + (c.brand.name || 'app').toLowerCase().replace(/[^a-z0-9]/g,'') + '.com',
+      "PLANETLOGIN_CONFIG='" + JSON.stringify(c) + "'",
+      'PLANETLOGIN_DOWNSTREAM_URL=https://api.example.com/identity',
+      'PLANETLOGIN_DOWNSTREAM_SECRET=change-me',
+      'PLANETLOGIN_JWT_PRIVATE_KEY_PEM=/run/secrets/planetlogin_ed25519.pem',
+    ];
+    for (const o of c.providers.oauth) {
+      const u = o.id.toUpperCase();
+      lines.push(`PLANETLOGIN_OAUTH_${u}_CLIENT_ID=…`, `PLANETLOGIN_OAUTH_${u}_CLIENT_SECRET=…`);
+    }
+    return lines.join('\n');
+  }
+
+  let globe; // recreate to apply accent live
+  function renderGlobe(c) {
+    const wrap = $('globe-wrap');
+    if (c.layout.globePosition === 'right') $('stage').style.flexDirection = 'row-reverse';
+    else $('stage').style.flexDirection = 'row';
+    $('lpanel').style.display = c.layout.globePosition === 'full' ? 'none' : '';
+    wrap.innerHTML = '';
+    globe = document.createElement('planet-login');
+    globe.setAttribute('accent', c.brand.accent);
+    globe.setAttribute('search', String(c.layout.showSearch));
+    globe.setAttribute('autospin', String(c.layout.autoSpin));
+    wrap.appendChild(globe);
+  }
+
+  function renderPanel(c) {
+    document.documentElement.style.setProperty('--accent', c.brand.accent);
+    $('lpanel').style.setProperty('--pv-surface', c.brand.background);
+    $('pv-name').textContent = c.brand.name || 'Acme';
+    $('pv-logo').src = c.brand.logoUrl || '/favicon.svg';
+    $('pv-pwd').style.display = c.providers.password.enabled ? '' : 'none';
+    $('pv-cta').style.background = c.brand.accent; $('pv-cta').style.color = '#231400';
+    $('pv-cta').textContent = c.providers.password.allowRegister ? 'Sign in / up' : 'Sign in';
+    const social = [];
+    for (const o of c.providers.oauth) social.push(`Continue with ${o.id[0].toUpperCase()+o.id.slice(1)}`);
+    if (c.providers.magicLink.enabled) social.push('Email me a magic link');
+    if (c.providers.passkeys.enabled) social.push('Use a passkey');
+    $('pv-social').innerHTML = social.map(s => `<div class="lsoc">${s}</div>`).join('');
+    const hasSocial = social.length > 0;
+    $('pv-social-wrap').style.display = hasSocial ? '' : 'none';
+    $('pv-div').style.display = (hasSocial && c.providers.password.enabled) ? '' : 'none';
+  }
+
+  function renderExport(c) {
+    $('out').textContent = tab === 'json' ? JSON.stringify(c, null, 2) : toEnv(c);
+  }
+
+  let globeTimer;
+  function update(globeToo) {
+    const c = readConfig();
+    renderPanel(c);
+    renderExport(c);
+    if (globeToo) { clearTimeout(globeTimer); globeTimer = setTimeout(() => renderGlobe(c), 120); }
+  }
+
+  // wire controls: accent/layout changes recreate the globe; others just repaint
+  document.querySelectorAll('input,select').forEach((el) => {
+    const heavy = ['c-accent','l-pos','l-search','l-spin'].includes(el.id);
+    el.addEventListener('input', () => update(heavy));
+  });
+  document.querySelectorAll('.tabs button[data-t]').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button[data-t]').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); tab = b.dataset.t; renderExport(readConfig());
+  }));
+  $('copy').addEventListener('click', () => {
+    navigator.clipboard.writeText($('out').textContent); $('copy').textContent = 'Copied'; setTimeout(()=>$('copy').textContent='Copy', 1200);
+  });
+
+  // initial
+  renderGlobe(readConfig());
+  update(false);
+</script>
+</body>
+</html>
