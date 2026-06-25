@@ -9,6 +9,7 @@ import {
   verifyPassword, getStore,
   passwordLogin, requestMagicLink, verifyMagicLink, totpEnroll, totpVerify,
   corsHeaders, corsFromEnv, isPreflight, rateLimit, ruleFor, rlKey,
+  getPreferences, savePreferences,
 } from '@planetlogin/core';
 
 const PORT = Number(process.env.PORT) || 8810;
@@ -71,7 +72,21 @@ const server = createServer(async (req, res) => {
       );
       if (r.ok === 'mfa') return send(res, 200, { requires: 'totp' }); // (vanilla: stateless demo — client re-sends identifier to /totp/verify)
       if (r.ok !== true) return err(res, r.code === 'downstream_unavailable' ? 503 : 401, r.code, 'login failed');
+      // Tier 2 (gate A): persist the picked locale to the account. Best-effort.
+      if (cfg.locale?.persist && locale)
+        await savePreferences({ downstream: downstreamFromEnv() }, { userId: r.user.id, locale }).catch(() => {});
       return send(res, 200, { token: r.token, user: r.user }, setCookie(r.token));
+    }
+
+    // GET/PUT /auth/preferences — the session user's locale + open data bag (§4).
+    if (p === '/auth/preferences' && (m === 'GET' || m === 'PUT')) {
+      const tok = (req.headers.authorization ?? '').replace(/^Bearer /, '') || cookie(req, COOKIE);
+      let userId: string;
+      try { userId = (await verifySession(tok ?? '')).sub as string; }
+      catch { return err(res, 401, 'invalid_token', 'no session'); }
+      if (m === 'GET') return send(res, 200, await getPreferences({ downstream: downstreamFromEnv() }, { userId }));
+      const { locale, data } = await body(req);
+      return send(res, 200, await savePreferences({ downstream: downstreamFromEnv() }, { userId, locale, data }));
     }
 
     if (p === '/auth/magic/request' && m === 'POST') {

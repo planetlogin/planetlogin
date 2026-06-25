@@ -11,6 +11,14 @@ export interface DownstreamUser {
   totpEnabled?: boolean; // if true, password login requires a 2FA step
 }
 
+/** Per-user, dev-owned preferences (spec §4). `locale` is the typed, first-class
+ *  piece PlanetLogin reads/writes (fly-to + i18n); `data` is an open bag the
+ *  integrator can store any "that kind of info" in. */
+export interface UserPreferences {
+  locale?: Locale;
+  data?: Record<string, unknown>;
+}
+
 export class Downstream {
   constructor(
     private baseUrl: string,
@@ -67,5 +75,13 @@ export class Downstream {
   }
   totpSave(data: { userId: string; secret: string; enabled: boolean }): Promise<unknown> {
     return this.call('/totp/save', data);
+  }
+
+  /** Preferences (spec §4): per-user locale + open data bag. Null when none. */
+  preferencesGet(query: { userId: string }): Promise<UserPreferences | null> {
+    return this.call<UserPreferences>('/preferences/find', query);
+  }
+  preferencesSave(data: { userId: string } & UserPreferences): Promise<unknown> {
+    return this.call('/preferences/save', data);
   }
 }

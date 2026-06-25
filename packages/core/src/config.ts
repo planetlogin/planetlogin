@@ -16,6 +16,15 @@ export interface PlanetLoginConfig {
   };
   copy?: Record<string, Record<string, string>>;
   layout?: { globePosition?: 'left' | 'right' | 'full'; showSearch?: boolean; autoSpin?: boolean };
+  // Account-bound locale memory (Tier 2). Both gates default OFF (privacy-first).
+  // Persistence rides the downstream contract (§4 /preferences/*) — PlanetLogin
+  // stores nothing itself.
+  locale?: {
+    // Write the picked locale to the user's downstream record on login.
+    persist?: boolean;
+    // On login, fly the globe to the account's saved locale before handing off.
+    flyToOnLogin?: boolean;
+  };
   token?: { issuer?: string; audience?: string; ttlSeconds?: number; algorithm?: 'EdDSA' | 'RS256' | 'ES256' | 'HS256' };
   session?: { store?: 'none' | 'memory' | 'redis' | 'sqlite' | 'downstream' };
   security?: {
@@ -47,7 +56,12 @@ export function loadConfig(): PlanetLoginConfig {
 
 /** The public subset served at GET /auth/config (no secrets). */
 export function publicConfig(c = loadConfig()) {
-  return { spec: c.spec, brand: c.brand, providers: c.providers, copy: c.copy ?? {}, layout: c.layout ?? {} };
+  return {
+    spec: c.spec, brand: c.brand, providers: c.providers,
+    copy: c.copy ?? {}, layout: c.layout ?? {},
+    // Only the client-relevant gate (flyToOnLogin drives the post-login fly-to).
+    locale: { flyToOnLogin: c.locale?.flyToOnLogin ?? false },
+  };
 }
 
 export function downstreamFromEnv(): Downstream {

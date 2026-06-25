@@ -32,6 +32,7 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS totp ( user_id TEXT PRIMARY KEY, secret TEXT, enabled INTEGER DEFAULT 0 );
   CREATE TABLE IF NOT EXISTS magic_log ( id INTEGER PRIMARY KEY AUTOINCREMENT, identifier TEXT, link TEXT, ts TEXT );
+  CREATE TABLE IF NOT EXISTS preferences ( user_id TEXT PRIMARY KEY, locale TEXT, data TEXT );
 `);
 
 // Password users are created by YOUR app (PlanetLogin only verifies the hash). Here we
@@ -104,6 +105,22 @@ const routes = {
       .run(userId, secret, enabled ? 1 : 0);
     // mirror the flag onto the user so password login knows to require 2FA
     db.prepare('UPDATE users SET totp_enabled = ? WHERE id = ?').run(enabled ? 1 : 0, userId);
+    return [201];
+  },
+  // preferencesGet / preferencesSave — per-user locale + open data bag (Tier 2).
+  '/preferences/find': ({ userId }) => {
+    const r = db.prepare('SELECT * FROM preferences WHERE user_id = ?').get(userId);
+    if (!r) return [404];
+    return [200, { locale: r.locale ? JSON.parse(r.locale) : undefined, data: r.data ? JSON.parse(r.data) : undefined }];
+  },
+  // Partial: only the provided fields are overwritten (locale and data are independent).
+  '/preferences/save': ({ userId, locale, data }) => {
+    const cur = db.prepare('SELECT * FROM preferences WHERE user_id = ?').get(userId);
+    const nextLocale = locale !== undefined ? JSON.stringify(locale) : (cur?.locale ?? null);
+    const nextData = data !== undefined ? JSON.stringify(data) : (cur?.data ?? null);
+    db.prepare(`INSERT INTO preferences (user_id,locale,data) VALUES (?,?,?)
+                ON CONFLICT(user_id) DO UPDATE SET locale = excluded.locale, data = excluded.data`)
+      .run(userId, nextLocale, nextData);
     return [201];
   },
 };

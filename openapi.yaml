@@ -36,6 +36,14 @@ components:
         language: { type: string, example: "es" }
         timezone: { type: string, example: "Europe/Madrid" }
         country: { type: string, example: "ES" }
+        lat: { type: number, example: 41.39 }
+        lon: { type: number, example: 2.16 }
+    Preferences:
+      type: object
+      description: Per-user locale memory + open data bag (locale memory Tier 2).
+      properties:
+        locale: { $ref: "#/components/schemas/Locale" }
+        data: { type: object, additionalProperties: true, description: "Integrator-owned bag for that kind of info." }
     Session:
       type: object
       required: [token]
@@ -158,3 +166,19 @@ paths:
     post:
       summary: Revoke the session and clear the cookie
       responses: { "204": { description: Logged out } }
+
+  /preferences:
+    get:
+      summary: The session user's locale + data bag (locale memory Tier 2)
+      responses:
+        "200": { description: Preferences, content: { application/json: { schema: { $ref: "#/components/schemas/Preferences" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      summary: Save the session user's preferences (partial; fields independent)
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/Preferences" } }
+      responses:
+        "200": { description: "Saved flag", content: { application/json: { schema: { type: object, properties: { saved: { type: boolean } } } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }

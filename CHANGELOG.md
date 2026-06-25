@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — locale memory Tier 2 (account-bound)
+
+### Added (`@planetlogin/core` + flavors + reference downstream)
+- **Account-bound locale memory.** `config.locale.persist` writes the picked locale (incl. coordinates) to the user's downstream record on login; `config.locale.flyToOnLogin` makes the login page fly the globe to the account's saved place after auth. Both default **off**.
+- **`GET`/`PUT /auth/preferences`** (session-gated) — the user's `{locale?, data?}`. `data` is an open, integrator-owned bag for "that kind of info". Save is partial (locale and data are independent).
+- Downstream contract (§4): `POST /preferences/find` + `POST /preferences/save` (`Downstream.preferencesGet`/`preferencesSave`); `Locale` gains optional `lat`/`lon`; `UserPreferences` type. Core flow `getPreferences`/`savePreferences` with `sanitizeLocale` (clients can't write junk into the typed locale). Reference downstream (`examples/downstream`) implements both routes (SQLite).
+- Wired in both flavors (Svelte routes + `hooks`-free page fly-to; vanilla `/auth/preferences` + persist-on-login). SPEC §3/§4/§6, `openapi.yaml`, `config.schema.json` updated. Core tests **60** (6 new); Tier 2 smoke 7/7 vs the reference downstream.
+- Note: device-only memory (no backend) remains Tier 0 in the globe component (`@planetlogin/planetlogin` ≥0.2.0).
+
 ## [@planetlogin/planetlogin 0.2.0] — 2026-06-25 — locale memory (Tier 0)
 
 ### Added (globe Web Component)

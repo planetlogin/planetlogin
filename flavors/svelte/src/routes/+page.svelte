@@ -19,6 +19,7 @@
   let msg = $state('');
   let ok = $state(false);
   let providers = $state<any>({ password: { enabled: true } });
+  let flyOnLogin = $state(false);
   let globeEl: HTMLElement;
 
   const t = $derived(T[locale?.language as string] ?? T.en);
@@ -30,8 +31,23 @@
       document.documentElement.lang = locale.language ?? 'en';
     });
     // render from the white-label config (spec §5)
-    try { providers = (await (await fetch('/auth/config')).json()).providers ?? providers; } catch {}
+    try {
+      const c = await (await fetch('/auth/config')).json();
+      providers = c.providers ?? providers;
+      flyOnLogin = c.locale?.flyToOnLogin ?? false;
+    } catch {}
   });
+
+  // Tier 2 account memory (gate B): after login, fly the globe to the account's
+  // saved place before the app takes over. Needs the saved locale to carry coords.
+  async function maybeFlyToAccount() {
+    if (!flyOnLogin) return;
+    try {
+      const p = await (await fetch('/auth/preferences')).json();
+      const l = p?.locale;
+      if (l && typeof l.lat === 'number' && typeof l.lon === 'number') (globeEl as any).flyTo?.(l.lon, l.lat);
+    } catch {}
+  }
 
   async function magicRequest() {
     if (!email) { msg = '✗ enter your email'; ok = false; return; }
@@ -61,6 +77,7 @@
       if (r.ok && data.requires === 'totp') { mfa = true; msg = ''; return; }
       ok = r.ok;
       msg = r.ok ? `✓ ${data.user?.email ?? 'signed in'}` : `✗ ${data.error?.code ?? r.status}`;
+      if (r.ok) maybeFlyToAccount();
     } catch { ok = false; msg = '✗ network error'; }
     finally { busy = false; }
   }
@@ -74,6 +91,7 @@
       const data = await r.json();
       ok = r.ok; mfa = !r.ok;
       msg = r.ok ? `✓ ${data.user?.id ?? 'signed in'}` : `✗ ${data.error?.code ?? 'bad code'}`;
+      if (r.ok) maybeFlyToAccount();
     } catch { ok = false; msg = '✗ network error'; }
     finally { busy = false; }
   }
@@ -92,6 +110,7 @@
       const data = await r.json();
       ok = r.ok;
       msg = r.ok ? `✓ ${data.user?.id ?? 'signed in'}` : `✗ ${data.error?.code ?? 'failed'}`;
+      if (r.ok) maybeFlyToAccount();
     } catch { ok = false; msg = '✗ passkey cancelled'; }
     finally { busy = false; }
   }

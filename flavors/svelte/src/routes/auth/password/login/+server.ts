@@ -3,7 +3,7 @@ import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { verifyPassword } from '@planetlogin/core';
 import { signSession } from '@planetlogin/core';
 import { passwordLogin } from '@planetlogin/core';
-import { sealEnc, getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
+import { sealEnc, getStore, rateLimit, ruleFor, rlKey, savePreferences } from '@planetlogin/core';
 
 // POST /auth/password/login  (openapi.yaml). Thin wrapper over the tested flow.
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
@@ -48,5 +48,11 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
   cookies.set(process.env.PLANETLOGIN_COOKIE_NAME || 'planetlogin_session', res.token, {
     path: '/', httpOnly: true, secure: true, sameSite: 'lax',
   });
+
+  // Tier 2 account memory (gate A): persist the picked locale to the user's
+  // downstream record. Best-effort — never fail a login on a preferences write.
+  if (cfg.locale?.persist && locale)
+    await savePreferences({ downstream: downstreamFromEnv() }, { userId: res.user.id, locale }).catch(() => {});
+
   return json({ token: res.token, user: res.user });
 };

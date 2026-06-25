@@ -182,6 +182,23 @@
         }
       }
     },
+    "locale": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Account-bound locale memory (Tier 2). Both gates default OFF (privacy-first). Persistence rides the downstream /preferences/* contract; PlanetLogin stores nothing. Device-only memory (Tier 0) is a globe component option, not config.",
+      "properties": {
+        "persist": {
+          "type": "boolean",
+          "default": false,
+          "description": "Write the picked locale to the user's downstream record on login."
+        },
+        "flyToOnLogin": {
+          "type": "boolean",
+          "default": false,
+          "description": "On login, fly the globe to the account's saved locale (needs persisted coordinates) before handing off."
+        }
+      }
+    },
     "token": {
       "type": "object",
       "additionalProperties": false,

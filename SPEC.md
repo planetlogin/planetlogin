@@ -61,6 +61,8 @@ Formal definition in [`openapi.yaml`](openapi.yaml). Summary (all JSON):
 | `POST /auth/passkey/verify` | Verify the ceremony → session token. |
 | `GET /auth/session` | Validate the current token → claims, or 401. |
 | `POST /auth/logout` | Revoke (downstream session delete, if used) + clear cookie. |
+| `GET /auth/preferences` | Session-gated → the user's `{locale?, data?}` (locale memory, §6). |
+| `PUT /auth/preferences` | Session-gated → save `{locale?, data?}` (partial; fields are independent). |
 
 Rules:
 - Errors MUST be a stable shape: `{ "error": { "code": "...", "message": "..." } }`
@@ -85,6 +87,8 @@ the storage. A flavor MUST call these and MUST tolerate 404s.
 | `POST /magic/deliver` | `{identifier, link, locale}` | 202 (integrator sends the email/SMS) |
 | `POST /passkeys/find` | `{userId? , credentialId?}` | `{credentials:[...]}` |
 | `POST /passkeys/save` | `{userId, credential}` | 201 |
+| `POST /preferences/find` | `{userId}` | `{locale?, data?}` or 404 |
+| `POST /preferences/save` | `{userId, locale?, data?}` | 201 (partial: omitted fields unchanged) |
 
 - PlanetLogin verifies passwords by fetching `passwordHash` via `/users/find` and
   comparing with **argon2id** locally. The integrator MUST store an argon2id hash
@@ -104,9 +108,25 @@ subset** (no secrets, no client secrets, no downstream URL).
 
 - The front detects locale from the globe pick and from the browser; it MUST set
   `<html lang>` and localize copy.
-- `locale` (`{language, timezone, country}`) MUST be attached to the session token
-  claims so downstream apps can honor it.
+- `locale` (`{language, timezone, country}`, optionally `{lat, lon}`) MUST be
+  attached to the session token claims so downstream apps can honor it.
 - Copy MUST be overridable per language via `config.copy`.
+
+### Locale memory (progressive enhancement; all gates default OFF)
+
+PlanetLogin can remember a user's place and replay the globe fly-to. It degrades
+by what's available — a pure-frontend embed gets full memory with **no backend**:
+
+- **Tier 0 — device (frontend only, no backend).** The globe component persists the
+  picked locale to browser storage (`remember`) and flies to it on return
+  (`flyToSaved`). Pure client; works on a static page. Per device.
+- **Tier 1 — session.** The `locale` claim already rides the JWT — a returning
+  login carries language/timezone/country for free (used for i18n).
+- **Tier 2 — account (needs a flavor + downstream).** `config.locale.persist`
+  writes the picked locale (incl. coordinates) to the user via `/preferences/*`;
+  `config.locale.flyToOnLogin` makes the login page fly the globe to the account's
+  saved place before handoff. The open `data` bag is the integrator's to use.
+  Fly-to-on-login needs coordinates, which is why it requires Tier 2 persistence.
 
 ## 7. Conformance
 

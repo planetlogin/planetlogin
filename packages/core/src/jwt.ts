@@ -9,7 +9,13 @@ import {
 } from 'jose';
 import { readFileSync } from 'node:fs';
 
-export interface Locale { language?: string; timezone?: string; country?: string }
+export interface Locale {
+  language?: string; timezone?: string; country?: string;
+  // Optional coordinates of the picked place — needed to replay the globe fly-to
+  // on login (Tier 2 account memory). The globe produces them; persisting them is
+  // what lets a returning user's globe fly to their saved spot.
+  lat?: number; lon?: number;
+}
 export interface SessionClaims {
   sub: string; email?: string; name?: string; locale?: Locale;
 }
