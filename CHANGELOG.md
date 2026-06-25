@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — auth core hardening
+
+### Added (`@planetlogin/core` + flavors)
+- **All-terrain `token.algorithm`:** session/magic JWTs can now be signed with `EdDSA` (default), `RS256`, `ES256` (asymmetric → JWKS) or `HS256` (symmetric → shared `PLANETLOGIN_JWT_SECRET`, JWKS stays empty). Selected via `PLANETLOGIN_JWT_ALG`.
+- **Rate limiting:** fixed-window brute-force protection (`rateLimit`, `ruleFor`, `rlKey`) backed by the pluggable store. Wired into `/auth/password/login` (IP+identifier) and `/auth/magic/request` (IP only) in both flavors — `429` + `Retry-After`. No-op until `session.store` is configured; **fails open** on store outage. Added `SessionStore.incr`.
+- **CORS:** exact-allowlist credentialed CORS (`corsHeaders`, `corsFromEnv`, `originAllowed`, `isPreflight`) from `PLANETLOGIN_CORS_ORIGINS` + `config.security.cors`. Svelte via `hooks.server.ts`, vanilla inline; never `*` with credentials, always `Vary: Origin`, `OPTIONS` → `204`.
+- `config.security` block in `config.schema.json`; new `PLANETLOGIN_*` vars in `ENV.md`; SPEC §2/§8/§9 updated.
+- 21 new core tests (rate limit, CORS, JWT algorithms); flavor smoke verified (CORS preflight, 429, JWKS). Core **54 tests**, svelte conformance **8/8**.
+
 ## [0.1.2] — 2026-06-24
 
 ### Added

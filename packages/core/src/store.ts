@@ -13,14 +13,20 @@ export interface SessionStore {
   delete(key: string): Promise<void>;
   /** Atomically claim a key once: true if newly claimed, false if already present. */
   claimOnce(key: string, ttlSeconds: number): Promise<boolean>;
+  /** Atomically increment a counter, setting its TTL on first touch; returns the
+   *  new count. Used by the rate limiter (fixed window). */
+  incr(key: string, ttlSeconds: number): Promise<number>;
 }
 
-/** No store: stateless. claimOnce always allows (single-use not enforced → TTL only). */
+/** No store: stateless. claimOnce always allows (single-use not enforced → TTL
+ *  only); incr always returns 1 → the rate limiter never blocks. Both real
+ *  single-use and rate limiting need a configured store (memory/redis/…). */
 class NoneStore implements SessionStore {
   async get() { return null; }
   async set() {}
   async delete() {}
   async claimOnce() { return true; }
+  async incr() { return 1; }
 }
 
 class MemoryStore implements SessionStore {
@@ -40,6 +46,13 @@ class MemoryStore implements SessionStore {
     if (this.alive(key)) return false;
     await this.set(key, '1', ttlSeconds);
     return true;
+  }
+  async incr(key: string, ttlSeconds: number) {
+    const e = this.alive(key);
+    if (!e) { await this.set(key, '1', ttlSeconds); return 1; }
+    const n = Number(e.v) + 1;
+    e.v = String(n); // keep the original window expiry (fixed window)
+    return n;
   }
 }
 

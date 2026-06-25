@@ -32,9 +32,11 @@ PlanetLogin is **stateless**. It holds **no database**. It has two REST surfaces
 
 ## 2. Tokens & sessions
 
-- On success PlanetLogin issues a **signed JWT** (the *session token*) with an
-  **asymmetric** algorithm (`EdDSA` default, `RS256` allowed) so downstream
-  services verify it via the published JWKS (`GET /auth/.well-known/jwks.json`).
+- On success PlanetLogin issues a **signed JWT** (the *session token*). The
+  algorithm is configurable (`token.algorithm`, §8): an **asymmetric** one
+  (`EdDSA` default, `RS256`/`ES256`) so downstream services verify it via the
+  published JWKS (`GET /auth/.well-known/jwks.json`), or `HS256` (symmetric, JWKS
+  empty, verifiers share the secret out of band).
 - Claims: `iss`, `aud`, `sub` (the downstream user id), `iat`, `exp`,
   `email?`, `name?`, `locale?` (`{ language, timezone, country }`).
 - TTL from config (`token.ttlSeconds`, default 3600). Refresh: a flavor MAY issue
@@ -141,7 +143,23 @@ safe envelope (no `alg:none`, no MD5/SHA1 for passwords).
   - Refresh tokens & revocation are **opt-in** capabilities of a store, never
     required of the downstream contract.
 
-## 9. Versioning
+## 9. Hardening (CORS & rate limiting)
+
+A conformant flavor SHOULD:
+
+- **CORS** — the auth API is called cross-origin and sets cookies, so it MUST use
+  an **exact origin allowlist** (`security.cors.origins` / `PLANETLOGIN_CORS_ORIGINS`)
+  and MUST NOT send `Access-Control-Allow-Origin: *` together with
+  `Allow-Credentials: true`. It reflects the concrete allowlisted origin and always
+  sets `Vary: Origin`; preflight `OPTIONS` returns `204`.
+- **Rate limiting** — brute-force-prone endpoints (`/auth/password/login`,
+  `/auth/magic/request`, `/auth/totp/verify`) are throttled with a fixed window
+  (`security.rateLimit.*`). Over-limit requests return **`429`** with `Retry-After`.
+  Login is keyed by IP + identifier; magic by IP only (so an attacker can't lock a
+  victim's mailbox). Throttling needs `session.store != none` and **fails open** if
+  the store is unreachable. The `none` store leaves it disabled (stateless default).
+
+## 10. Versioning
 
 This spec is versioned (`spec: 1`). A flavor declares the spec version it targets
 in its `GET /auth/config` (`{ "spec": 1 }`). Breaking changes bump the major.

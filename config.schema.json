@@ -227,6 +227,50 @@
           "default": "none"
         }
       }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Cross-origin + brute-force hardening. Rate limiting needs session.store != none. CORS also reads PLANETLOGIN_CORS_ORIGINS (merged).",
+      "properties": {
+        "cors": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' — the concrete origin is echoed.",
+          "properties": {
+            "origins": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Allowed origins (exact). ['*'] reflects any origin only when credentials=false."
+            },
+            "credentials": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "rateLimit": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-action fixed-window limits. No-op unless session.store is configured. Fails open if the store is down.",
+          "properties": {
+            "login": { "$ref": "#/$defs/rateRule" },
+            "magic": { "$ref": "#/$defs/rateRule" },
+            "totp": { "$ref": "#/$defs/rateRule" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "rateRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["limit", "windowSeconds"],
+      "properties": {
+        "limit": { "type": "integer", "minimum": 1 },
+        "windowSeconds": { "type": "integer", "minimum": 1 }
+      }
     }
   }
 }
