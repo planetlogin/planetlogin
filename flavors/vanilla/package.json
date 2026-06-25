@@ -3,7 +3,14 @@
   "private": true,
   "type": "module",
   "description": "PlanetLogin — vanilla Node flavor. Consumes @planetlogin/core; adds only a plain http() binding.",
-  "scripts": { "start": "tsx server.ts" },
-  "dependencies": { "@planetlogin/core": "^0.1.0" },
-  "devDependencies": { "tsx": "^4.19.0", "typescript": "^5.6.0" }
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "@planetlogin/core": "^0.2.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
 }

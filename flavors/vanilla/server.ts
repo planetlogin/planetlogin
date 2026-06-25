@@ -104,6 +104,8 @@ const server = createServer(async (req, res) => {
     if (p === '/auth/totp/verify' && m === 'POST') {
       if (!cfg.providers.totp?.enabled) return err(res, 403, 'not_enabled', 'disabled');
       const { identifier, code } = await body(req);
+      const rl = await rateLimit(getStore(), rlKey('totp', { ip: clientIp(req), identifier }), ruleFor('totp', cfg.security?.rateLimit));
+      if (!rl.ok) return send(res, 429, { error: { code: 'rate_limited', message: 'Too many attempts' } }, { 'retry-after': String(rl.retryAfter) });
       const ds = downstreamFromEnv();
       const user = await ds.findUser(identifier);
       if (!user) return err(res, 401, 'invalid_credentials', 'unknown user');

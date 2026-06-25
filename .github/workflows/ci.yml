@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  # Root package = the globe Web Component.
+  globe:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,3 +20,32 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  # @planetlogin/core — the framework-agnostic auth logic (owns the unit/e2e tests).
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck -w @planetlogin/core
+      - run: npm test -w @planetlogin/core
+
+  # Black-box conformance suite run against the built Svelte flavor (spec §3).
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci                                   # builds @planetlogin/core dist (prepare)
+      - run: npm run build -w planetlogin-svelte      # → flavors/svelte/build
+      - run: npm install --prefix conformance         # conformance is not a workspace
+      - name: Run conformance against the Svelte flavor
+        working-directory: conformance
+        run: ./run.sh node ../flavors/svelte/build/index.js
