@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — anonymous / guest sessions
+
+### Added (`@planetlogin/core` + flavors)
+- **Anonymous (guest) sessions — the zero-backend path.** `providers.anonymous.enabled` + `POST /auth/anonymous` `{locale?}` mints a signed session for a fresh random `sub`, carrying the picked locale, with **no account and no downstream**. The globe → a signed locale token, verifiable via the same JWKS. `createAnonymousSession()` in core; `SessionClaims.anon`; `anon` rate-limit rule (30/5min). Rate-limited by IP in both flavors.
+- ⚠️ The token carries `anon: true` — it's a session identity, **not** authentication of a person. Consumers must treat it as unauthenticated for anything sensitive. Upgrade path: bind the `sub` to a real account later (uses the downstream). SPEC §3; config.schema; +4 tests (core 69).
+
 ## [Unreleased] — encrypted session tokens (JWE)
 
 ### Added (`@planetlogin/core`)

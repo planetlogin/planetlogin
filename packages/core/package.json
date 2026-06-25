@@ -1,6 +1,6 @@
 {
   "name": "@planetlogin/core",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "PlanetLogin auth core — framework-agnostic flows, JWT, crypto, downstream contract. Consumed by every flavor; the HTTP binding stays per-framework.",
   "exports": {

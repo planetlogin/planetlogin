@@ -19,6 +19,10 @@ export interface Locale {
 }
 export interface SessionClaims {
   sub: string; email?: string; name?: string; locale?: Locale;
+  /** True for an ANONYMOUS/guest session — no credential was verified. It is a
+   *  session identity, NOT proof of who the user is. Consumers MUST treat
+   *  `anon === true` as unauthenticated for anything sensitive. */
+  anon?: boolean;
 }
 
 export type JwtAlg = 'EdDSA' | 'RS256' | 'ES256' | 'HS256';
@@ -143,7 +147,7 @@ export async function signSession(
   opts: { issuer?: string; audience?: string; ttlSeconds?: number } = {},
 ): Promise<string> {
   const k = await getKeys();
-  const jws = await new SignJWT({ email: claims.email, name: claims.name, locale: claims.locale })
+  const jws = await new SignJWT({ email: claims.email, name: claims.name, locale: claims.locale, anon: claims.anon })
     .setProtectedHeader({ alg: k.alg, kid: k.kid })
     .setSubject(claims.sub)
     .setIssuedAt()

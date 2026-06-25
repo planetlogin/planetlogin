@@ -13,6 +13,9 @@ export interface PlanetLoginConfig {
     passkeys?: { enabled?: boolean };
     totp?: { enabled?: boolean };
     saml?: { enabled?: boolean; idpMetadataUrl?: string };
+    // Anonymous/guest sessions — no account, no downstream. Mints a signed session
+    // (anon:true claim). NOT authentication of a person. ttlSeconds defaults to token.ttlSeconds.
+    anonymous?: { enabled?: boolean; ttlSeconds?: number };
   };
   copy?: Record<string, Record<string, string>>;
   layout?: { globePosition?: 'left' | 'right' | 'full'; showSearch?: boolean; autoSpin?: boolean };
@@ -42,6 +45,7 @@ export interface PlanetLoginConfig {
       login?: { limit: number; windowSeconds: number };
       magic?: { limit: number; windowSeconds: number };
       totp?: { limit: number; windowSeconds: number };
+      anon?: { limit: number; windowSeconds: number };
     };
   };
 }

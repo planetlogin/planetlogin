@@ -12,6 +12,7 @@ export * from './oauthState.ts';
 export * from './passkey.ts';
 export * from './totp.ts';
 export * from './flows/passwordLogin.ts';
+export * from './flows/anonymous.ts';
 export * from './flows/preferences.ts';
 export * from './flows/magicLink.ts';
 export * from './flows/oauthLogin.ts';

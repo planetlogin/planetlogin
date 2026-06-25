@@ -52,6 +52,7 @@ Formal definition in [`openapi.yaml`](openapi.yaml). Summary (all JSON):
 | `GET /auth/config` | Public white-label config for the front (branding, enabled providers, copy). **Never** returns secrets. |
 | `GET /auth/.well-known/jwks.json` | Public keys to verify issued JWTs. |
 | `POST /auth/password/login` | `{identifier, password}` → verify (argon2id over the hash from §4) → session token. |
+| `POST /auth/anonymous` | `{locale?}` → a **guest** session (no account, no downstream). Token carries `anon:true`. |
 | `POST /auth/password/register` | If `providers.password.allowRegister` → upsert downstream → session token. |
 | `GET /auth/oauth/{provider}/start` | 302 to the provider (PKCE). |
 | `GET /auth/oauth/{provider}/callback` | Exchange code → profile → downstream upsert → session token. |
@@ -71,6 +72,11 @@ Rules:
 - The session token is returned **both** as a `Set-Cookie` (HttpOnly, Secure,
   SameSite=Lax) **and** in the JSON body (`{ token }`) for non-browser clients.
 - `GET /auth/config` MUST reflect the active white-label config (§5).
+- **Anonymous sessions** (`/auth/anonymous`) mint a signed session for a fresh
+  random `sub` with **no credential verified** — the token MUST carry `anon: true`,
+  and consumers MUST treat it as unauthenticated for anything sensitive. It needs
+  no downstream. Upgrade path: bind the `sub` to a real account later (that step
+  uses the downstream). This is the zero-backend entry point.
 
 ## 4. Downstream API (the integrator implements; PlanetLogin calls)
 

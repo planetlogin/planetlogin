@@ -145,6 +145,21 @@
               "format": "uri"
             }
           }
+        },
+        "anonymous": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Guest sessions — no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "ttlSeconds": {
+              "type": "integer",
+              "description": "Session lifetime for guests (defaults to token.ttlSeconds)."
+            }
+          }
         }
       }
     },
@@ -278,7 +293,8 @@
           "properties": {
             "login": { "$ref": "#/$defs/rateRule" },
             "magic": { "$ref": "#/$defs/rateRule" },
-            "totp": { "$ref": "#/$defs/rateRule" }
+            "totp": { "$ref": "#/$defs/rateRule" },
+            "anon": { "$ref": "#/$defs/rateRule" }
           }
         }
       }

@@ -9,7 +9,7 @@ import {
   verifyPassword, getStore,
   passwordLogin, requestMagicLink, verifyMagicLink, totpEnroll, totpVerify,
   corsHeaders, corsFromEnv, isPreflight, rateLimit, ruleFor, rlKey,
-  getPreferences, savePreferences,
+  getPreferences, savePreferences, createAnonymousSession,
 } from '@planetlogin/core';
 
 const PORT = Number(process.env.PORT) || 8810;
@@ -76,6 +76,19 @@ const server = createServer(async (req, res) => {
       if (cfg.locale?.persist && locale)
         await savePreferences({ downstream: downstreamFromEnv() }, { userId: r.user.id, locale }).catch(() => {});
       return send(res, 200, { token: r.token, user: r.user }, setCookie(r.token));
+    }
+
+    // POST /auth/anonymous — a guest session (no account, no downstream). anon:true.
+    if (p === '/auth/anonymous' && m === 'POST') {
+      if (!cfg.providers.anonymous?.enabled) return err(res, 403, 'not_enabled', 'disabled');
+      const rl = await rateLimit(getStore(), rlKey('anon', { ip: clientIp(req) }), ruleFor('anon', cfg.security?.rateLimit));
+      if (!rl.ok) return send(res, 429, { error: { code: 'rate_limited', message: 'Too many requests' } }, { 'retry-after': String(rl.retryAfter) });
+      const { locale } = await body(req);
+      const r = await createAnonymousSession(
+        { signSession: (c, o) => signSession(c, o) },
+        { locale, ttlSeconds: cfg.providers.anonymous?.ttlSeconds ?? loadConfig().token?.ttlSeconds, issuer: cfg.token?.issuer, audience: cfg.token?.audience },
+      );
+      return send(res, 200, r, setCookie(r.token));
     }
 
     // GET/PUT /auth/preferences — the session user's locale + open data bag (§4).

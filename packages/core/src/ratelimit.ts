@@ -31,6 +31,7 @@ export const DEFAULT_RULES: Record<string, RateLimitRule> = {
   login: { limit: 10, windowSeconds: 300 },   // 10 / 5 min
   magic: { limit: 5, windowSeconds: 900 },    // 5 / 15 min
   totp: { limit: 10, windowSeconds: 300 },
+  anon: { limit: 30, windowSeconds: 300 },    // 30 / 5 min — cheap, but cap spam
 };
 
 /**
