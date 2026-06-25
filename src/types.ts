@@ -31,6 +31,24 @@ export interface PlanetLoginOptions {
   dataUrl?: string;
   /** Called every time a place is picked. */
   onLocale?: (locale: PlanetLocale) => void;
+
+  // ── Locale memory (Tier 0: device-local, no backend) ──────────────────────
+  /**
+   * Persist the picked locale to browser storage so it survives reloads. Default
+   * false (privacy-first, opt-in). Per device/browser — for per-account memory,
+   * run a PlanetLogin auth flavor (the locale rides in the session JWT).
+   */
+  remember?: boolean;
+  /**
+   * On mount, if a locale was previously remembered, fly the globe to it and
+   * re-emit it (so a form can pre-fill). Default false. Independent of `remember`:
+   * you can fly to a saved value without writing new ones.
+   */
+  flyToSaved?: boolean;
+  /** Storage key for the remembered locale. Default "planetlogin:locale". */
+  storageKey?: string;
+  /** Where to persist: "local" (default), "session", or "none" (disable). */
+  storage?: 'local' | 'session' | 'none';
 }
 
 export type PlanetLoginEvent = 'locale';

@@ -1,16 +1,36 @@
 {
   "name": "@planetlogin/planetlogin",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Sign in with a planet — interactive globe locale picker that detects timezone, language and location. Framework-agnostic (Web Component).",
   "type": "module",
   "license": "AGPL-3.0-or-later",
   "author": "Ricard (Ricajos) (https://ricajos.com)",
   "homepage": "https://planetlogin.org",
-  "repository": { "type": "git", "url": "git+https://github.com/planetlogin/planetlogin.git" },
-  "bugs": { "url": "https://github.com/planetlogin/planetlogin/issues" },
-  "keywords": ["globe","locale","i18n","timezone","geolocation","login","onboarding","web-component","d3-geo"],
-  "workspaces": ["packages/*", "flavors/*"],
-  "files": ["dist"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/planetlogin/planetlogin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/planetlogin/planetlogin/issues"
+  },
+  "keywords": [
+    "globe",
+    "locale",
+    "i18n",
+    "timezone",
+    "geolocation",
+    "login",
+    "onboarding",
+    "web-component",
+    "d3-geo"
+  ],
+  "workspaces": [
+    "packages/*",
+    "flavors/*"
+  ],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/planetlogin.umd.cjs",
   "module": "./dist/planetlogin.js",
   "types": "./dist/index.d.ts",

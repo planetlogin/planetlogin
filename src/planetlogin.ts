@@ -10,6 +10,7 @@ import {
 import { feature, mesh } from 'topojson-client';
 import { geocode, reverseMeta } from './geocode';
 import { countryToLanguage } from './locale';
+import { readSavedLocale, writeSavedLocale, clearSavedLocale, DEFAULT_STORAGE_KEY } from './memory';
 import type { PlanetLocale, PlanetLoginOptions } from './types';
 
 type Mode = 'idle' | 'travel' | 'zoom';
@@ -97,6 +98,10 @@ export class PlanetLogin {
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(target);
     this.raf = requestAnimationFrame((t) => this.loop(t));
+
+    // Tier 0 locale memory: if asked, fly to the previously remembered place and
+    // re-emit it (e.g. to pre-fill a form). Independent of `remember` (writing).
+    if (this.opts.flyToSaved) this.restoreSaved();
   }
 
   /** Register a listener fired whenever a place is picked. */
@@ -123,6 +128,18 @@ export class PlanetLogin {
     this.flyTo(res.lon, res.lat);
   }
 
+  /** The remembered locale for this device, or null. Reads browser storage
+   *  (the same key the globe writes when `remember` is on). Devs can call this
+   *  to read the saved value without an instance event. */
+  getSavedLocale(): PlanetLocale | null {
+    return readSavedLocale(this.store(), this.opts.storageKey ?? DEFAULT_STORAGE_KEY);
+  }
+
+  /** Forget the remembered locale on this device. */
+  clearSavedLocale(): void {
+    clearSavedLocale(this.store(), this.opts.storageKey ?? DEFAULT_STORAGE_KEY);
+  }
+
   /** Stop everything and remove the DOM it created. */
   destroy(): void {
     cancelAnimationFrame(this.raf);
@@ -138,9 +155,29 @@ export class PlanetLogin {
   private emit(): void {
     if (!this.detected) return;
     const loc = this.detected;
+    if (this.opts.remember) this.saveLocale(loc);
     for (const cb of this.listeners) cb(loc);
     this.target.dispatchEvent(new CustomEvent<PlanetLocale>('locale', { detail: loc, bubbles: true }));
     this.opts.onLocale?.(loc);
+  }
+
+  // ── Tier 0 locale memory (device-local) ───────────────────────────────────
+  /** The storage backend, honoring opts.storage; null when disabled/unavailable. */
+  private store(): Storage | null {
+    if (this.opts.storage === 'none' || typeof window === 'undefined') return null;
+    try { return this.opts.storage === 'session' ? window.sessionStorage : window.localStorage; }
+    catch { return null; } // privacy mode / disabled → degrade silently
+  }
+
+  private saveLocale(loc: PlanetLocale): void {
+    writeSavedLocale(this.store(), loc, this.opts.storageKey ?? DEFAULT_STORAGE_KEY);
+  }
+
+  private restoreSaved(): void {
+    const saved = this.getSavedLocale();
+    if (!saved) return;
+    this.detected = saved;        // so onLocated()/emit() replay the full locale
+    this.flyTo(saved.lon, saved.lat);
   }
 
   private buildSearch(): void {

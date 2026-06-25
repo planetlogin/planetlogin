@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [@planetlogin/planetlogin 0.2.0] — 2026-06-25 — locale memory (Tier 0)
+
+### Added (globe Web Component)
+- **Locale memory, device-local, zero backend.** Opt-in: the globe can remember the picked locale in browser storage and fly back to it on return — no server, no login. Options `remember`, `flyToSaved`, `storageKey`, `storage` (`local`|`session`|`none`); element attributes `remember` / `fly-to-saved` / `storage-key` / `storage`. Both gates default **off** (privacy-first).
+- **Imperative API:** `flyTo(lon, lat)`, `getSavedLocale()`, `clearSavedLocale()` on both the class and the `<planet-login>` element.
+- **Pure helpers** `readSavedLocale` / `writeSavedLocale` / `clearSavedLocale` / `DEFAULT_STORAGE_KEY` exported — devs can read/write the remembered locale without an instance (the frontend-only "API"). All best-effort, never throw (private mode / quota / SSR → no-op).
+- Svelte flavor demo uses `remember fly-to-saved`. 5 new tests (`src/memory.test.ts`). Globe tests **11**.
+- Note: per-account memory (survives devices) + fly-to-on-login from the account need coordinates persisted server-side — that is a **Tier 2** feature (downstream contract), intentionally deferred.
+
 ## [@planetlogin/core 0.2.0] — 2026-06-25 — auth core hardening
 
 Published to npm. Flavors now depend on `^0.2.0`. Also: rate limiting wired into

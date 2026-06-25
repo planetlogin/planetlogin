@@ -1,6 +1,8 @@
 export type { PlanetLocale, PlanetLoginOptions, PlanetLoginEvent } from './types';
 export { PlanetLogin } from './planetlogin';
 export { PlanetLoginElement } from './element';
+// Tier 0 locale memory — device-local, no backend. Usable without an instance.
+export { readSavedLocale, writeSavedLocale, clearSavedLocale, DEFAULT_STORAGE_KEY, type LocaleStore } from './memory';
 
 import { PlanetLogin } from './planetlogin';
 import { PlanetLoginElement } from './element';
