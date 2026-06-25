@@ -17,13 +17,36 @@ lives in the white-label config ([`config.schema.json`](config.schema.json));
 
 | Var | Required | Meaning |
 |---|---|---|
-| `PLANETLOGIN_JWT_PRIVATE_KEY` | yes | EdDSA private key that signs session tokens — the **PEM itself** or a **path** to a PEM file (e.g. a Docker secret). Generate one with `npx planetlogin-keygen`. Keep it secret; without it the portal falls back to an ephemeral key (tokens die on restart) and logs a warning. |
+| `PLANETLOGIN_JWT_ALG` | no | Signing algorithm: `EdDSA` (default), `RS256`, `ES256` (all asymmetric → JWKS) or `HS256` (symmetric → shared secret, **JWKS empty**). Must match `config.token.algorithm`. |
+| `PLANETLOGIN_JWT_PRIVATE_KEY` | for asym | Private key (PKCS#8 PEM) that signs session tokens — the **PEM itself** or a **path** to a PEM file (e.g. a Docker secret). Generate one with `npx planetlogin-keygen`. Without it the portal falls back to an ephemeral key (tokens die on restart) and logs a warning. |
+| `PLANETLOGIN_JWT_SECRET` | for HS256 | Shared secret (raw string or path to a file) used when `PLANETLOGIN_JWT_ALG=HS256`. Distribute it to verifiers out of band — it is **never** published in JWKS. |
 | `PLANETLOGIN_JWT_KID` | no | Key id surfaced in JWKS (enables rotation). |
 | `PLANETLOGIN_JWT_ISSUER` | no | `iss` claim (default `PLANETLOGIN_BASE_URL`). |
 | `PLANETLOGIN_JWT_AUDIENCE` | no | `aud` claim. |
 
-> The **public** key is derived and published at `GET /auth/.well-known/jwks.json`.
-> Downstream services verify tokens with it — never with the private key.
+> For **asymmetric** algorithms the **public** key is derived and published at
+> `GET /auth/.well-known/jwks.json`; downstream services verify with it, never with
+> the private key. For **HS256** the JWKS is empty and verifiers need the shared
+> secret.
+
+## Security (CORS + rate limiting)
+
+PlanetLogin is a stand-alone portal usually called cross-origin and sets cookies,
+so CORS must be an **exact allowlist** (no `*` with credentials). Rate limiting
+needs a configured `session.store` (it is a no-op with the default `none` store).
+
+| Var | Required | Meaning |
+|---|---|---|
+| `PLANETLOGIN_CORS_ORIGINS` | no | Comma-separated allowlist of origins (e.g. `https://app.acme.com,https://admin.acme.com`). Merged with `config.security.cors.origins`. `*` is only honored without credentials. |
+| `PLANETLOGIN_CORS_CREDENTIALS` | no | `false` to disable credentialed CORS (default sends `Allow-Credentials: true`). |
+| `PLANETLOGIN_SESSION_STORE` | no | `none` (default, stateless), `memory`, `redis`, `sqlite`, `downstream`. Required (non-`none`) for rate limiting **and** true single-use magic links. |
+| `PLANETLOGIN_RATELIMIT_LOGIN_LIMIT` / `_WINDOW` | no | Override the login fixed-window limit (default 10 / 300s). |
+| `PLANETLOGIN_RATELIMIT_MAGIC_LIMIT` / `_WINDOW` | no | Override the magic-link limit (default 5 / 900s). |
+| `PLANETLOGIN_RATELIMIT_TOTP_LIMIT` / `_WINDOW` | no | Override the TOTP limit (default 10 / 300s). |
+| `PLANETLOGIN_TRUST_PROXY` | no | `true` to read the client IP from `X-Forwarded-For` (set only behind a trusted proxy; otherwise the IP is spoofable). |
+
+> Rate limits **fail open**: if the store is unreachable, requests are allowed — a
+> counter outage must not lock everyone out of auth.
 
 ## Downstream (your store)
 

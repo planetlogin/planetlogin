@@ -3,10 +3,10 @@ import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { verifyPassword } from '@planetlogin/core';
 import { signSession } from '@planetlogin/core';
 import { passwordLogin } from '@planetlogin/core';
-import { sealEnc } from '@planetlogin/core';
+import { sealEnc, getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
 
 // POST /auth/password/login  (openapi.yaml). Thin wrapper over the tested flow.
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
   const cfg = loadConfig();
   if (!cfg.providers.password?.enabled)
     return json({ error: { code: 'not_enabled', message: 'Password login disabled' } }, { status: 403 });
@@ -14,6 +14,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   const { identifier, password, locale } = await request.json().catch(() => ({}));
   if (!identifier || !password)
     return json({ error: { code: 'bad_request', message: 'identifier and password required' } }, { status: 400 });
+
+  // Brute-force guard (no-op until session.store is configured). Keyed by IP+id.
+  const rl = await rateLimit(getStore(), rlKey('login', { ip: getClientAddress(), identifier }), ruleFor('login', cfg.security?.rateLimit));
+  if (!rl.ok)
+    return json({ error: { code: 'rate_limited', message: 'Too many attempts, try again later' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 
   const res = await passwordLogin(
     {

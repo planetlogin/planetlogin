@@ -18,6 +18,17 @@ export interface PlanetLoginConfig {
   layout?: { globePosition?: 'left' | 'right' | 'full'; showSearch?: boolean; autoSpin?: boolean };
   token?: { issuer?: string; audience?: string; ttlSeconds?: number; algorithm?: 'EdDSA' | 'RS256' | 'ES256' | 'HS256' };
   session?: { store?: 'none' | 'memory' | 'redis' | 'sqlite' | 'downstream' };
+  security?: {
+    // Cross-origin allowlist for the auth API (exact origins, or ["*"] without
+    // credentials). Maps to PLANETLOGIN_CORS_ORIGINS.
+    cors?: { origins?: string[]; credentials?: boolean };
+    // Per-action brute-force limits (fixed window). Needs session.store != none.
+    rateLimit?: {
+      login?: { limit: number; windowSeconds: number };
+      magic?: { limit: number; windowSeconds: number };
+      totp?: { limit: number; windowSeconds: number };
+    };
+  };
 }
 
 let cfg: PlanetLoginConfig | null = null;

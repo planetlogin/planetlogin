@@ -8,6 +8,7 @@ import {
   jwks, signSession, verifySession, signMagicToken, verifyMagicToken,
   verifyPassword, getStore,
   passwordLogin, requestMagicLink, verifyMagicLink, totpEnroll, totpVerify,
+  corsHeaders, corsFromEnv, isPreflight, rateLimit, ruleFor, rlKey,
 } from '@planetlogin/core';
 
 const PORT = Number(process.env.PORT) || 8810;
@@ -27,6 +28,10 @@ const body = (req: IncomingMessage) =>
   new Promise<any>((resolve) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => resolve(b ? JSON.parse(b) : {})); });
 const cookie = (req: IncomingMessage, name: string) =>
   (req.headers.cookie ?? '').split(';').map((c) => c.trim().split('=')).find(([k]) => k === name)?.[1];
+// Client IP: trust X-Forwarded-For only when behind a known proxy (env opt-in).
+const clientIp = (req: IncomingMessage) =>
+  (process.env.PLANETLOGIN_TRUST_PROXY === 'true' && (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim())
+  || req.socket.remoteAddress || null;
 const setCookie = (val: string, maxAge?: number) =>
   ({ 'set-cookie': `${COOKIE}=${val}; Path=/; HttpOnly; Secure; SameSite=Lax${maxAge ? `; Max-Age=${maxAge}` : ''}` });
 
@@ -35,6 +40,14 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', baseUrl());
     const p = url.pathname, m = req.method ?? 'GET';
     const cfg = loadConfig();
+
+    // CORS: set allowlisted headers on every response; short-circuit preflights.
+    const origin = (req.headers.origin as string) ?? null;
+    const cors = corsHeaders(origin, corsFromEnv());
+    for (const [k, v] of Object.entries(cors)) res.setHeader(k, v);
+    if (isPreflight(m, (req.headers['access-control-request-method'] as string) ?? null)) {
+      res.writeHead(204); return res.end();
+    }
 
     if (p === '/auth/config' && m === 'GET') return send(res, 200, publicConfig(cfg));
     if (p === '/auth/.well-known/jwks.json' && m === 'GET') return send(res, 200, await jwks());
@@ -50,6 +63,8 @@ const server = createServer(async (req, res) => {
       if (!cfg.providers.password?.enabled) return err(res, 403, 'not_enabled', 'disabled');
       const { identifier, password, locale } = await body(req);
       if (!identifier || !password) return err(res, 400, 'bad_request', 'identifier and password required');
+      const rl = await rateLimit(getStore(), rlKey('login', { ip: clientIp(req), identifier }), ruleFor('login', cfg.security?.rateLimit));
+      if (!rl.ok) return send(res, 429, { error: { code: 'rate_limited', message: 'Too many attempts' } }, { 'retry-after': String(rl.retryAfter) });
       const r = await passwordLogin(
         { downstream: downstreamFromEnv(), verifyPassword, signSession: (c) => signSession(c, tokenOpts()) },
         { identifier, password, locale },
@@ -63,6 +78,8 @@ const server = createServer(async (req, res) => {
       if (!cfg.providers.magicLink?.enabled) return err(res, 403, 'not_enabled', 'disabled');
       const { identifier, locale } = await body(req);
       if (!identifier) return err(res, 400, 'bad_request', 'identifier required');
+      const rl = await rateLimit(getStore(), rlKey('magic', { ip: clientIp(req) }), ruleFor('magic', cfg.security?.rateLimit));
+      if (!rl.ok) return send(res, 429, { error: { code: 'rate_limited', message: 'Too many requests' } }, { 'retry-after': String(rl.retryAfter) });
       await requestMagicLink({ downstream: downstreamFromEnv(), signMagicToken }, { identifier, baseUrl: baseUrl(), locale });
       return send(res, 202, { accepted: true });
     }
