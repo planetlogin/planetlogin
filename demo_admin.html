@@ -93,6 +93,19 @@
       <div class="row"><label>Search box</label><span class="sw"><input type="checkbox" id="l-search" checked><span></span></span></div>
       <div class="row"><label>Auto-spin</label><span class="sw"><input type="checkbox" id="l-spin" checked><span></span></span></div>
     </div>
+    <div class="sec">
+      <h3>Locale memory</h3>
+      <div class="row"><label>Remember on device <span class="hint">Tier 0 · no backend · live →</span></label><span class="sw"><input type="checkbox" id="m-remember"><span></span></span></div>
+      <div class="row"><label>↳ fly to saved on load</label><span class="sw"><input type="checkbox" id="m-flysaved"><span></span></span></div>
+      <div class="row"><label>Persist to account <span class="hint">Tier 2 · needs a backend</span></label><span class="sw"><input type="checkbox" id="m-persist"><span></span></span></div>
+      <div class="row"><label>↳ fly to account on login</label><span class="sw"><input type="checkbox" id="m-flylogin"><span></span></span></div>
+    </div>
+    <div class="sec">
+      <h3>Security</h3>
+      <div class="row"><label>Token algorithm</label>
+        <select id="s-alg"><option value="EdDSA">EdDSA</option><option value="RS256">RS256</option><option value="ES256">ES256</option><option value="HS256">HS256</option></select></div>
+      <div class="row"><label>CORS origins <span class="hint">comma-separated</span></label><input type="text" id="s-cors" placeholder="https://app.acme.com"></div>
+    </div>
   </div>
 
   <!-- PREVIEW + EXPORT -->
@@ -149,17 +162,33 @@
       layout: { globePosition: $('l-pos').value, showSearch: $('l-search').checked, autoSpin: $('l-spin').checked },
     };
     if ($('c-logo').value) c.brand.logoUrl = $('c-logo').value;
+    // Account-bound locale memory (Tier 2) — only emit when a gate is on.
+    const locale = {};
+    if ($('m-persist').checked) locale.persist = true;
+    if ($('m-flylogin').checked) locale.flyToOnLogin = true;
+    if (Object.keys(locale).length) c.locale = locale;
+    // Token algorithm — only emit when non-default.
+    if ($('s-alg').value !== 'EdDSA') c.token = { algorithm: $('s-alg').value };
+    // CORS allowlist.
+    const cors = $('s-cors').value.split(',').map(s => s.trim()).filter(Boolean);
+    if (cors.length) c.security = { cors: { origins: cors } };
     return c;
   }
 
   function toEnv(c) {
+    const alg = c.token?.algorithm || 'EdDSA';
     const lines = [
       'PLANETLOGIN_BASE_URL=https://login.' + (c.brand.name || 'app').toLowerCase().replace(/[^a-z0-9]/g,'') + '.com',
       "PLANETLOGIN_CONFIG='" + JSON.stringify(c) + "'",
       'PLANETLOGIN_DOWNSTREAM_URL=https://api.example.com/identity',
       'PLANETLOGIN_DOWNSTREAM_SECRET=change-me',
-      'PLANETLOGIN_JWT_PRIVATE_KEY_PEM=/run/secrets/planetlogin_ed25519.pem',
     ];
+    if (alg !== 'EdDSA') lines.push(`PLANETLOGIN_JWT_ALG=${alg}`);
+    // HS256 is symmetric (shared secret, no JWKS); the rest use an asymmetric PEM.
+    lines.push(alg === 'HS256'
+      ? 'PLANETLOGIN_JWT_SECRET=/run/secrets/planetlogin_hs256.key'
+      : 'PLANETLOGIN_JWT_PRIVATE_KEY=/run/secrets/planetlogin_signing.pem');
+    if (c.security?.cors?.origins?.length) lines.push('PLANETLOGIN_CORS_ORIGINS=' + c.security.cors.origins.join(','));
     for (const o of c.providers.oauth) {
       const u = o.id.toUpperCase();
       lines.push(`PLANETLOGIN_OAUTH_${u}_CLIENT_ID=…`, `PLANETLOGIN_OAUTH_${u}_CLIENT_SECRET=…`);
@@ -178,6 +207,10 @@
     globe.setAttribute('accent', c.brand.accent);
     globe.setAttribute('search', String(c.layout.showSearch));
     globe.setAttribute('autospin', String(c.layout.autoSpin));
+    // Tier 0 device memory — globe attributes (not config). Live in the preview:
+    // pick a place, toggle on, and it flies back there on the next reload.
+    if ($('m-remember').checked) globe.setAttribute('remember', '');
+    if ($('m-flysaved').checked) globe.setAttribute('fly-to-saved', '');
     wrap.appendChild(globe);
   }
 
@@ -213,7 +246,7 @@
 
   // wire controls: accent/layout changes recreate the globe; others just repaint
   document.querySelectorAll('input,select').forEach((el) => {
-    const heavy = ['c-accent','l-pos','l-search','l-spin'].includes(el.id);
+    const heavy = ['c-accent','l-pos','l-search','l-spin','m-remember','m-flysaved'].includes(el.id);
     el.addEventListener('input', () => update(heavy));
   });
   document.querySelectorAll('.tabs button[data-t]').forEach((b) => b.addEventListener('click', () => {
