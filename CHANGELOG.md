@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — encrypted session tokens (JWE)
+
+### Added (`@planetlogin/core`)
+- **Optional JWE encryption of the session token.** `config.token.encrypt` / `PLANETLOGIN_JWT_ENCRYPT=true` wraps the signed JWS in a JWE (`dir`+A256GCM, key `PLANETLOGIN_JWE_KEY`) — a **nested JWT** so claims (email, locale…) are confidential to the client. The inner signature is preserved, so a holder of the JWE key decrypts then verifies via JWKS; works with any signing algorithm. `verifySession` transparently decrypts. Off by default.
+- `planetlogin-keygen --jwe` emits a 32-byte base64url JWE key. `config.token.encrypt` in the schema; `PLANETLOGIN_JWT_ENCRYPT`/`PLANETLOGIN_JWE_KEY` in ENV.md; SPEC §8. 5 new tests (core 65).
+
 ## [Unreleased] — locale memory Tier 2 (account-bound)
 
 ### Added (`@planetlogin/core` + flavors + reference downstream)

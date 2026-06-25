@@ -1,9 +1,20 @@
 #!/usr/bin/env node
-// Generate an EdDSA (Ed25519) keypair for PlanetLogin session signing.
-//   npx planetlogin-keygen            → print PEM + the env line
+// Generate keys for PlanetLogin.
+//   npx planetlogin-keygen            → EdDSA signing keypair (PEM + env line)
 //   npx planetlogin-keygen ./key.pem  → also write the private key to a file
-import { generateKeyPair, exportPKCS8, exportJWK } from 'jose';
+//   npx planetlogin-keygen --jwe      → a 32-byte JWE key (for token.encrypt)
+import { generateKeyPair, exportPKCS8, exportJWK, base64url } from 'jose';
 import { writeFileSync } from 'node:fs';
+
+// JWE key mode: a 32-byte symmetric key (base64url) for encrypting session tokens.
+if (process.argv.includes('--jwe')) {
+  const key = base64url.encode(crypto.getRandomValues(new Uint8Array(32)));
+  process.stdout.write(key + '\n');
+  console.error('\n# ↑ 32-byte JWE key (base64url). Shared out of band with services that read claims. Then set:');
+  console.error('#   PLANETLOGIN_JWT_ENCRYPT=true');
+  console.error(`#   PLANETLOGIN_JWE_KEY=${key}`);
+  process.exit(0);
+}
 
 const { privateKey, publicKey } = await generateKeyPair('EdDSA', { extractable: true });
 const pem = await exportPKCS8(privateKey);

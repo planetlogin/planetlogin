@@ -23,6 +23,12 @@ lives in the white-label config ([`config.schema.json`](config.schema.json));
 | `PLANETLOGIN_JWT_KID` | no | Key id surfaced in JWKS (enables rotation). |
 | `PLANETLOGIN_JWT_ISSUER` | no | `iss` claim (default `PLANETLOGIN_BASE_URL`). |
 | `PLANETLOGIN_JWT_AUDIENCE` | no | `aud` claim. |
+| `PLANETLOGIN_JWT_ENCRYPT` | no | `true` to **encrypt** the session token (nested JWS-in-JWE, `dir`+A256GCM) so claims are confidential. Must match `config.token.encrypt`. |
+| `PLANETLOGIN_JWE_KEY` | if encrypt | 32-byte symmetric key (base64url) for the JWE envelope. Generate with `npx planetlogin-keygen --jwe`. Share it out of band with any service that must read claims. |
+
+> Encryption keeps the inner signature: a holder of `PLANETLOGIN_JWE_KEY` decrypts,
+> then verifies via JWKS as usual. It's a single-trust-domain feature (shared
+> symmetric key) — it does **not** replace the asymmetric verify model.
 
 > For **asymmetric** algorithms the **public** key is derived and published at
 > `GET /auth/.well-known/jwks.json`; downstream services verify with it, never with

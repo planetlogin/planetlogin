@@ -5,7 +5,8 @@
 // jose, pure JS.
 import {
   SignJWT, jwtVerify, exportJWK, generateKeyPair, generateSecret,
-  importPKCS8, createLocalJWKSet, type KeyLike, type JWK, type JWTVerifyGetKey,
+  importPKCS8, createLocalJWKSet, CompactEncrypt, compactDecrypt, base64url,
+  type KeyLike, type JWK, type JWTVerifyGetKey,
 } from 'jose';
 import { readFileSync } from 'node:fs';
 
@@ -103,12 +104,46 @@ async function verifier(): Promise<Uint8Array | JWTVerifyGetKey> {
   return createLocalJWKSet({ keys: [k.pubJwk!] });
 }
 
+// ── Optional encryption (JWE) of the session token (spec §8) ──────────────────
+// When PLANETLOGIN_JWT_ENCRYPT=true the session token is a NESTED JWT: the signed
+// JWS is wrapped in a JWE (dir + A256GCM) so the claims are confidential — a
+// client/intermediary can't read email/locale/etc. The signature is preserved, so
+// a holder of the JWE key DECRYPTS, then verifies the inner JWS via JWKS as usual.
+// The JWE key is symmetric and shared out of band (like HS256) — encryption is a
+// single-trust-domain feature; it does NOT replace the asymmetric verify model.
+let jweKey: Uint8Array | null = null;
+function encryptEnabled(): boolean { return process.env.PLANETLOGIN_JWT_ENCRYPT === 'true'; }
+function getJweKey(): Uint8Array {
+  if (jweKey) return jweKey;
+  const env = process.env.PLANETLOGIN_JWE_KEY;
+  if (env) {
+    jweKey = base64url.decode(env);
+    if (jweKey.length !== 32) throw new Error('PLANETLOGIN_JWE_KEY must decode to 32 bytes (base64url)');
+  } else {
+    console.warn('[planetlogin] WARNING: PLANETLOGIN_JWT_ENCRYPT is on but no PLANETLOGIN_JWE_KEY — using an EPHEMERAL key. Tokens cannot be decrypted across instances/restarts. Do not use in production.');
+    jweKey = crypto.getRandomValues(new Uint8Array(32));
+  }
+  return jweKey;
+}
+async function maybeEncrypt(jws: string): Promise<string> {
+  if (!encryptEnabled()) return jws;
+  return new CompactEncrypt(new TextEncoder().encode(jws))
+    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM', cty: 'JWT' })
+    .encrypt(getJweKey());
+}
+/** A JWE compact token has 5 dot-separated segments; a JWS has 3. */
+async function maybeDecrypt(token: string): Promise<string> {
+  if (token.split('.').length !== 5) return token;
+  const { plaintext } = await compactDecrypt(token, getJweKey());
+  return new TextDecoder().decode(plaintext);
+}
+
 export async function signSession(
   claims: SessionClaims,
   opts: { issuer?: string; audience?: string; ttlSeconds?: number } = {},
 ): Promise<string> {
   const k = await getKeys();
-  return new SignJWT({ email: claims.email, name: claims.name, locale: claims.locale })
+  const jws = await new SignJWT({ email: claims.email, name: claims.name, locale: claims.locale })
     .setProtectedHeader({ alg: k.alg, kid: k.kid })
     .setSubject(claims.sub)
     .setIssuedAt()
@@ -116,11 +151,13 @@ export async function signSession(
     .setIssuer(opts.issuer ?? 'planetlogin')
     .setAudience(opts.audience ?? 'planetlogin')
     .sign(k.sign as any);
+  return maybeEncrypt(jws);
 }
 
-/** Verify a session token against our own key material (what a downstream does). */
+/** Verify a session token against our own key material (what a downstream does).
+ *  Transparently decrypts a JWE-wrapped token first when encryption is on. */
 export async function verifySession(token: string) {
-  const { payload } = await jwtVerify(token, (await verifier()) as any, {
+  const { payload } = await jwtVerify(await maybeDecrypt(token), (await verifier()) as any, {
     issuer: 'planetlogin', audience: 'planetlogin',
   });
   return payload;

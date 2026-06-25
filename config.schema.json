@@ -224,6 +224,11 @@
           ],
           "default": "EdDSA",
           "description": "Asymmetric (EdDSA/RS256/ES256) \u2192 multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
+        },
+        "encrypt": {
+          "type": "boolean",
+          "default": false,
+          "description": "Encrypt the session token (nested JWS-in-JWE, dir+A256GCM) so claims are confidential. Needs PLANETLOGIN_JWT_ENCRYPT=true + PLANETLOGIN_JWE_KEY. Single trust domain; the inner signature is preserved."
         }
       }
     },

@@ -25,7 +25,13 @@ export interface PlanetLoginConfig {
     // On login, fly the globe to the account's saved locale before handing off.
     flyToOnLogin?: boolean;
   };
-  token?: { issuer?: string; audience?: string; ttlSeconds?: number; algorithm?: 'EdDSA' | 'RS256' | 'ES256' | 'HS256' };
+  token?: {
+    issuer?: string; audience?: string; ttlSeconds?: number;
+    algorithm?: 'EdDSA' | 'RS256' | 'ES256' | 'HS256';
+    // Encrypt the session token (nested JWS-in-JWE) so claims are confidential.
+    // Needs PLANETLOGIN_JWT_ENCRYPT=true + a shared PLANETLOGIN_JWE_KEY (32B base64url).
+    encrypt?: boolean;
+  };
   session?: { store?: 'none' | 'memory' | 'redis' | 'sqlite' | 'downstream' };
   security?: {
     // Cross-origin allowlist for the auth API (exact origins, or ["*"] without

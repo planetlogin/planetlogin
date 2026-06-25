@@ -149,9 +149,13 @@ safe envelope (no `alg:none`, no MD5/SHA1 for passwords).
 
 - **Token signing is configurable** (`token.algorithm`): `EdDSA`/`RS256`/`ES256`
   (asymmetric → multi-service verification via JWKS) or `HS256` (symmetric "simple
-  mode", single trust domain, no JWKS). Optional JWE for encrypted claims. The JWT
-  is the *default issued session*; a consumer MAY ignore it and mint its own from
-  the verified identity.
+  mode", single trust domain, no JWKS). The JWT is the *default issued session*; a
+  consumer MAY ignore it and mint its own from the verified identity.
+- **Optional encryption** (`token.encrypt`): the session token becomes a **nested
+  JWT** — the signed JWS wrapped in a JWE (`dir`+A256GCM, key `PLANETLOGIN_JWE_KEY`)
+  so claims are confidential to the client. The inner signature is preserved: a
+  holder of the JWE key decrypts, then verifies via JWKS. Single trust domain
+  (shared symmetric key); does not replace the asymmetric verify model.
 - **Password verification auto-detects the stored hash format** (argon2id, bcrypt,
   scrypt, pbkdf2 — by the PHC prefix), so PlanetLogin drops in front of an existing
   user store without rehashing. New hashes default to argon2id.
