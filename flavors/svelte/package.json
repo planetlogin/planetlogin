@@ -11,7 +11,7 @@
     "check": "svelte-check"
   },
   "dependencies": {
-    "@planetlogin/core": "^0.1.0",
+    "@planetlogin/core": "^0.2.0",
     "@planetlogin/planetlogin": "^0.1.2",
     "@simplewebauthn/browser": "^13.3.0"
   },

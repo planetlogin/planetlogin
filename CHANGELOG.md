@@ -4,7 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — auth core hardening
+## [@planetlogin/core 0.2.0] — 2026-06-25 — auth core hardening
+
+Published to npm. Flavors now depend on `^0.2.0`. Also: rate limiting wired into
+`/auth/totp/verify` (IP+identifier) in both flavors; CI split into per-workspace
+jobs (globe / core / conformance) so the core's 54 tests and the black-box
+conformance suite run on every push (previously only the globe was tested).
 
 ### Added (`@planetlogin/core` + flavors)
 - **All-terrain `token.algorithm`:** session/magic JWTs can now be signed with `EdDSA` (default), `RS256`, `ES256` (asymmetric → JWKS) or `HS256` (symmetric → shared `PLANETLOGIN_JWT_SECRET`, JWKS stays empty). Selected via `PLANETLOGIN_JWT_ALG`.

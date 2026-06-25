@@ -1,6 +1,6 @@
 {
   "name": "@planetlogin/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "PlanetLogin auth core — framework-agnostic flows, JWT, crypto, downstream contract. Consumed by every flavor; the HTTP binding stays per-framework.",
   "exports": {
@@ -12,8 +12,12 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": { "planetlogin-keygen": "./dist/keygen.js" },
-  "files": ["dist"],
+  "bin": {
+    "planetlogin-keygen": "./dist/keygen.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "prepare": "tsup",
