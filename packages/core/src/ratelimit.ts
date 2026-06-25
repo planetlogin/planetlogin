@@ -77,3 +77,16 @@ export function rlKey(action: string, parts: { ip?: string | null; identifier?: 
   const disc = [parts.ip, parts.identifier].filter(Boolean).join('|') || 'anon';
   return `${action}:${disc}`;
 }
+
+let _warned = false;
+/** Warn ONCE at startup if credential providers are enabled but no store backs the
+ *  limiter (store=none → incr always returns 1 → the limiter is INERT, so there is
+ *  no brute-force protection). Call from the flavor's boot path. */
+export function warnIfRateLimitInert(opts: { providersEnabled: boolean; storeKind?: string | null }): void {
+  if (_warned) return;
+  const inert = !opts.storeKind || opts.storeKind === 'none';
+  if (opts.providersEnabled && inert) {
+    _warned = true;
+    console.warn('[planetlogin] WARNING: rate limiting is INERT — session.store is "none", so login / magic / totp have NO brute-force protection. Set PLANETLOGIN_SESSION_STORE=memory (single instance) or a shared store (redis) when scaled.');
+  }
+}

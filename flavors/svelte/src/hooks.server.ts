@@ -3,7 +3,17 @@
 // cookies, so we reflect an allowlisted origin exactly and answer preflights.
 // Allowlist = PLANETLOGIN_CORS_ORIGINS (env) merged with config.security.cors.
 import type { Handle } from '@sveltejs/kit';
-import { corsHeaders, corsFromEnv, isPreflight, loadConfig, type CorsConfig } from '@planetlogin/core';
+import { corsHeaders, corsFromEnv, isPreflight, loadConfig, warnIfRateLimitInert, type CorsConfig } from '@planetlogin/core';
+
+// Boot-time posture check (runs once): if credential providers are on but no store
+// backs the rate limiter, it's inert — warn loudly so prod doesn't ship unprotected.
+try {
+  const p = loadConfig().providers;
+  warnIfRateLimitInert({
+    providersEnabled: !!(p.password?.enabled || p.magicLink?.enabled || p.totp?.enabled),
+    storeKind: process.env.PLANETLOGIN_SESSION_STORE,
+  });
+} catch { /* config not available at import time — skip */ }
 
 function corsConfig(): CorsConfig {
   const env = corsFromEnv();
