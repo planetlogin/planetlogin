@@ -132,9 +132,13 @@ const emit = defineEmits<{ locale: [unknown] }>();
 | `resolution` | `'110m' \| '50m'` | `'110m'` | Border detail (50m = sharper, heavier). |
 | `dataUrl` | `string` | world-atlas CDN | Override the country TopoJSON URL. |
 | `onLocale` | `(l: PlanetLocale) => void` | — | Callback on every pick. |
+| `remember` | `boolean` | `false` | Persist the picked locale to browser storage (see [Locale memory](#locale-memory)). |
+| `flyToSaved` | `boolean` | `false` | On mount, fly to the remembered locale and re-emit it. |
+| `storageKey` | `string` | `planetlogin:locale` | Storage key for the remembered locale. |
+| `storage` | `'local' \| 'session' \| 'none'` | `'local'` | Where to persist (or disable). |
 
 The Web Component mirrors these as attributes: `accent`, `resolution`, `search`,
-`placeholder`, `autospin`.
+`placeholder`, `autospin`, `remember`, `fly-to-saved`, `storage-key`, `storage`.
 
 ## Methods
 
@@ -143,6 +147,8 @@ The Web Component mirrors these as attributes: `accent`, `resolution`, `search`,
 | `on('locale', cb)` | Add a listener fired on every pick. Returns `this`. |
 | `flyTo(lon, lat)` | Animate to coordinates and pick them. |
 | `search(query)` | Geocode a string and fly to the result (async). |
+| `getSavedLocale()` | The locale remembered on this device, or `null`. |
+| `clearSavedLocale()` | Forget the remembered locale on this device. |
 | `destroy()` | Stop animation and remove all DOM it created. |
 
 ## The `locale` payload
@@ -160,6 +166,34 @@ interface PlanetLocale {
   approxTimezone?: boolean; // true when tz is a longitude estimate, not IANA
 }
 ```
+
+## Locale memory
+
+Opt-in, **device-local, zero backend**: the globe can remember where the user
+picked and fly back to it next time. Both gates are off by default (privacy-first).
+
+```html
+<planet-login remember fly-to-saved></planet-login>
+```
+
+```ts
+// Or with the function API:
+const planet = createPlanetLogin(el, { remember: true, flyToSaved: true });
+planet.getSavedLocale();   // → PlanetLocale | null
+planet.clearSavedLocale(); // forget it
+```
+
+Read or write the saved value **without an instance** (e.g. to pre-fill a form on
+a static page) — these are pure helpers over `localStorage`, never throw:
+
+```ts
+import { readSavedLocale, writeSavedLocale, clearSavedLocale } from '@planetlogin/planetlogin';
+const saved = readSavedLocale(localStorage); // PlanetLocale | null
+```
+
+> **Per-account memory** (survives devices, flies to the user's place on login)
+> needs a backend: run a PlanetLogin auth flavor with a downstream store and turn
+> on `config.locale.persist` / `flyToOnLogin`. See the [SPEC](SPEC.md#6-i18n--locale).
 
 ## How it works
 
