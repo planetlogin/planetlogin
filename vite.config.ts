@@ -13,4 +13,10 @@ export default defineConfig({
       formats: ['es', 'umd'],
     },
   },
+  // Root package = the globe component. Its tests live in src/. The auth core
+  // (packages/core) and the conformance suite have their own runners — don't let
+  // the root `vitest run` glob into them (conformance needs a live server → CI red).
+  test: {
+    include: ['src/**/*.{test,spec}.ts'],
+  },
 });
