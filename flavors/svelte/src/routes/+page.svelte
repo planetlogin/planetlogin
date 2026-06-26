@@ -35,9 +35,10 @@
   const t = $derived(T[locale?.language as string] ?? T.en);
 
   onMount(async () => {
+    // Same-origin path only — mirrors core's safeReturnPath (can't import it client-side:
+    // the core bundle pulls node deps). Must start with "/" but not "//" or "/\" (browsers
+    // fold "\"→"/", so "/\evil.com" → "//evil.com" → open redirect).
     const rt = new URLSearchParams(location.search).get('return_to');
-    // Same-origin path only: must start with "/" but not "//" or "/\" (browsers
-    // fold "\"→"/", so "/\evil.com" would resolve to "//evil.com" → open redirect).
     if (rt && /^\/[^/\\]/.test(rt)) returnTo = rt;
     await import('@planetlogin/planetlogin'); // registers <planet-login>
     globeEl?.addEventListener('locale', (e: Event) => {

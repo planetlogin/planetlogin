@@ -6,6 +6,7 @@ export * from './password.ts';
 export * from './downstream.ts';
 export * from './store.ts';
 export * from './ratelimit.ts';
+export * from './redirect.ts';
 export * from './cors.ts';
 export * from './oauth.ts';
 export * from './oauthState.ts';
