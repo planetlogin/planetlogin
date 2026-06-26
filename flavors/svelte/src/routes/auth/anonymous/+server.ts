@@ -1,3 +1,4 @@
+import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { loadConfig, signSession, createAnonymousSession, getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
 
@@ -8,7 +9,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
   if (!cfg.providers.anonymous?.enabled)
     return json({ error: { code: 'not_enabled', message: 'Anonymous sessions disabled' } }, { status: 403 });
 
-  const rl = await rateLimit(getStore(), rlKey('anon', { ip: getClientAddress() }), ruleFor('anon', cfg.security?.rateLimit));
+  const rl = await rateLimit(getStore(), rlKey('anon', { ip: clientIp({ request, getClientAddress }) }), ruleFor('anon', cfg.security?.rateLimit));
   if (!rl.ok)
     return json({ error: { code: 'rate_limited', message: 'Too many requests' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 

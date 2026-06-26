@@ -1,3 +1,4 @@
+import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { verifyPassword } from '@planetlogin/core';
@@ -16,7 +17,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
     return json({ error: { code: 'bad_request', message: 'identifier and password required' } }, { status: 400 });
 
   // Brute-force guard (no-op until session.store is configured). Keyed by IP+id.
-  const rl = await rateLimit(getStore(), rlKey('login', { ip: getClientAddress(), identifier }), ruleFor('login', cfg.security?.rateLimit));
+  const rl = await rateLimit(getStore(), rlKey('login', { ip: clientIp({ request, getClientAddress }), identifier }), ruleFor('login', cfg.security?.rateLimit));
   if (!rl.ok)
     return json({ error: { code: 'rate_limited', message: 'Too many attempts, try again later' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 

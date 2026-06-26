@@ -10,8 +10,11 @@ lives in the white-label config ([`config.schema.json`](config.schema.json));
 | Var | Required | Meaning |
 |---|---|---|
 | `PLANETLOGIN_BASE_URL` | yes | Public origin of this portal (e.g. `https://login.acme.com`). |
-| `PLANETLOGIN_BASE_PATH` | no | Mount path (default `/auth`). |
 | `PLANETLOGIN_CONFIG` | yes | The white-label config: a path to a JSON file **or** inline JSON, validated against `config.schema.json`. |
+
+> The auth endpoints live under a fixed `/auth` namespace (the route structure), e.g.
+> `<BASE_URL>/auth/config`. To mount the whole portal under another app's path, set
+> `PLANETLOGIN_BASE` (below) — endpoints then sit at `<BASE_URL><BASE>/auth/...`.
 
 ## Tokens (signing)
 
@@ -72,7 +75,7 @@ For each `providers.oauth[].id`, supply a client id + secret. The config's
 | `PLANETLOGIN_OAUTH_<ID>_CLIENT_ID` | `PLANETLOGIN_OAUTH_GOOGLE_CLIENT_ID` |
 | `PLANETLOGIN_OAUTH_<ID>_CLIENT_SECRET` | `PLANETLOGIN_OAUTH_GOOGLE_CLIENT_SECRET` |
 
-Redirect URI to register at the provider: `<BASE_URL><BASE_PATH>/oauth/<id>/callback`.
+Redirect URI to register at the provider: `<BASE_URL><BASE>/auth/oauth/<id>/callback` (with `<BASE>` empty for a subdomain portal).
 
 ## Sessions / cookies
 

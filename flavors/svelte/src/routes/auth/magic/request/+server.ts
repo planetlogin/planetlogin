@@ -1,3 +1,4 @@
+import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { signMagicToken } from '@planetlogin/core';
@@ -14,7 +15,7 @@ export const POST: RequestHandler = async ({ request, url, getClientAddress }) =
 
   // Throttle by IP only (never by identifier — that would let an attacker lock a
   // victim's mailbox). No-op until session.store is configured.
-  const rl = await rateLimit(getStore(), rlKey('magic', { ip: getClientAddress() }), ruleFor('magic', cfg.security?.rateLimit));
+  const rl = await rateLimit(getStore(), rlKey('magic', { ip: clientIp({ request, getClientAddress }) }), ruleFor('magic', cfg.security?.rateLimit));
   if (!rl.ok)
     return json({ error: { code: 'rate_limited', message: 'Too many requests, try again later' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 

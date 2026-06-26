@@ -1,3 +1,4 @@
+import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { signSession } from '@planetlogin/core';
@@ -14,7 +15,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
   if (!code) return json({ error: { code: 'bad_request', message: 'code required' } }, { status: 400 });
 
   // Throttle code-guessing (no-op until session.store is set). Keyed by IP+id.
-  const rl = await rateLimit(getStore(), rlKey('totp', { ip: getClientAddress(), identifier }), ruleFor('totp', cfg.security?.rateLimit));
+  const rl = await rateLimit(getStore(), rlKey('totp', { ip: clientIp({ request, getClientAddress }), identifier }), ruleFor('totp', cfg.security?.rateLimit));
   if (!rl.ok) return json({ error: { code: 'rate_limited', message: 'Too many attempts, try again later' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 
   const ds = downstreamFromEnv();
