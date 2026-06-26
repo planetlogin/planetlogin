@@ -31,14 +31,26 @@ class NoneStore implements SessionStore {
 
 class MemoryStore implements SessionStore {
   private m = new Map<string, { v: string; exp: number }>();
+  // Bound memory: rate-limit counters key on (ip|identifier), so a flood of unique
+  // clients would grow the map unboundedly (entries only expire when re-read). Cap
+  // the size; on overflow, sweep expired entries first, then evict oldest (insertion
+  // order) until under the cap. Default 50k keys (~a few MB); override for big fleets.
+  private max = Number(process.env.PLANETLOGIN_MEMORY_STORE_MAX) || 50_000;
   private alive(key: string): { v: string; exp: number } | undefined {
     const e = this.m.get(key);
     if (!e) return undefined;
     if (e.exp <= Date.now()) { this.m.delete(key); return undefined; }
     return e;
   }
+  private evictIfNeeded() {
+    if (this.m.size < this.max) return;
+    const now = Date.now();
+    for (const [k, e] of this.m) if (e.exp <= now) this.m.delete(k); // sweep expired
+    while (this.m.size >= this.max) { const k = this.m.keys().next().value; if (k === undefined) break; this.m.delete(k); }
+  }
   async get(key: string) { return this.alive(key)?.v ?? null; }
   async set(key: string, value: string, ttlSeconds: number) {
+    this.evictIfNeeded();
     this.m.set(key, { v: value, exp: Date.now() + ttlSeconds * 1000 });
   }
   async delete(key: string) { this.m.delete(key); }
@@ -56,23 +68,60 @@ class MemoryStore implements SessionStore {
   }
 }
 
+// Minimal Redis surface RedisStore needs — adapt your client (ioredis / node-redis)
+// to this so the core never depends on a specific redis library. `set` honours an
+// optional EX (ttl seconds) and NX (set-only-if-absent, returns null when it exists).
+export interface RedisLike {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, opts?: { ex?: number; nx?: boolean }): Promise<string | null>;
+  del(key: string): Promise<unknown>;
+  incr(key: string): Promise<number>;
+  expire(key: string, seconds: number): Promise<unknown>;
+}
+
+/** SHARED store for horizontally-scaled portals: every instance hits the same Redis,
+ *  so single-use (claimOnce) and rate-limit counters are global, not per-instance. */
+export class RedisStore implements SessionStore {
+  constructor(private r: RedisLike, private prefix = 'pl:') {}
+  private k(key: string) { return this.prefix + key; }
+  async get(key: string) { return this.r.get(this.k(key)); }
+  async set(key: string, value: string, ttlSeconds: number) { await this.r.set(this.k(key), value, { ex: ttlSeconds }); }
+  async delete(key: string) { await this.r.del(this.k(key)); }
+  async claimOnce(key: string, ttlSeconds: number) {
+    const res = await this.r.set(this.k(key), '1', { ex: ttlSeconds, nx: true });
+    return res !== null; // NX returns null when the key already existed
+  }
+  async incr(key: string, ttlSeconds: number) {
+    const n = await this.r.incr(this.k(key));
+    if (n === 1) await this.r.expire(this.k(key), ttlSeconds); // set the window TTL on first touch
+    return n;
+  }
+}
+
 export type StoreKind = 'none' | 'memory' | 'redis' | 'sqlite' | 'downstream';
 
 let cached: SessionStore | null = null;
 
-/** Build the store from config. Only none+memory ship in this flavor; the rest
- *  are declared in the spec and added per deployment need. */
+/** Inject a ready store (e.g. a RedisStore wrapping your client) at boot. Flavors call
+ *  this when PLANETLOGIN_SESSION_STORE=redis, since the core can't construct a client. */
+export function provideStore(store: SessionStore): void { cached = store; }
+
+/** Build the store from config. `none`+`memory` are built in; `redis` must be supplied
+ *  via provideStore() (the core stays client-agnostic). */
 export function getStore(kind: StoreKind = (process.env.PLANETLOGIN_SESSION_STORE as StoreKind) || 'none'): SessionStore {
   if (cached) return cached;
   switch (kind) {
     case 'memory': cached = new MemoryStore(); break;
     case 'none': cached = new NoneStore(); break;
+    case 'redis':
+      throw new Error('session.store "redis": construct a RedisStore(client) and pass it to provideStore() at boot');
     default:
-      // redis / sqlite / downstream: not bundled here yet — fail loud rather than
-      // silently run stateless when an operator asked for persistence.
-      throw new Error(`session.store "${kind}" not implemented in this flavor (use none|memory)`);
+      throw new Error(`session.store "${kind}" not implemented (use none|memory, or provideStore() for redis)`);
   }
   return cached;
 }
 
-export const _stores = { NoneStore, MemoryStore }; // for tests
+/** Reset the cached singleton (tests). */
+export function _resetStore(): void { cached = null; }
+
+export const _stores = { NoneStore, MemoryStore, RedisStore }; // for tests

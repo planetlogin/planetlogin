@@ -48,7 +48,7 @@ needs a configured `session.store` (it is a no-op with the default `none` store)
 |---|---|---|
 | `PLANETLOGIN_CORS_ORIGINS` | no | Comma-separated allowlist of origins (e.g. `https://app.acme.com,https://admin.acme.com`). Merged with `config.security.cors.origins`. `*` is only honored without credentials. |
 | `PLANETLOGIN_CORS_CREDENTIALS` | no | `false` to disable credentialed CORS (default sends `Allow-Credentials: true`). |
-| `PLANETLOGIN_SESSION_STORE` | no | `none` (default, stateless), `memory`, `redis`, `sqlite`, `downstream`. Required (non-`none`) for rate limiting **and** true single-use magic links. |
+| `PLANETLOGIN_SESSION_STORE` | no | `none` (default, stateless), `memory`, `redis`, `sqlite`, `downstream`. Required (non-`none`) for rate limiting **and** true single-use. Redis wiring → [STORES.md](STORES.md). |
 | `PLANETLOGIN_RATELIMIT_LOGIN_LIMIT` / `_WINDOW` | no | Override the login fixed-window limit (default 10 / 300s). |
 | `PLANETLOGIN_RATELIMIT_MAGIC_LIMIT` / `_WINDOW` | no | Override the magic-link limit (default 5 / 900s). |
 | `PLANETLOGIN_RATELIMIT_TOTP_LIMIT` / `_WINDOW` | no | Override the TOTP limit (default 10 / 300s). |
