@@ -16,9 +16,26 @@ and forgets. Your app does two things — **persist** (implement the §4 downstr
 npx planetlogin-keygen ./pl_ed25519.pem      # writes the EdDSA private key (chmod 600)
 ```
 
-## 2. Run a downstream (your persistence)
-Implement the seven §4 routes — see [`examples/downstream`](examples/downstream) for a
-real, copyable SQLite implementation. Point the portal at it.
+## 2. Provide a downstream (your persistence)
+The downstream is a contract (`DownstreamStore`), not necessarily a service. Pick one:
+
+**A) In-process (a SvelteKit / monolith app)** — no REST routes, no HTTP hop. Implement
+only what your enabled providers need and pass it straight to the flows:
+```ts
+import { defineStore, passwordLogin, verifyPassword, signSession } from '@planetlogin/core';
+
+const store = defineStore({
+  findUser: async (id) => db.users.findByEmailOrId(id),   // your DB
+  // add upsertUser / preferencesGet … as you enable OAuth / locale memory
+});
+
+// in src/routes/auth/login/+server.ts
+const res = await passwordLogin({ downstream: store, verifyPassword, signSession }, { identifier, password });
+```
+
+**B) HTTP (a separate auth service)** — implement the §4 routes and point the portal at
+them with `PLANETLOGIN_DOWNSTREAM_URL`/`_SECRET`. See [`examples/downstream`](examples/downstream)
+for a real, copyable SQLite implementation. Use this for multi-service setups.
 
 ## 3. Run the portal (a flavor)
 ```bash

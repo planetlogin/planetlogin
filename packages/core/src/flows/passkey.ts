@@ -1,16 +1,16 @@
 // Passkey ceremonies orchestration (spec §3 /auth/passkey/*). The WebAuthn crypto
 // is delegated to the wrapper (verify* injected → testable); here we only route to
 // the downstream credential store and mint a session. Nothing stored locally.
-import type { Downstream } from '../downstream.ts';
+import type { DownstreamStore } from '../downstream.ts';
 import type { Locale, SessionClaims } from '../jwt.ts';
 import type { StoredCredential } from '../passkey.ts';
 
 export interface RegisterVerifyDeps {
-  downstream: Downstream;
+  downstream: DownstreamStore;
   verifyRegistration: (a: { response: any; expectedChallenge: string; origin: string; rpID: string }) => Promise<{ verified: boolean; credential?: StoredCredential }>;
 }
 export interface AuthVerifyDeps {
-  downstream: Downstream;
+  downstream: DownstreamStore;
   verifyAuthentication: (a: { response: any; expectedChallenge: string; origin: string; rpID: string; credential: StoredCredential }) => Promise<{ verified: boolean; newCounter?: number }>;
   signSession: (claims: SessionClaims) => Promise<string>;
 }

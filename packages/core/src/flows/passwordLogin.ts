@@ -1,10 +1,10 @@
 // The password login flow (spec §3 /auth/password/login). Pure orchestration with
 // injected deps → fully testable. No storage, no enumeration, fail-closed.
-import type { Downstream } from '../downstream.ts';
+import type { DownstreamStore } from '../downstream.ts';
 import type { Locale, SessionClaims } from '../jwt.ts';
 
 export interface PasswordLoginDeps {
-  downstream: Downstream;
+  downstream: DownstreamStore;
   verifyPassword: (password: string, hash: string) => Promise<boolean>;
   signSession: (claims: SessionClaims) => Promise<string>;
 }

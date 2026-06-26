@@ -2,17 +2,17 @@
 // short-lived token, the integrator delivers it; verifying it mints a session.
 // No enumeration: /request ALWAYS reports accepted, whether the account exists or
 // not. Stateless: the token carries everything; nothing is stored here.
-import type { Downstream } from '../downstream.ts';
+import type { DownstreamStore } from '../downstream.ts';
 import type { Locale, SessionClaims } from '../jwt.ts';
 import type { SessionStore } from '../store.ts';
 
 export interface MagicRequestDeps {
-  downstream: Downstream;
+  downstream: DownstreamStore;
   signMagicToken: (identifier: string) => Promise<string>;
 }
 
 export interface MagicVerifyDeps {
-  downstream: Downstream;
+  downstream: DownstreamStore;
   verifyMagicToken: (token: string) => Promise<{ identifier: string; jti: string } | null>;
   signSession: (claims: SessionClaims) => Promise<string>;
   // Optional store → true single-use. With the default NoneStore, claimOnce

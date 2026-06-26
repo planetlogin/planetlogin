@@ -2,12 +2,12 @@
 // code, fetch the profile, upsert the user DOWNSTREAM by (provider, providerUserId)
 // — the canonical link; the integrator decides account-linking — then mint a
 // session. Pure/injectable; nothing stored here.
-import type { Downstream } from '../downstream.ts';
+import type { DownstreamStore } from '../downstream.ts';
 import type { Locale, SessionClaims } from '../jwt.ts';
 import { exchangeCode, fetchProfile, type ProviderConfig } from '../oauth.ts';
 
 export interface OAuthLoginDeps {
-  downstream: Downstream;
+  downstream: DownstreamStore;
   signSession: (claims: SessionClaims) => Promise<string>;
 }
 

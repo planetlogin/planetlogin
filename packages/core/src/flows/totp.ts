@@ -1,10 +1,10 @@
 // TOTP (2FA) flows (spec §3 /auth/totp/*). Enroll generates a secret + otpauth URI
 // (the integrator stores the secret); verify checks a code and, on first success,
 // confirms enrollment (enabled=true). Pure orchestration; secret lives downstream.
-import type { Downstream } from '../downstream.ts';
+import type { DownstreamStore } from '../downstream.ts';
 import { newTotpSecret, totpKeyUri, verifyTotp } from '../totp.ts';
 
-export interface TotpDeps { downstream: Downstream }
+export interface TotpDeps { downstream: DownstreamStore }
 
 export async function totpEnroll(
   deps: TotpDeps,

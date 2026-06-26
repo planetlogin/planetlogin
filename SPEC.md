@@ -80,9 +80,19 @@ Rules:
 
 ## 4. Downstream API (the integrator implements; PlanetLogin calls)
 
-Base URL from `PLANETLOGIN_DOWNSTREAM_URL`; requests authenticated with
-`PLANETLOGIN_DOWNSTREAM_SECRET` (Bearer). PlanetLogin calls — the integrator owns
-the storage. A flavor MUST call these and MUST tolerate 404s.
+The downstream is a **contract** (`DownstreamStore`), not necessarily a network
+service. Two equivalent ways to provide it — same shape, integrator's choice:
+
+- **In-process** (a monolith / SvelteKit app): implement the methods as local
+  functions over your DB — `defineStore({ findUser: (id) => db.query(…), … })` —
+  and pass it to the flows. No REST routes, no HTTP hop. Implement only the
+  methods your enabled providers use.
+- **HTTP** (a separate auth service, multi-service verification): expose the
+  routes below; `new Downstream(url, secret)` (`downstreamFromEnv()`) is the client.
+  Base URL from `PLANETLOGIN_DOWNSTREAM_URL`, Bearer `PLANETLOGIN_DOWNSTREAM_SECRET`.
+
+The integrator owns the storage; a flavor MUST tolerate 404s (→ null). The HTTP
+route table (also the method names of the in-process contract):
 
 | Method · Path | PlanetLogin sends | Expects |
 |---|---|---|

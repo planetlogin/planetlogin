@@ -1,5 +1,12 @@
-// Downstream identity client (spec §4). PlanetLogin stores nothing — it calls the
-// integrator's REST store for every read/write. Fails closed (deny) on error.
+// The downstream store (spec §4). PlanetLogin stores nothing — it reads/writes
+// the integrator's store for every operation, and fails closed (deny) on error.
+//
+// `DownstreamStore` is the CONTRACT (an interface). There are two ways to provide
+// it, same shape, your choice:
+//   • HTTP: `new Downstream(url, secret)` — a separate service, multi-service auth.
+//   • IN-PROCESS: `defineStore({ findUser: (id) => db.query(...) , ... })` — talk to
+//     your DB directly from the same app (a SvelteKit monolith), no REST, no hop.
+// The auth flows take a `DownstreamStore`, so either works identically.
 import type { Locale } from './jwt.ts';
 
 export interface DownstreamUser {
@@ -19,7 +26,45 @@ export interface UserPreferences {
   data?: Record<string, unknown>;
 }
 
-export class Downstream {
+/** The §4 contract. Implement it in-process (DB calls) or use the HTTP `Downstream`.
+ *  Only the methods your enabled providers need are ever called. */
+export interface DownstreamStore {
+  findUser(identifier: string): Promise<DownstreamUser | null>;
+  upsertUser(data: { provider: string; providerUserId?: string; email?: string; name?: string; profile?: unknown }): Promise<DownstreamUser | null>;
+  deliverMagic(data: { identifier: string; link: string; locale?: Locale }): Promise<unknown>;
+  passkeysFind(query: { userId?: string; credentialId?: string }): Promise<{ userId: string; credentials: any[] } | null>;
+  passkeysSave(data: { userId: string; credential: any }): Promise<unknown>;
+  totpGet(query: { userId: string }): Promise<{ secret: string; enabled: boolean } | null>;
+  totpSave(data: { userId: string; secret: string; enabled: boolean }): Promise<unknown>;
+  preferencesGet(query: { userId: string }): Promise<UserPreferences | null>;
+  preferencesSave(data: { userId: string } & UserPreferences): Promise<unknown>;
+}
+
+/**
+ * Build a `DownstreamStore` from an IN-PROCESS partial implementation — implement
+ * only what your enabled providers use (e.g. just `findUser` for password login).
+ * Any method you didn't provide throws a clear error if ever called (fail-closed).
+ *
+ *   const store = defineStore({ findUser: (id) => db.users.findByEmailOrId(id) });
+ *   await passwordLogin({ downstream: store, verifyPassword, signSession }, input);
+ */
+export function defineStore(impl: Partial<DownstreamStore>): DownstreamStore {
+  const miss = (m: string) => async () => { throw new Error(`@planetlogin/core: downstream.${m}() is required by an enabled provider but not implemented`); };
+  return {
+    findUser: impl.findUser ?? miss('findUser'),
+    upsertUser: impl.upsertUser ?? miss('upsertUser'),
+    deliverMagic: impl.deliverMagic ?? miss('deliverMagic'),
+    passkeysFind: impl.passkeysFind ?? miss('passkeysFind'),
+    passkeysSave: impl.passkeysSave ?? miss('passkeysSave'),
+    totpGet: impl.totpGet ?? miss('totpGet'),
+    totpSave: impl.totpSave ?? miss('totpSave'),
+    preferencesGet: impl.preferencesGet ?? miss('preferencesGet'),
+    preferencesSave: impl.preferencesSave ?? miss('preferencesSave'),
+  };
+}
+
+/** HTTP implementation of the contract (a separate downstream service). */
+export class Downstream implements DownstreamStore {
   constructor(
     private baseUrl: string,
     private secret: string,

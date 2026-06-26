@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — in-process downstream
+
+### Added (`@planetlogin/core`)
+- **In-process downstream** — the §4 contract is now an exported interface `DownstreamStore`, and `defineStore({ findUser, … })` builds one from local functions. A SvelteKit/monolith app can talk to its DB directly (no REST routes, no HTTP hop); implement only the methods your enabled providers use (unimplemented ones throw a clear fail-closed error). The HTTP `Downstream` now `implements DownstreamStore`, and every flow takes a `DownstreamStore` — so in-process and HTTP are interchangeable.
+- Docs: SPEC §4, INTEGRATION.md (the in-process pattern for SvelteKit). +3 tests (core 72). No breaking changes (the HTTP path is unchanged).
+
 ## [Unreleased] — anonymous / guest sessions
 
 ### Added (`@planetlogin/core` + flavors)

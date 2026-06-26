@@ -2,11 +2,11 @@
 // stores nothing — these proxy the downstream, with light sanitization so a client
 // can't write junk into the typed `locale`. The open `data` bag is passed through
 // for the integrator to use as "that kind of info" storage.
-import type { Downstream, UserPreferences } from '../downstream.ts';
+import type { DownstreamStore, UserPreferences } from '../downstream.ts';
 import type { Locale } from '../jwt.ts';
 
 export interface PreferencesDeps {
-  downstream: Pick<Downstream, 'preferencesGet' | 'preferencesSave'>;
+  downstream: Pick<DownstreamStore, 'preferencesGet' | 'preferencesSave'>;
 }
 
 /** Keep only the known, well-typed locale fields (drop anything else). */
