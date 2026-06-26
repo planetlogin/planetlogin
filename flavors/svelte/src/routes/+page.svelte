@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { base } from '$app/paths';
+
+  let { data } = $props(); // { appOrigin } from +page.server.ts
 
   // i18n — the global-audience angle: the form re-localizes from the globe pick.
   const T: Record<string, Record<string, string>> = {
@@ -22,9 +25,20 @@
   let flyOnLogin = $state(false);
   let globeEl: HTMLElement;
 
+  // Same-origin path-mount (e.g. calcat.app/auth): on success, hand control back to
+  // the host app. Sanitised to a same-origin path to avoid open redirects.
+  let returnTo = '/';
+  // returnTo is a sanitised same-origin path; for a subdomain portal we prepend the
+  // trusted app origin (data.appOrigin) so login on auth.calcat.app returns to calcat.app.
+  function goReturn() { window.location.href = (data.appOrigin || '') + returnTo; }
+
   const t = $derived(T[locale?.language as string] ?? T.en);
 
   onMount(async () => {
+    const rt = new URLSearchParams(location.search).get('return_to');
+    // Same-origin path only: must start with "/" but not "//" or "/\" (browsers
+    // fold "\"→"/", so "/\evil.com" would resolve to "//evil.com" → open redirect).
+    if (rt && /^\/[^/\\]/.test(rt)) returnTo = rt;
     await import('@planetlogin/planetlogin'); // registers <planet-login>
     globeEl?.addEventListener('locale', (e: Event) => {
       locale = (e as CustomEvent).detail;
@@ -32,7 +46,7 @@
     });
     // render from the white-label config (spec §5)
     try {
-      const c = await (await fetch('/auth/config')).json();
+      const c = await (await fetch(`${base}/auth/config`)).json();
       providers = c.providers ?? providers;
       flyOnLogin = c.locale?.flyToOnLogin ?? false;
     } catch {}
@@ -43,7 +57,7 @@
   async function maybeFlyToAccount() {
     if (!flyOnLogin) return;
     try {
-      const p = await (await fetch('/auth/preferences')).json();
+      const p = await (await fetch(`${base}/auth/preferences`)).json();
       const l = p?.locale;
       if (l && typeof l.lat === 'number' && typeof l.lon === 'number') (globeEl as any).flyTo?.(l.lon, l.lat);
     } catch {}
@@ -53,7 +67,7 @@
     if (!email) { msg = '✗ enter your email'; ok = false; return; }
     busy = true; msg = '';
     try {
-      await fetch('/auth/magic/request', {
+      await fetch(`${base}/auth/magic/request`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ identifier: email, locale }),
       });
@@ -69,7 +83,7 @@
     e.preventDefault();
     busy = true; msg = '';
     try {
-      const r = await fetch('/auth/password/login', {
+      const r = await fetch(`${base}/auth/password/login`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ identifier: email, password, locale }),
       });
@@ -77,7 +91,7 @@
       if (r.ok && data.requires === 'totp') { mfa = true; msg = ''; return; }
       ok = r.ok;
       msg = r.ok ? `✓ ${data.user?.email ?? 'signed in'}` : `✗ ${data.error?.code ?? r.status}`;
-      if (r.ok) maybeFlyToAccount();
+      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = '✗ network error'; }
     finally { busy = false; }
   }
@@ -85,13 +99,13 @@
   async function totpVerify() {
     busy = true; msg = '';
     try {
-      const r = await fetch('/auth/totp/verify', {
+      const r = await fetch(`${base}/auth/totp/verify`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }),
       });
       const data = await r.json();
       ok = r.ok; mfa = !r.ok;
       msg = r.ok ? `✓ ${data.user?.id ?? 'signed in'}` : `✗ ${data.error?.code ?? 'bad code'}`;
-      if (r.ok) maybeFlyToAccount();
+      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = '✗ network error'; }
     finally { busy = false; }
   }
@@ -100,22 +114,25 @@
     busy = true; msg = '';
     try {
       const { startAuthentication } = await import('@simplewebauthn/browser');
-      const options = await (await fetch('/auth/passkey/challenge', {
+      const options = await (await fetch(`${base}/auth/passkey/challenge`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'auth' }),
       })).json();
       const response = await startAuthentication({ optionsJSON: options });
-      const r = await fetch('/auth/passkey/verify', {
+      const r = await fetch(`${base}/auth/passkey/verify`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ response }),
       });
       const data = await r.json();
       ok = r.ok;
       msg = r.ok ? `✓ ${data.user?.id ?? 'signed in'}` : `✗ ${data.error?.code ?? 'failed'}`;
-      if (r.ok) maybeFlyToAccount();
+      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = '✗ passkey cancelled'; }
     finally { busy = false; }
   }
 
-  const oauthStart = (id: string) => { window.location.href = `/auth/oauth/${id}/start`; };
+  const oauthStart = (id: string) => {
+    const rt = encodeURIComponent(returnTo);
+    window.location.href = `${base}/auth/oauth/${id}/start?return_to=${rt}`;
+  };
 </script>
 
 <div class="stage">

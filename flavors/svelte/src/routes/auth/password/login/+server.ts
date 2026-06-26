@@ -45,8 +45,12 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
       { status: res.code === 'downstream_unavailable' ? 503 : 401 },
     );
 
+  // PLANETLOGIN_COOKIE_DOMAIN (e.g. .calcat.app) lets a subdomain portal
+  // (auth.calcat.app) set a cookie the app on calcat.app reads — same-site, not
+  // third-party-blocked. Empty = host-only. (Set it on every provider you enable.)
   cookies.set(process.env.PLANETLOGIN_COOKIE_NAME || 'planetlogin_session', res.token, {
     path: '/', httpOnly: true, secure: true, sameSite: 'lax',
+    domain: process.env.PLANETLOGIN_COOKIE_DOMAIN || undefined,
   });
 
   // Tier 2 account memory (gate A): persist the picked locale to the user's

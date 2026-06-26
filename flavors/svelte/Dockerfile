@@ -13,6 +13,10 @@
 
 FROM node:22-alpine AS build
 WORKDIR /app
+# Mount point baked at build time (paths.base). Empty = subdomain; e.g. /auth to
+# consume PlanetLogin same-origin under another app's path.
+ARG PLANETLOGIN_BASE=""
+ENV PLANETLOGIN_BASE=$PLANETLOGIN_BASE
 COPY package.json package-lock.json* ./
 RUN npm install --no-audit --no-fund
 COPY . .
