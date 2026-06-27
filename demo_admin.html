@@ -139,7 +139,7 @@
   </div>
 </div>
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@planetlogin/planetlogin"></script>
+<script type="module" src="./planetlogin.js"></script>
 <script>
   const $ = (id) => document.getElementById(id);
   let tab = 'json';
@@ -204,6 +204,7 @@
     $('lpanel').style.display = c.layout.globePosition === 'full' ? 'none' : '';
     wrap.innerHTML = '';
     globe = document.createElement('planet-login');
+    globe.setAttribute('data-url', './countries-110m.json');
     globe.setAttribute('accent', c.brand.accent);
     globe.setAttribute('search', String(c.layout.showSearch));
     globe.setAttribute('autospin', String(c.layout.autoSpin));

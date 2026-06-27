@@ -127,7 +127,7 @@
     <div>
       <div class="demo-stage">
         <div class="readout" id="readout"><span class="chip">↻ drag the globe or search a place</span></div>
-        <planet-login accent="#f6a13c"></planet-login>
+        <planet-login accent="#f6a13c" data-url="./countries-110m.json"></planet-login>
       </div>
     </div>
   </div>
@@ -235,7 +235,7 @@ onDestroy(() =&gt; g?.destroy());</pre></div>
   </div>
 </footer>
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@planetlogin/planetlogin"></script>
+<script type="module" src="./planetlogin.js"></script>
 <script>
   // quickstart tabs
   document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
