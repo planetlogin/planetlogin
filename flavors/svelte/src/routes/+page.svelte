@@ -139,7 +139,7 @@
 <div class="stage">
   <!-- Tier 0 locale memory: remember the picked place on this device and fly back
        to it on return — zero backend. (Per-account memory is a Tier 2 upgrade.) -->
-  <planet-login bind:this={globeEl} accent="#f6a13c" remember fly-to-saved></planet-login>
+  <planet-login bind:this={globeEl} accent="#f6a13c" data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
 
   <aside class="panel">
     {#if mfa}

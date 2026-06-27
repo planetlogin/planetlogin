@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@planetlogin/core": "^0.8.0",
-    "@planetlogin/planetlogin": "^0.2.0",
+    "@planetlogin/planetlogin": "^0.3.0",
     "@simplewebauthn/browser": "^13.3.0"
   },
   "devDependencies": {

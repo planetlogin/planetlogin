@@ -25,6 +25,9 @@ export class PlanetLoginElement extends HTMLElement {
     const opts: PlanetLoginOptions = {
       accent: this.getAttribute('accent') ?? undefined,
       resolution: (this.getAttribute('resolution') as '110m' | '50m') ?? undefined,
+      // Override the world-atlas TopoJSON URL — e.g. a same-origin copy so the globe
+      // never depends on a third-party CDN at runtime (CSP/adblock/offline proof).
+      dataUrl: this.getAttribute('data-url') ?? undefined,
       placeholder: this.getAttribute('placeholder') ?? undefined,
       search: this.getAttribute('search') !== 'false',
       autoSpin: this.getAttribute('autospin') !== 'false',
