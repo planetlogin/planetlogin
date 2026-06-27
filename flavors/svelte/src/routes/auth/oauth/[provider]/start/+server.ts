@@ -1,7 +1,22 @@
 import { redirect, json, type RequestHandler } from '@sveltejs/kit';
-import { loadConfig, safeReturnPath } from '@planetlogin/core';
+import { loadConfig } from '@planetlogin/core';
 import { getProvider, oauthStart } from '@planetlogin/core';
 import { sealOAuthState } from '@planetlogin/core';
+
+// Same-origin open-redirect guard. Mirrors core's safeReturnPath; the published
+// @planetlogin/core@0.8.0 doesn't export it yet, so keep a local copy. Returns a
+// relative same-site path (pathname+search+hash) or '/' if anything is off-origin
+// or malformed (absolute URLs, protocol-relative //host, etc.).
+function safeReturnPath(returnTo: string | null, origin: string): string {
+  if (!returnTo) return '/';
+  try {
+    const u = new URL(returnTo, origin);
+    if (u.origin !== origin) return '/';
+    return u.pathname + u.search + u.hash;
+  } catch {
+    return '/';
+  }
+}
 
 // GET /auth/oauth/{provider}/start — PKCE + state in an encrypted cookie, 302 out.
 export const GET: RequestHandler = async ({ params, url, cookies }) => {
