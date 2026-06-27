@@ -85,6 +85,7 @@
       <div class="row"><label>Magic link</label><span class="sw"><input type="checkbox" id="p-magic"><span></span></span></div>
       <div class="row"><label>Passkeys</label><span class="sw"><input type="checkbox" id="p-passkeys" checked><span></span></span></div>
       <div class="row"><label>2FA (TOTP)</label><span class="sw"><input type="checkbox" id="p-totp"><span></span></span></div>
+      <div class="row"><label>Anonymous <span class="hint">guest · no account</span></label><span class="sw"><input type="checkbox" id="p-anon"><span></span></span></div>
     </div>
     <div class="sec">
       <h3>Layout</h3>
@@ -104,6 +105,10 @@
       <h3>Security</h3>
       <div class="row"><label>Token algorithm</label>
         <select id="s-alg"><option value="EdDSA">EdDSA</option><option value="RS256">RS256</option><option value="ES256">ES256</option><option value="HS256">HS256</option></select></div>
+      <div class="row"><label>Encrypt token <span class="hint">JWE · confidential claims</span></label><span class="sw"><input type="checkbox" id="s-encrypt"><span></span></span></div>
+      <div class="row"><label>Session store <span class="hint">redis = scale</span></label>
+        <select id="s-store"><option value="none">none</option><option value="memory">memory</option><option value="redis">redis</option></select></div>
+      <div class="row"><label>Login rate limit <span class="hint">per 5 min · blank = off</span></label><input type="number" id="s-rl" min="1" placeholder="off"></div>
       <div class="row"><label>CORS origins <span class="hint">comma-separated</span></label><input type="text" id="s-cors" placeholder="https://app.acme.com"></div>
     </div>
   </div>
@@ -158,6 +163,7 @@
         magicLink: { enabled: $('p-magic').checked },
         passkeys: { enabled: $('p-passkeys').checked },
         totp: { enabled: $('p-totp').checked },
+        anonymous: { enabled: $('p-anon').checked },
       },
       layout: { globePosition: $('l-pos').value, showSearch: $('l-search').checked, autoSpin: $('l-spin').checked },
     };
@@ -167,11 +173,20 @@
     if ($('m-persist').checked) locale.persist = true;
     if ($('m-flylogin').checked) locale.flyToOnLogin = true;
     if (Object.keys(locale).length) c.locale = locale;
-    // Token algorithm — only emit when non-default.
-    if ($('s-alg').value !== 'EdDSA') c.token = { algorithm: $('s-alg').value };
-    // CORS allowlist.
+    // Token: algorithm (non-default) + optional JWE encryption.
+    const token = {};
+    if ($('s-alg').value !== 'EdDSA') token.algorithm = $('s-alg').value;
+    if ($('s-encrypt').checked) token.encrypt = true;
+    if (Object.keys(token).length) c.token = token;
+    // Session store — only emit when not the stateless default.
+    if ($('s-store').value !== 'none') c.session = { store: $('s-store').value };
+    // Security: CORS allowlist + login rate limit.
+    const security = {};
     const cors = $('s-cors').value.split(',').map(s => s.trim()).filter(Boolean);
-    if (cors.length) c.security = { cors: { origins: cors } };
+    if (cors.length) security.cors = { origins: cors };
+    const rl = parseInt($('s-rl').value, 10);
+    if (rl > 0) security.rateLimit = { login: { limit: rl, windowSeconds: 300 } };
+    if (Object.keys(security).length) c.security = security;
     return c;
   }
 
@@ -188,6 +203,9 @@
     lines.push(alg === 'HS256'
       ? 'PLANETLOGIN_JWT_SECRET=/run/secrets/planetlogin_hs256.key'
       : 'PLANETLOGIN_JWT_PRIVATE_KEY=/run/secrets/planetlogin_signing.pem');
+    if (c.token?.encrypt) lines.push('PLANETLOGIN_JWT_ENCRYPT=true', 'PLANETLOGIN_JWE_KEY=…  # npx planetlogin-keygen --jwe');
+    if (c.session?.store) lines.push(`PLANETLOGIN_SESSION_STORE=${c.session.store}`);
+    if (c.security?.rateLimit?.login) lines.push(`PLANETLOGIN_RATELIMIT_LOGIN_LIMIT=${c.security.rateLimit.login.limit}`);
     if (c.security?.cors?.origins?.length) lines.push('PLANETLOGIN_CORS_ORIGINS=' + c.security.cors.origins.join(','));
     for (const o of c.providers.oauth) {
       const u = o.id.toUpperCase();
@@ -227,6 +245,7 @@
     for (const o of c.providers.oauth) social.push(`Continue with ${o.id[0].toUpperCase()+o.id.slice(1)}`);
     if (c.providers.magicLink.enabled) social.push('Email me a magic link');
     if (c.providers.passkeys.enabled) social.push('Use a passkey');
+    if (c.providers.anonymous?.enabled) social.push('Continue as guest');
     $('pv-social').innerHTML = social.map(s => `<div class="lsoc">${s}</div>`).join('');
     const hasSocial = social.length > 0;
     $('pv-social-wrap').style.display = hasSocial ? '' : 'none';
