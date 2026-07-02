@@ -244,10 +244,12 @@ onDestroy(() =&gt; g?.destroy());</pre></div>
 <section class="block" id="core">
   <div class="wrap">
     <p class="eyebrow">More than a globe</p>
-    <h2>A full auth service — stateless, no database.</h2>
+    <h2>A full auth service — stateless, no database of its own.</h2>
     <p class="sub">The globe is the face. Behind it, <code>@planetlogin/core</code> is a framework-agnostic
       login service: password, OAuth/OIDC, magic links, passkeys, TOTP and anonymous sessions. It signs an
-      asymmetric JWT (EdDSA) and publishes a JWKS — <b>PlanetLogin stores nothing</b>; your app is the source of truth.</p>
+      asymmetric JWT (EdDSA) and publishes a JWKS. <b>PlanetLogin keeps no database of its own</b> — it reads and
+      writes <i>your</i> store over REST (or in-process), so your app stays the source of truth. Need zero backend?
+      Run anonymous guest sessions with no store at all. The stores below are optional batteries.</p>
     <div class="tabs">
       <button class="on" data-t="login">Login</button>
       <button data-t="verify">Verify</button>
