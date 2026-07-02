@@ -104,6 +104,13 @@
   footer a{color:var(--muted);text-decoration:none}footer a:hover{color:var(--text)}
   footer .sp{flex:1}
 
+  /* --- thin, overlay-style scrollbars (kept visible — accessibility-safe) --- */
+  *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.32);background-clip:padding-box}
+
   /* --- planetlogin.org shared top nav (identical on every page) --- */
   .pl-header{display:block;height:auto;padding:0;position:sticky;top:0;z-index:100;background:rgba(7,11,22,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .pl-nav{display:flex;align-items:center;gap:16px;height:60px;max-width:1080px;margin:0 auto;padding:0 24px}
