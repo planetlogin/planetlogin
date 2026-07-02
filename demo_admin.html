@@ -16,7 +16,7 @@
   header{display:flex;align-items:center;gap:14px;height:56px;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(7,11,22,.7);backdrop-filter:blur(8px)}
   .brand{display:flex;align-items:center;gap:9px;font-weight:700;text-decoration:none;color:var(--text)} .brand img{width:24px}
   header .sp{flex:1} header .tag{color:var(--muted);font-size:.85rem} header a.l{color:var(--muted);text-decoration:none;font-size:.88rem;margin-left:16px}
-  .grid{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 56px)}
+  .grid{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 60px)}
   /* controls */
   .controls{overflow:auto;border-right:1px solid var(--line);padding:18px 18px 60px}
   .sec{margin-bottom:22px}
@@ -55,15 +55,34 @@
   .tabs .sp{flex:1} .copy{background:var(--accent);color:var(--ink);border:0;border-radius:8px;padding:.35rem .8rem;font-weight:700;font-size:.8rem;cursor:pointer;align-self:center}
   pre.out{margin:0;padding:12px 16px;overflow:auto;font-size:.78rem;line-height:1.5;font-family:ui-monospace,Menlo,monospace;color:#cdd8f0}
   @media(max-width:900px){.grid{grid-template-columns:1fr;height:auto}.controls{border-right:0;border-bottom:1px solid var(--line)}.stage{height:60vh}}
+
+  /* --- planetlogin.org shared top nav (identical on every page) --- */
+  .pl-header{display:block;height:auto;padding:0;position:sticky;top:0;z-index:100;background:rgba(7,11,22,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .pl-nav{display:flex;align-items:center;gap:16px;height:60px;max-width:1080px;margin:0 auto;padding:0 24px}
+  .pl-nav .pl-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--text)}
+  .pl-nav .pl-brand img{width:26px;height:26px}
+  .pl-nav .pl-sp{flex:1}
+  .pl-nav a.pl-link{color:var(--muted);text-decoration:none;font-size:.92rem;font-weight:500}
+  .pl-nav a.pl-link:hover{color:var(--text)}
+  .pl-nav .pl-btn{display:inline-flex;align-items:center;gap:8px;border-radius:11px;padding:.5rem .9rem;font-weight:600;font-size:.9rem;text-decoration:none;border:1px solid var(--line);color:var(--text)}
+  .pl-nav .pl-btn:hover{border-color:var(--muted)}
+  .pl-nav .pl-btn.primary{background:var(--accent);color:#231400;border:0}
+  @media(max-width:760px){.pl-nav a.pl-link{display:none}}
 </style>
 </head>
 <body>
-<header>
-  <a class="brand" href="/"><img src="/favicon.svg" alt="">PlanetLogin</a>
-  <span class="tag">· White-label studio</span>
-  <span class="sp"></span>
-  <a class="l" href="/whitepaper.html">Whitepaper</a>
-  <a class="l" href="https://github.com/planetlogin/planetlogin/blob/main/config.schema.json" target="_blank" rel="noopener">Schema ↗</a>
+<header class="pl-header">
+  <nav class="pl-nav">
+    <a class="pl-brand" href="/"><img src="/favicon.svg" alt="">PlanetLogin</a>
+    <span class="pl-sp"></span>
+    <a class="pl-link" href="/#features">Features</a>
+    <a class="pl-link" href="/#core">Auth service</a>
+    <a class="pl-link" href="/demo.html">Live demo</a>
+    <a class="pl-link" href="/whitepaper.html">Whitepaper</a>
+    <a class="pl-link" href="/demo_admin.html">Studio</a>
+    <a class="pl-link" href="https://www.npmjs.com/package/@planetlogin/planetlogin" target="_blank" rel="noopener">npm</a>
+    <a class="pl-btn primary" href="https://github.com/planetlogin/planetlogin" target="_blank" rel="noopener">GitHub</a>
+  </nav>
 </header>
 
 <div class="grid">
