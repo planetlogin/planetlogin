@@ -49,6 +49,21 @@ jobs:
       - run: npm test -w @planetlogin/store-sqlite
       - run: npm run build -w @planetlogin/store-sqlite
 
+  # @planetlogin/store-postgres — batteries-included DownstreamStore over any
+  # pg-compatible client. Tests run against an in-process Postgres (PGlite/WASM).
+  store-postgres:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci                                   # builds @planetlogin/core dist (prepare)
+      - run: npm run typecheck -w @planetlogin/store-postgres
+      - run: npm test -w @planetlogin/store-postgres
+      - run: npm run build -w @planetlogin/store-postgres
+
   # Black-box conformance suite run against the built Svelte flavor (spec §3).
   conformance:
     runs-on: ubuntu-latest

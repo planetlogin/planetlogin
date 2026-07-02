@@ -1,0 +1,35 @@
+{
+  "name": "@planetlogin/store-postgres",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Batteries-included Postgres DownstreamStore for PlanetLogin — real accounts (password, OAuth, passkeys, TOTP, preferences) over any pg-compatible client, zero driver deps.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "tsup",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@planetlogin/core": ">=0.6.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.0",
+    "@planetlogin/core": "*",
+    "@types/node": "^26.0.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
