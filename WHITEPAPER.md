@@ -1,8 +1,9 @@
 # PlanetLogin — Whitepaper
 
 > A professional, white-label **login portal** you drop in front of any app —
-> stateless, no database, integrates over REST, and greets every visitor in
-> their own language from a spinning globe.
+> stateless (it keeps **no database of its own** — your store owns the data, or
+> none at all for guest sessions), integrates over REST, and greets every visitor
+> in their own language from a spinning globe.
 
 **Status:** vision / v1 design. This document is the root of the project — the
 *spec*, the *conformance suite*, the *benchmark harness* and every framework

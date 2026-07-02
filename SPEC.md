@@ -12,7 +12,9 @@ See [WHITEPAPER.md](WHITEPAPER.md) for the *why*.
 
 ## 1. Model
 
-PlanetLogin is **stateless**. It holds **no database**. It has two REST surfaces:
+PlanetLogin is **stateless** — it holds **no database of its own**. Persistence lives
+in the integrator's store (or nowhere at all, for anonymous guest sessions). It has two
+REST surfaces:
 
 ```
             ┌──────────────── EXPOSED API (§3) ────────────────┐
