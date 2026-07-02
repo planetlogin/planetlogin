@@ -97,35 +97,35 @@
     </div>
     <div class="sec">
       <h3>Providers</h3>
-      <div class="row"><label>Email + password</label><span class="sw"><input type="checkbox" id="p-password" checked><span></span></span></div>
-      <div class="row"><label>↳ allow register</label><span class="sw"><input type="checkbox" id="p-register"><span></span></span></div>
-      <div class="row"><label>Google</label><span class="sw"><input type="checkbox" id="p-google" checked><span></span></span></div>
-      <div class="row"><label>GitHub</label><span class="sw"><input type="checkbox" id="p-github"><span></span></span></div>
-      <div class="row"><label>Apple</label><span class="sw"><input type="checkbox" id="p-apple"><span></span></span></div>
-      <div class="row"><label>Magic link</label><span class="sw"><input type="checkbox" id="p-magic"><span></span></span></div>
-      <div class="row"><label>Passkeys</label><span class="sw"><input type="checkbox" id="p-passkeys" checked><span></span></span></div>
-      <div class="row"><label>2FA (TOTP)</label><span class="sw"><input type="checkbox" id="p-totp"><span></span></span></div>
-      <div class="row"><label>Anonymous <span class="hint">guest · no account</span></label><span class="sw"><input type="checkbox" id="p-anon"><span></span></span></div>
+      <div class="row"><label>Email + password</label><label class="sw"><input type="checkbox" id="p-password" checked><span></span></label></div>
+      <div class="row"><label>↳ allow register</label><label class="sw"><input type="checkbox" id="p-register"><span></span></label></div>
+      <div class="row"><label>Google</label><label class="sw"><input type="checkbox" id="p-google" checked><span></span></label></div>
+      <div class="row"><label>GitHub</label><label class="sw"><input type="checkbox" id="p-github"><span></span></label></div>
+      <div class="row"><label>Apple</label><label class="sw"><input type="checkbox" id="p-apple"><span></span></label></div>
+      <div class="row"><label>Magic link</label><label class="sw"><input type="checkbox" id="p-magic"><span></span></label></div>
+      <div class="row"><label>Passkeys</label><label class="sw"><input type="checkbox" id="p-passkeys" checked><span></span></label></div>
+      <div class="row"><label>2FA (TOTP)</label><label class="sw"><input type="checkbox" id="p-totp"><span></span></label></div>
+      <div class="row"><label>Anonymous <span class="hint">guest · no account</span></label><label class="sw"><input type="checkbox" id="p-anon"><span></span></label></div>
     </div>
     <div class="sec">
       <h3>Layout</h3>
       <div class="row"><label>Globe position</label>
         <select id="l-pos"><option value="left">left</option><option value="right">right</option><option value="full">full</option></select></div>
-      <div class="row"><label>Search box</label><span class="sw"><input type="checkbox" id="l-search" checked><span></span></span></div>
-      <div class="row"><label>Auto-spin</label><span class="sw"><input type="checkbox" id="l-spin" checked><span></span></span></div>
+      <div class="row"><label>Search box</label><label class="sw"><input type="checkbox" id="l-search" checked><span></span></label></div>
+      <div class="row"><label>Auto-spin</label><label class="sw"><input type="checkbox" id="l-spin" checked><span></span></label></div>
     </div>
     <div class="sec">
       <h3>Locale memory</h3>
-      <div class="row"><label>Remember on device <span class="hint">Tier 0 · no backend · live →</span></label><span class="sw"><input type="checkbox" id="m-remember"><span></span></span></div>
-      <div class="row"><label>↳ fly to saved on load</label><span class="sw"><input type="checkbox" id="m-flysaved"><span></span></span></div>
-      <div class="row"><label>Persist to account <span class="hint">Tier 2 · needs a backend</span></label><span class="sw"><input type="checkbox" id="m-persist"><span></span></span></div>
-      <div class="row"><label>↳ fly to account on login</label><span class="sw"><input type="checkbox" id="m-flylogin"><span></span></span></div>
+      <div class="row"><label>Remember on device <span class="hint">Tier 0 · no backend · live →</span></label><label class="sw"><input type="checkbox" id="m-remember"><span></span></label></div>
+      <div class="row"><label>↳ fly to saved on load</label><label class="sw"><input type="checkbox" id="m-flysaved"><span></span></label></div>
+      <div class="row"><label>Persist to account <span class="hint">Tier 2 · needs a backend</span></label><label class="sw"><input type="checkbox" id="m-persist"><span></span></label></div>
+      <div class="row"><label>↳ fly to account on login</label><label class="sw"><input type="checkbox" id="m-flylogin"><span></span></label></div>
     </div>
     <div class="sec">
       <h3>Security</h3>
       <div class="row"><label>Token algorithm</label>
         <select id="s-alg"><option value="EdDSA">EdDSA</option><option value="RS256">RS256</option><option value="ES256">ES256</option><option value="HS256">HS256</option></select></div>
-      <div class="row"><label>Encrypt token <span class="hint">JWE · confidential claims</span></label><span class="sw"><input type="checkbox" id="s-encrypt"><span></span></span></div>
+      <div class="row"><label>Encrypt token <span class="hint">JWE · confidential claims</span></label><label class="sw"><input type="checkbox" id="s-encrypt"><span></span></label></div>
       <div class="row"><label>Session store <span class="hint">redis = scale</span></label>
         <select id="s-store"><option value="none">none</option><option value="memory">memory</option><option value="redis">redis</option></select></div>
       <div class="row"><label>Login rate limit <span class="hint">per 5 min · blank = off</span></label><input type="number" id="s-rl" min="1" placeholder="off"></div>
