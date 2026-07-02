@@ -10,7 +10,9 @@
 <style>
   @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2-variations');font-weight:100 900;font-display:swap}
   :root{--bg:#070b16;--surface:#0d1422;--surface-2:#131c2e;--accent:#f6a13c;--ink:#231400;--text:#eef2fb;--muted:#9aa7bd;--line:rgba(255,255,255,.12)}
-  *{box-sizing:border-box} html{scrollbar-gutter:stable} html,body{height:100%;margin:0}
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  /* full-height app on desktop: no document scrollbar (only the inner panes scroll) */
+  @media(min-width:901px){body{overflow:hidden}}
   body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
   a{color:var(--accent)}
   header{display:flex;align-items:center;gap:14px;height:56px;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(7,11,22,.7);backdrop-filter:blur(8px)}

@@ -29,7 +29,9 @@
     --ink:#10131c; --text:#eef2fb; --muted:#9aa7bd; --line:rgba(255,255,255,.12);
   }
   *{box-sizing:border-box}
-  html{scrollbar-gutter:stable} html,body{height:100%;margin:0}
+  html,body{height:100%;margin:0}
+  /* full-height demo on desktop: no document scrollbar (globe/panel fill the screen) */
+  @media(min-width:821px){body{overflow:hidden}}
   @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2-variations');font-weight:100 900;font-style:normal;font-display:swap}
   body{
     background:var(--bg); color:var(--text); overflow:hidden;
