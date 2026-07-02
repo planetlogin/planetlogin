@@ -29,14 +29,14 @@
     --ink:#10131c; --text:#eef2fb; --muted:#9aa7bd; --line:rgba(255,255,255,.12);
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
+  html{scrollbar-gutter:stable} html,body{height:100%;margin:0}
   @font-face{font-family:'Inter';src:url('fonts/inter-var.woff2') format('woff2-variations');font-weight:100 900;font-style:normal;font-display:swap}
   body{
     background:var(--bg); color:var(--text); overflow:hidden;
     font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .stage{display:flex; height:calc(100vh - 60px); width:100vw}
+  .stage{display:flex; height:calc(100vh - 60px); width:100%}
 
   /* ---- panel izquierdo: globo + localización ---- */
   .globe-pane{position:relative; flex:1 1 auto; min-width:0; overflow:hidden}
