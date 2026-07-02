@@ -6,9 +6,9 @@ downstream contract client, and the pluggable session store.
 
 No HTTP, no framework. Each **flavor** adds only its runtime's HTTP binding and calls
 into this package — so the auth logic lives once and every flavor stays in lockstep
-with the [SPEC](../planetpass/SPEC.md). It also owns the **test suite (31 tests, typecheck clean)** — the logic is validated
-here, not in any flavor. Verified: the vanilla flavor consumes this and passes the
-conformance suite 9/9; the SvelteKit flavor builds green over it.
+with the [SPEC](../../SPEC.md). It also owns the **unit/e2e test suite** — the logic is
+validated here, not in any flavor. Verified: the vanilla flavor consumes this and passes
+the black-box [conformance suite](../../conformance); the SvelteKit flavor builds green over it.
 
 ```ts
 import { passwordLogin, signSession, verifyPassword, downstreamFromEnv } from '@planetlogin/core';

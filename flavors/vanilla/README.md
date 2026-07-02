@@ -1,7 +1,7 @@
 # planetlogin-vanilla
 
 A **flavor** of PlanetLogin with **no framework** — a plain Node `http()` server
-(`server.ts`) that consumes [`@planetlogin/core`](../planetlogin-core) and adds only
+(`server.ts`) that consumes [`@planetlogin/core`](../../packages/core) and adds only
 the HTTP binding. The auth logic lives in the core; this flavor is the thin layer
 that maps it to routes.
 

@@ -1,8 +1,9 @@
 # planetlogin-svelte
 
 The **SvelteKit flavor** of [PlanetLogin](https://github.com/planetlogin/planetlogin)
-— a stateless auth portal (no database, persistence downstream over REST, asymmetric
-JWT, white-label). It consumes [`@planetlogin/core`](../planetlogin-core) and adds the
+— a stateless auth portal (no database **of its own** — persistence is your store,
+downstream over REST; or none at all for guest sessions — asymmetric JWT, white-label).
+It consumes [`@planetlogin/core`](../../packages/core) and adds the
 SvelteKit HTTP routes plus the globe login front. **Svelte is just a flavor**; the auth
 logic and its tests live in the core.
 
