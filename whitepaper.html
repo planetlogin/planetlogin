@@ -99,10 +99,10 @@
 
 <!-- the live component (the face every flavor wears) -->
 <script type="module" src="./planetlogin.js"></script>
-<!-- render the CANONICAL WHITEPAPER.md (single source of truth, no drift) -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- render WHITEPAPER.md — self-hosted, no third-party at runtime -->
+<script src="./vendor/marked.min.js"></script>
 <script>
-  const SRC = 'https://cdn.jsdelivr.net/gh/planetlogin/planetlogin@main/WHITEPAPER.md';
+  const SRC = './WHITEPAPER.md';
   fetch(SRC)
     .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
     .then(md => { document.getElementById('paper').innerHTML = marked.parse(md); })

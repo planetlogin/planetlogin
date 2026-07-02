@@ -90,6 +90,14 @@
   pre.code .k{color:#f6a13c}.code .s{color:#9ad19a}.code .c{color:#6b7794}
   .panel{display:none}.panel.on{display:block}
 
+  /* packages */
+  .pkgs{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:30px}
+  @media(max-width:860px){.pkgs{grid-template-columns:1fr}}
+  .pkg{display:flex;align-items:baseline;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;transition:.15s}
+  .pkg:hover{border-color:var(--muted)}
+  .pkg code{color:var(--accent);font-size:.9rem;font-weight:600;white-space:nowrap}
+  .pkg span{color:var(--muted);font-size:.85rem;margin-left:auto;text-align:right}
+
   /* footer */
   footer{padding:48px 0;color:var(--muted);font-size:.9rem}
   footer .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
@@ -105,6 +113,7 @@
     <span class="sp"></span>
     <a class="link" href="#features">Features</a>
     <a class="link" href="#install">Install</a>
+    <a class="link" href="#core">Auth service</a>
     <a class="link" href="/demo.html">Live demo</a>
     <a class="link" href="/whitepaper.html">Whitepaper</a>
     <a class="link" href="/demo_admin.html">Studio</a>
@@ -212,6 +221,53 @@ onDestroy(() =&gt; g?.destroy());</pre></div>
   </div>
 </section>
 
+<section class="block" id="core">
+  <div class="wrap">
+    <p class="eyebrow">More than a globe</p>
+    <h2>A full auth service — stateless, no database.</h2>
+    <p class="sub">The globe is the face. Behind it, <code>@planetlogin/core</code> is a framework-agnostic
+      login service: password, OAuth/OIDC, magic links, passkeys, TOTP and anonymous sessions. It signs an
+      asymmetric JWT (EdDSA) and publishes a JWKS — <b>PlanetLogin stores nothing</b>; your app is the source of truth.</p>
+    <div class="tabs">
+      <button class="on" data-t="login">Login</button>
+      <button data-t="verify">Verify</button>
+      <button data-t="store">Store</button>
+    </div>
+    <div class="panel on" id="p-login"><pre class="code"><span class="c">// A stateless login — no session table, no DB inside PlanetLogin.</span>
+<span class="k">import</span> { passwordLogin, verifyPassword, signSession } <span class="k">from</span> <span class="s">'@planetlogin/core'</span>;
+
+<span class="k">const</span> result = <span class="k">await</span> passwordLogin(
+  { downstream, verifyPassword, signSession },
+  { identifier: email, password },
+);
+<span class="k">if</span> (result.ok) setCookie(<span class="s">'session'</span>, result.token); <span class="c">// signed JWT (EdDSA)</span></pre></div>
+    <div class="panel" id="p-verify"><pre class="code"><span class="c">// Your app verifies the token offline — no shared secret, just the JWKS.</span>
+<span class="k">import</span> { createRemoteJWKSet, jwtVerify } <span class="k">from</span> <span class="s">'jose'</span>;
+
+<span class="k">const</span> jwks = createRemoteJWKSet(<span class="k">new</span> URL(
+  <span class="s">'https://auth.acme.com/auth/.well-known/jwks.json'</span>));
+
+<span class="k">const</span> { payload } = <span class="k">await</span> jwtVerify(token, jwks);
+<span class="k">const</span> userId = payload.sub; <span class="c">// authenticated, anywhere, offline</span></pre></div>
+    <div class="panel" id="p-store"><pre class="code"><span class="c">// Batteries-included persistence — accounts with zero downstream code.</span>
+<span class="k">import</span> { postgresStore } <span class="k">from</span> <span class="s">'@planetlogin/store-postgres'</span>; <span class="c">// or store-sqlite</span>
+
+<span class="k">const</span> downstream = postgresStore(pool);
+<span class="k">await</span> downstream.ensureSchema();
+<span class="k">await</span> downstream.createUser({ email, password });
+<span class="c">// That's the whole identity layer — passwordLogin() now just works.</span></pre></div>
+
+    <div class="pkgs">
+      <a class="pkg" href="https://www.npmjs.com/package/@planetlogin/core" target="_blank" rel="noopener"><code>@planetlogin/core</code><span>the auth core</span></a>
+      <a class="pkg" href="https://www.npmjs.com/package/@planetlogin/planetlogin" target="_blank" rel="noopener"><code>@planetlogin/planetlogin</code><span>the globe component</span></a>
+      <a class="pkg" href="https://www.npmjs.com/package/@planetlogin/store-sqlite" target="_blank" rel="noopener"><code>@planetlogin/store-sqlite</code><span>accounts in one file</span></a>
+      <a class="pkg" href="https://www.npmjs.com/package/@planetlogin/store-postgres" target="_blank" rel="noopener"><code>@planetlogin/store-postgres</code><span>accounts on Postgres</span></a>
+    </div>
+    <p class="sub" style="margin-top:26px">Ship it as a <b>flavor</b> (a ready portal for your framework — SvelteKit today, more coming) or embed the
+      core directly. <a href="/whitepaper.html" style="color:var(--accent)">Read the whitepaper →</a></p>
+  </div>
+</section>
+
 <section class="block" style="border-bottom:0">
   <div class="wrap" style="text-align:center">
     <p class="eyebrow">Open source</p>
@@ -237,13 +293,17 @@ onDestroy(() =&gt; g?.destroy());</pre></div>
 
 <script type="module" src="./planetlogin.js"></script>
 <script>
-  // quickstart tabs
-  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on'));
-    document.querySelectorAll('.panel').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    document.getElementById('p-' + b.dataset.t).classList.add('on');
-  }));
+  // code tabs — scoped per section (.tabs + .panel siblings share a .wrap) so
+  // the Quickstart and Auth-service tab groups don't clobber each other.
+  document.querySelectorAll('.tabs').forEach((tabs) => {
+    const scope = tabs.parentElement;
+    tabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      tabs.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      scope.querySelectorAll('.panel').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      scope.querySelector('#p-' + b.dataset.t).classList.add('on');
+    }));
+  });
   // live readout of what the globe detected
   document.addEventListener('locale', (e) => {
     const d = e.detail || {};
