@@ -23,6 +23,8 @@
   let ok = $state(false);
   let providers = $state<any>({ password: { enabled: true } });
   let flyOnLogin = $state(false);
+  let brand = $state<any>({});
+  let copy = $state<any>({});
   let globeEl: HTMLElement;
 
   // Same-origin path-mount (e.g. calcat.app/auth): on success, hand control back to
@@ -50,6 +52,14 @@
       const c = await (await fetch(`${base}/auth/config`)).json();
       providers = c.providers ?? providers;
       flyOnLogin = c.locale?.flyToOnLogin ?? false;
+      brand = c.brand ?? brand;
+      copy = c.copy ?? copy;
+      const root = document.documentElement.style;
+      if (brand.accent) root.setProperty('--pl-accent', brand.accent);
+      if (brand.accentFg) root.setProperty('--pl-accent-fg', brand.accentFg);
+      if (brand.accentDark) root.setProperty('--pl-accent-dark', brand.accentDark);
+      if (brand.font) root.setProperty('--pl-font', brand.font);
+      if (brand.accent) globeEl?.setAttribute('accent', brand.accent);
     } catch {}
   });
 
@@ -137,9 +147,18 @@
 </script>
 
 <div class="stage">
+  {#if brand.homeUrl}
+    <nav class="pl-nav">
+      <a class="pl-brand" href={brand.homeUrl}>{brand.name ?? 'PlanetLogin'}<span class="pl-dot">.</span></a>
+      <div class="pl-links">
+        {#each brand.navLinks ?? [] as l}<a class="pl-link" href={l.href}>{l.label}</a>{/each}
+        <a class="pl-back" href={brand.homeUrl}>← {brand.backLabel ?? 'Volver'}</a>
+      </div>
+    </nav>
+  {/if}
   <!-- Tier 0 locale memory: remember the picked place on this device and fly back
        to it on return — zero backend. (Per-account memory is a Tier 2 upgrade.) -->
-  <planet-login bind:this={globeEl} accent="#f6a13c" data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
+  <planet-login bind:this={globeEl} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
 
   <aside class="panel">
     {#if mfa}
@@ -153,8 +172,8 @@
       </form>
     {:else}
     <form class="card" onsubmit={submit}>
-      <h1>{t.greet}</h1>
-      <p class="sub">{t.sub}</p>
+      <h1>{copy.title ?? t.greet}</h1>
+      <p class="sub">{copy.subtitle ?? t.sub}</p>
 
       <label for="email">{t.email}</label>
       <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
@@ -191,11 +210,21 @@
     </form>
     {/if}
   </aside>
+  {#if brand.homeUrl}
+    <footer class="pl-foot">
+      {#if (brand.footerLinks ?? []).length}
+        {#each brand.footerLinks as l}<a href={l.href}>{l.label}</a>{/each}
+        <span class="pl-foot-sep">·</span>
+      {/if}
+      <span class="pl-foot-note">© {brand.name ?? ''}</span>
+    </footer>
+  {/if}
 </div>
 
 <style>
-  :global(body) { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-  .stage { display: flex; height: 100vh; color: #eef2fb; }
+  :global(body) { font-family: var(--pl-font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif); }
+  .stage { position: relative; display: flex; height: 100vh; color: #eef2fb; animation: pl-fade .45s ease both; }
+  @keyframes pl-fade { from { opacity: 0; } to { opacity: 1; } }
   planet-login { flex: 1 1 auto; min-width: 0; height: 100vh; display: block; }
   .panel { flex: 0 0 380px; max-width: 42vw; background: #0d1422; border-left: 1px solid rgba(255,255,255,.12);
     display: grid; place-items: center; padding: 2rem; }
@@ -205,11 +234,15 @@
   label { display: block; font-size: .78rem; color: #9aa7bd; margin: .8rem 0 .3rem; }
   input { width: 100%; background: #131c2e; border: 1px solid rgba(255,255,255,.12); border-radius: 10px;
     padding: .6rem .7rem; color: #eef2fb; font-size: .95rem; }
-  input:focus { outline: 0; border-color: #f6a13c; box-shadow: 0 0 0 3px rgba(246,161,60,.14); }
+  input:focus { outline: 0; border-color: var(--pl-accent, #f6a13c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pl-accent, #f6a13c) 22%, transparent); }
   button { width: 100%; margin-top: 1.1rem; border: 0; border-radius: 11px; padding: .7rem; font-weight: 700;
-    background: #f6a13c; color: #231400; cursor: pointer; font-size: .98rem; }
+    background: var(--pl-accent, #f6a13c); color: var(--pl-accent-fg, #231400); cursor: pointer; font-size: .98rem; }
+  button[type="submit"] { box-shadow: 0 5px 0 var(--pl-accent-dark, #256e33);
+    transition: transform .22s cubic-bezier(.34,1.65,.5,1), box-shadow .22s cubic-bezier(.34,1.65,.5,1); }
+  button[type="submit"]:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pl-accent-dark, #256e33);
+    transition: transform .05s, box-shadow .05s; }
   button:disabled { opacity: .6; cursor: progress; }
-  button.alt { background: transparent; color: var(--accent, #f6a13c); border: 1px solid rgba(246,161,60,.4); margin-top: .6rem; }
+  button.alt { background: transparent; color: var(--pl-accent, #f6a13c); border: 1px solid var(--pl-accent, #f6a13c); box-shadow: none; margin-top: .6rem; }
   button.soc { background: #131c2e; color: #eef2fb; border: 1px solid rgba(255,255,255,.12); margin-top: .5rem; font-weight: 600; }
   button.soc:hover { border-color: #9aa7bd; }
   .div { display: flex; align-items: center; gap: .6rem; color: #9aa7bd; font-size: .72rem; margin: 1rem 0 .2rem; }
@@ -218,7 +251,23 @@
   .msg.ok { color: #9ad19a; } .msg.err { color: #ff9b9b; }
   .chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1.2rem; font-size: .72rem; }
   .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: .2rem .6rem; }
-  .chip b { color: #f6a13c; }
+  .chip b { color: var(--pl-accent, #f6a13c); }
+  .pl-nav { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center;
+    justify-content: space-between; padding: 1rem 1.4rem; pointer-events: none; }
+  .pl-nav a { pointer-events: auto; text-decoration: none; }
+  .pl-brand { font-weight: 700; color: #fff; text-transform: lowercase; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
+  .pl-dot { color: var(--pl-accent, #f6a13c); }
+  .pl-links { display: flex; align-items: center; gap: 1.3rem; pointer-events: auto; }
+  .pl-link { color: #cdd6df; font-size: .85rem; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
+  .pl-link:hover { color: var(--pl-accent, #f6a13c); }
+  .pl-back { color: #cdd6df; font-size: .85rem; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
+  .pl-back:hover { color: var(--pl-accent, #f6a13c); }
+  .pl-foot { position: absolute; bottom: .9rem; right: 1.4rem; z-index: 5; font-size: .78rem; color: #9aa7bd;
+    display: flex; align-items: center; gap: .8rem; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+  .pl-foot a { color: var(--pl-accent, #f6a13c); text-decoration: none; }
+  .pl-foot a:hover { text-decoration: underline; }
+  .pl-foot-sep { opacity: .5; }
+  @media (max-width: 820px) { .pl-link { display: none; } .pl-foot { display: none; } }
   @media (max-width: 820px) {
     .stage { flex-direction: column; } planet-login { flex: none; height: 50vh; }
     .panel { max-width: none; border-left: 0; border-top: 1px solid rgba(255,255,255,.12); }
