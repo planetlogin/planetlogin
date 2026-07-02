@@ -34,6 +34,21 @@ jobs:
       - run: npm run typecheck -w @planetlogin/core
       - run: npm test -w @planetlogin/core
 
+  # @planetlogin/store-sqlite — batteries-included DownstreamStore on node:sqlite
+  # (needs Node ≥ 22.5 for the experimental builtin; tests run on node's runner).
+  store-sqlite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci                                   # builds @planetlogin/core dist (prepare)
+      - run: npm run typecheck -w @planetlogin/store-sqlite
+      - run: npm test -w @planetlogin/store-sqlite
+      - run: npm run build -w @planetlogin/store-sqlite
+
   # Black-box conformance suite run against the built Svelte flavor (spec §3).
   conformance:
     runs-on: ubuntu-latest
