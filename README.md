@@ -28,6 +28,10 @@ standard Web Component, a class, and a factory.
 - 📦 **~17 kB gzip**, zero peer deps, TypeScript types included.
 - 🧩 **Web Component** → drops into any framework or plain HTML.
 
+> **More than a globe?** PlanetLogin is also a **stateless auth service**
+> (`@planetlogin/core`) — password, OAuth, magic links, passkeys, TOTP, guest
+> sessions. [Jump to it ↓](#more-than-a-globe--a-full-auth-service)
+
 ## Install
 
 ```bash
@@ -203,6 +207,41 @@ gives a precise IANA timezone, with an [OSM Nominatim](https://nominatim.org) fa
 postal codes and reverse lookups. Country borders come from
 [world-atlas](https://github.com/topojson/world-atlas), fetched at runtime from a CDN.
 
+## More than a globe — a full auth service
+
+The globe is the **face**. The project behind it is **`@planetlogin/core`**: a
+framework-agnostic, **stateless** login service — password, OAuth/OIDC, magic links,
+passkeys, TOTP and anonymous guest sessions. It signs an asymmetric JWT (EdDSA) and
+publishes a JWKS, and it keeps **no database of its own** — persistence is *your*
+store over REST (or in-process), or none at all for guest sessions. Your app stays
+the source of truth.
+
+```ts
+import { passwordLogin, verifyPassword, signSession } from '@planetlogin/core';
+
+// Stateless login — no session table inside PlanetLogin:
+const result = await passwordLogin(
+  { downstream, verifyPassword, signSession },
+  { identifier: email, password },
+);
+// → { ok: true, token } — a signed JWT your app verifies via JWKS, offline.
+```
+
+Ship it as a **flavor** — the same app in every runtime, kept honest by a black-box
+[conformance suite](conformance/) that any flavor must pass. Need real accounts with
+zero downstream code? Drop in a batteries-included store.
+
+| Package | |
+|---|---|
+| [`@planetlogin/core`](packages/core) | the framework-agnostic auth core — flows, JWT/JWKS, downstream contract, pluggable session store |
+| [`@planetlogin/planetlogin`](.) | the globe Web Component (this package) |
+| [`@planetlogin/store-sqlite`](packages/store-sqlite) | batteries-included accounts on `node:sqlite` — one file, zero backend code |
+| [`@planetlogin/store-postgres`](packages/store-postgres) | the same, over any pg-compatible client |
+
+**Flavors:** [`flavors/svelte`](flavors/svelte) (SvelteKit — reference) ·
+[`flavors/vanilla`](flavors/vanilla) (plain Node). More welcome.
+The whole idea: **[whitepaper](https://planetlogin.org/whitepaper.html)** · [SPEC](SPEC.md) · [integration guide](INTEGRATION.md).
+
 ## Develop
 
 ```bash
@@ -213,7 +252,10 @@ npm run typecheck
 npm test           # unit tests
 ```
 
-Branches: **`main`** = the component · **[`simple`](https://github.com/planetlogin/planetlogin/tree/simple)** = a zero-build, single-file version to copy-paste.
+This is a **monorepo** (npm workspaces): the globe component at the root, plus
+`packages/*` (core + store adapters) and `flavors/*`. Branches: **`main`** = the
+monorepo · **[`simple`](https://github.com/planetlogin/planetlogin/tree/simple)** =
+a zero-build, single-file globe to copy-paste (what serves planetlogin.org).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) — issues and PRs welcome.
 
