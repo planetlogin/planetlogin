@@ -1,19 +1,49 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { base } from '$app/paths';
+  import SiteNav from '$lib/SiteNav.svelte';
+  import Footer from '$lib/Footer.svelte';
 
   let { data } = $props(); // { appOrigin } from +page.server.ts
 
   // i18n — the global-audience angle: the form re-localizes from the globe pick.
+  // Human, localized strings. Per-language entries override the English base, so a
+  // language only needs to translate what it wants — the rest falls back to `en`.
   const T: Record<string, Record<string, string>> = {
-    en: { greet: 'Welcome', sub: 'Pick where you are — we greet you in your language.', email: 'Email', pass: 'Password', cta: 'Sign in' },
-    es: { greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.', email: 'Email', pass: 'Contraseña', cta: 'Entrar' },
+    en: {
+      greet: 'Welcome', sub: 'Pick where you are — we greet you in your language.',
+      email: 'Email', pass: 'Password', cta: 'Sign in',
+      magic: 'Email me a sign-in link', passkey: 'Sign in with a passkey', or: 'or',
+      mfaHint: 'Enter the 6-digit code from your authenticator app.', code: 'Code', verify: 'Verify',
+      sent: 'Check your email for a sign-in link.', signedIn: 'Signed in — taking you back…',
+      badCreds: 'That email or password doesn’t match.', needEmail: 'Enter your email first.',
+      rateLimited: 'Too many attempts — please wait a moment.', unavailable: 'Service unavailable, try again shortly.',
+      netErr: 'Network error — check your connection.', passkeyCancel: 'Passkey sign-in cancelled.',
+      badCode: 'That code isn’t right — try again.',
+    },
+    es: {
+      greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
+      email: 'Email', pass: 'Contraseña', cta: 'Entrar',
+      magic: 'Enviarme un enlace de acceso', passkey: 'Entrar con una passkey', or: 'o',
+      mfaHint: 'Introduce el código de 6 dígitos de tu app de autenticación.', code: 'Código', verify: 'Verificar',
+      sent: 'Revisa tu correo para el enlace de acceso.', signedIn: 'Sesión iniciada — volviendo…',
+      badCreds: 'Ese email o contraseña no coincide.', needEmail: 'Escribe tu email primero.',
+      rateLimited: 'Demasiados intentos — espera un momento.', unavailable: 'Servicio no disponible, inténtalo en breve.',
+      netErr: 'Error de red — revisa tu conexión.', passkeyCancel: 'Acceso con passkey cancelado.',
+      badCode: 'Ese código no es correcto — inténtalo de nuevo.',
+    },
     fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter' },
     de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden' },
     pt: { greet: 'Bem-vindo', sub: 'Escolhe onde estás — falamos a tua língua.', email: 'Email', pass: 'Senha', cta: 'Entrar' },
     it: { greet: 'Benvenuto', sub: 'Scegli dove sei — ti salutiamo nella tua lingua.', email: 'Email', pass: 'Password', cta: 'Accedi' },
     ja: { greet: 'ようこそ', sub: '現在地を選んでください。あなたの言語でご案内します。', email: 'メール', pass: 'パスワード', cta: 'ログイン' },
   };
+  // Map a downstream error code → a friendly message (localized, en fallback).
+  const errMsg = (code: string | undefined) =>
+    code === 'invalid_credentials' ? t.badCreds
+    : code === 'rate_limited' ? t.rateLimited
+    : code === 'downstream_unavailable' ? t.unavailable
+    : t.badCreds;
 
   let locale = $state<any>(null);
   let email = $state('');
@@ -34,7 +64,7 @@
   // trusted app origin (data.appOrigin) so login on auth.calcat.app returns to calcat.app.
   function goReturn() { window.location.href = (data.appOrigin || '') + returnTo; }
 
-  const t = $derived(T[locale?.language as string] ?? T.en);
+  const t = $derived({ ...T.en, ...(T[locale?.language as string] ?? {}) });
 
   onMount(async () => {
     // Same-origin path only — mirrors core's safeReturnPath (can't import it client-side:
@@ -75,15 +105,15 @@
   }
 
   async function magicRequest() {
-    if (!email) { msg = '✗ enter your email'; ok = false; return; }
+    if (!email) { msg = t.needEmail; ok = false; return; }
     busy = true; msg = '';
     try {
       await fetch(`${base}/auth/magic/request`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ identifier: email, locale }),
       });
-      ok = true; msg = '✓ check your email for a sign-in link';
-    } catch { ok = false; msg = '✗ network error'; }
+      ok = true; msg = t.sent;
+    } catch { ok = false; msg = t.netErr; }
     finally { busy = false; }
   }
 
@@ -101,9 +131,9 @@
       const data = await r.json();
       if (r.ok && data.requires === 'totp') { mfa = true; msg = ''; return; }
       ok = r.ok;
-      msg = r.ok ? `✓ ${data.user?.email ?? 'signed in'}` : `✗ ${data.error?.code ?? r.status}`;
+      msg = r.ok ? t.signedIn : errMsg(data.error?.code);
       if (r.ok) { await maybeFlyToAccount(); goReturn(); }
-    } catch { ok = false; msg = '✗ network error'; }
+    } catch { ok = false; msg = t.netErr; }
     finally { busy = false; }
   }
 
@@ -115,9 +145,9 @@
       });
       const data = await r.json();
       ok = r.ok; mfa = !r.ok;
-      msg = r.ok ? `✓ ${data.user?.id ?? 'signed in'}` : `✗ ${data.error?.code ?? 'bad code'}`;
+      msg = r.ok ? t.signedIn : t.badCode;
       if (r.ok) { await maybeFlyToAccount(); goReturn(); }
-    } catch { ok = false; msg = '✗ network error'; }
+    } catch { ok = false; msg = t.netErr; }
     finally { busy = false; }
   }
 
@@ -134,9 +164,9 @@
       });
       const data = await r.json();
       ok = r.ok;
-      msg = r.ok ? `✓ ${data.user?.id ?? 'signed in'}` : `✗ ${data.error?.code ?? 'failed'}`;
+      msg = r.ok ? t.signedIn : errMsg(data.error?.code);
       if (r.ok) { await maybeFlyToAccount(); goReturn(); }
-    } catch { ok = false; msg = '✗ passkey cancelled'; }
+    } catch { ok = false; msg = t.passkeyCancel; }
     finally { busy = false; }
   }
 
@@ -147,14 +177,16 @@
 </script>
 
 <div class="stage">
+  {#snippet back()}
+    <a class="snav-back" href={brand.homeUrl}>← {brand.backLabel ?? 'Volver'}</a>
+  {/snippet}
   {#if brand.homeUrl}
-    <nav class="pl-nav">
-      <a class="pl-brand" href={brand.homeUrl}>{brand.name ?? 'PlanetLogin'}<span class="pl-dot">.</span></a>
-      <div class="pl-links">
-        {#each brand.navLinks ?? [] as l}<a class="pl-link" href={l.href}>{l.label}</a>{/each}
-        <a class="pl-back" href={brand.homeUrl}>← {brand.backLabel ?? 'Volver'}</a>
-      </div>
-    </nav>
+    <SiteNav
+      brand={{ label: (brand.name ?? 'PlanetLogin').toLowerCase(), href: brand.homeUrl }}
+      links={brand.navLinks ?? []}
+      over
+      right={back}
+    />
   {/if}
   <!-- Tier 0 locale memory: remember the picked place on this device and fly back
        to it on return — zero backend. (Per-account memory is a Tier 2 upgrade.) -->
@@ -164,10 +196,10 @@
     {#if mfa}
       <form class="card" onsubmit={(e) => { e.preventDefault(); totpVerify(); }}>
         <h1>{t.greet}</h1>
-        <p class="sub">Enter the 6-digit code from your authenticator app.</p>
-        <label for="code">Code</label>
+        <p class="sub">{t.mfaHint}</p>
+        <label for="code">{t.code}</label>
         <input id="code" inputmode="numeric" maxlength="6" bind:value={code} placeholder="123456" autocomplete="one-time-code" />
-        <button type="submit" disabled={busy}>{busy ? '…' : 'Verify'}</button>
+        <button type="submit" disabled={busy}>{busy ? '…' : t.verify}</button>
         {#if msg}<p class="msg" class:ok class:err={!ok}>{msg}</p>{/if}
       </form>
     {:else}
@@ -185,14 +217,14 @@
       {/if}
 
       {#if providers.magicLink?.enabled}
-        <button type="button" class="alt" disabled={busy} onclick={magicRequest}>Email me a sign-in link</button>
+        <button type="button" class="alt" disabled={busy} onclick={magicRequest}>{t.magic}</button>
       {/if}
 
       {#if providers.passkeys?.enabled || (providers.oauth?.length)}
-        <div class="div">or</div>
+        <div class="div">{t.or}</div>
       {/if}
       {#if providers.passkeys?.enabled}
-        <button type="button" class="soc" disabled={busy} onclick={passkeyLogin}>Sign in with a passkey</button>
+        <button type="button" class="soc" disabled={busy} onclick={passkeyLogin}>{t.passkey}</button>
       {/if}
       {#each providers.oauth ?? [] as o}
         <button type="button" class="soc" disabled={busy} onclick={() => oauthStart(o.id)}>Continue with {o.label ?? o.id}</button>
@@ -210,16 +242,18 @@
     </form>
     {/if}
   </aside>
-  {#if brand.homeUrl}
-    <footer class="pl-foot">
-      {#if (brand.footerLinks ?? []).length}
-        {#each brand.footerLinks as l}<a href={l.href}>{l.label}</a>{/each}
-        <span class="pl-foot-sep">·</span>
-      {/if}
-      <span class="pl-foot-note">© {brand.name ?? ''}</span>
-    </footer>
-  {/if}
 </div>
+
+{#if copy.footer}
+  <Footer
+    brand={{ label: (brand.name ?? 'PlanetLogin').toLowerCase(), href: brand.homeUrl }}
+    tagline={copy.footer.tagline}
+    mail={copy.footer.mail}
+    columns={copy.footer.columns ?? []}
+    bottom={copy.footer.bottom}
+    note={copy.footer.note}
+  />
+{/if}
 
 <style>
   :global(body) { font-family: var(--pl-font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif); }
@@ -252,22 +286,10 @@
   .chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1.2rem; font-size: .72rem; }
   .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: .2rem .6rem; }
   .chip b { color: var(--pl-accent, #f6a13c); }
-  .pl-nav { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center;
-    justify-content: space-between; padding: 1rem 1.4rem; pointer-events: none; }
-  .pl-nav a { pointer-events: auto; text-decoration: none; }
-  .pl-brand { font-weight: 700; color: #fff; text-transform: lowercase; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
-  .pl-dot { color: var(--pl-accent, #f6a13c); }
-  .pl-links { display: flex; align-items: center; gap: 1.3rem; pointer-events: auto; }
-  .pl-link { color: #cdd6df; font-size: .85rem; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
-  .pl-link:hover { color: var(--pl-accent, #f6a13c); }
-  .pl-back { color: #cdd6df; font-size: .85rem; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
-  .pl-back:hover { color: var(--pl-accent, #f6a13c); }
-  .pl-foot { position: absolute; bottom: .9rem; right: 1.4rem; z-index: 5; font-size: .78rem; color: #9aa7bd;
-    display: flex; align-items: center; gap: .8rem; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
-  .pl-foot a { color: var(--pl-accent, #f6a13c); text-decoration: none; }
-  .pl-foot a:hover { text-decoration: underline; }
-  .pl-foot-sep { opacity: .5; }
-  @media (max-width: 820px) { .pl-link { display: none; } .pl-foot { display: none; } }
+  :global(:root) { --snav-accent: var(--pl-accent, #3fb950); --snav-fg: #e6edf3; --snav-muted: #cdd6df;
+    --snav-border: rgba(255,255,255,.14); --snav-bg: #0b0e11; --snav-font: var(--pl-font, inherit); }
+  .snav-back { color: #e6edf3; text-decoration: none; font-size: .9rem; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
+  .snav-back:hover { color: var(--pl-accent, #f6a13c); }
   @media (max-width: 820px) {
     .stage { flex-direction: column; } planet-login { flex: none; height: 50vh; }
     .panel { max-width: none; border-left: 0; border-top: 1px solid rgba(255,255,255,.12); }
