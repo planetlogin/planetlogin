@@ -12,12 +12,13 @@ what makes "the same app in N frameworks" verifiable, not a claim.
 ./run.sh node ../flavors/svelte/build/index.js
 ```
 
-`run.sh` starts the reference downstream (`mock-downstream.mjs`, seeds
-`demo@planetlogin.test` / `planet42`, stores preferences, and captures magic links),
-starts your flavor pointed at it with every contract flow enabled, waits for
-`/auth/config`, and runs the suite. CI runs this per flavor and publishes the matrix.
+`run.sh` starts the reference downstream (`mock-downstream.mjs` — seeds
+`demo@planetlogin.test` / `planet42`, stores preferences/TOTP/passkeys, captures magic
+links) **and** a mock OAuth provider (`mock-oauth.mjs`), starts your flavor with every
+contract flow enabled, waits for `/auth/config`, and runs the suite. CI runs this per
+flavor and publishes the matrix.
 
-## What it checks (spec §3) — 17 checks
+## What it checks (spec §3) — 23 checks
 - **config & keys** — `/auth/config` returns `spec:1` + brand + providers; **never
   leaks secret values**; JWKS serves a key set.
 - **password login** — correct → JWT verifiable via JWKS + session cookie; wrong →
@@ -30,8 +31,18 @@ starts your flavor pointed at it with every contract flow enabled, waits for
   session → **the link is single-use** (second use → 401); unknown id still → 202.
 - **preferences** — session-gated (401 without a token); saves/reads locale + data;
   **partial saves are independent** (saving `data` keeps `locale`).
-- **oauth start** — enabled provider → 302 to the provider with PKCE + state cookie;
-  disabled provider → 403 `not_enabled`.
+- **TOTP 2FA** — enroll → confirm with a real code → password login **hands off to the
+  second factor** (`pl_mfa`) → verify → session; a wrong code → 401. (Codes are
+  generated with `otpauth`.)
+- **passkeys / WebAuthn** — a **virtual ES256 authenticator** (`mock-authenticator.mjs`)
+  registers a credential, then authenticates usernameless → session; a garbage
+  assertion → 401. Verified by the flavor's real `@simplewebauthn` server.
+- **oauth** — enabled provider → 302 with PKCE + state cookie; disabled → 403; **full
+  callback round-trip** against the mock provider (code → token → profile → upsert →
+  session); a mismatched state → 400 (CSRF).
 - **error shape** — a stable `{error:{code,message}}` throughout.
 
-Every response body error uses the stable `{error:{code,message}}` shape.
+## Bench
+
+`../bench/` runs the same black-box load over a flavor and reports req/s + p50/p95/p99
+per endpoint — the performance leaderboard, comparable across flavors.

@@ -4,6 +4,13 @@
 // the reference mock downstream (mock-downstream.mjs) seeding demo@planetlogin.test.
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { TOTP, Secret } from 'otpauth';
+// @ts-ignore — pure-JS virtual WebAuthn authenticator (no type declarations needed)
+import { makeAuthenticator } from './mock-authenticator.mjs';
+
+// Same parameters the core uses (SHA1 / 6 digits / 30s) — generate a valid code.
+const totpCode = (secretB32: string) =>
+  new TOTP({ secret: Secret.fromBase32(secretB32), algorithm: 'SHA1', digits: 6, period: 30 }).generate();
 
 const BASE = (process.env.PLANETLOGIN_TEST_URL || 'http://127.0.0.1:8810').replace(/\/$/, '');
 const MOCK = (process.env.PLANETLOGIN_MOCK_URL || 'http://127.0.0.1:8799').replace(/\/$/, '');
@@ -159,6 +166,75 @@ describe('preferences (session-gated, partial)', () => {
   });
 });
 
+describe('TOTP 2FA', () => {
+  const MFA = 'mfa@planetlogin.test';
+  it('enroll → confirm → password login hands off to MFA → verify → session', async () => {
+    // 1) enroll: get a secret (the QR uri too).
+    const enroll = await post('/auth/totp/enroll', { identifier: MFA });
+    expect(enroll.status).toBe(200);
+    const { secret, uri } = await enroll.json();
+    expect(typeof secret).toBe('string');
+    expect(String(uri)).toContain('otpauth://');
+
+    // 2) confirm enrollment with a valid code → enables 2FA.
+    const confirm = await post('/auth/totp/verify', { identifier: MFA, code: totpCode(secret) });
+    expect(confirm.status).toBe(200);
+    expect((await confirm.json()).ok).toBe(true);
+
+    // 3) password login now hands off to the MFA step (pl_mfa cookie), NOT a token.
+    const login = await post('/auth/password/login', { identifier: MFA, password: PASS });
+    const setCookie = login.headers.get('set-cookie') || '';
+    expect(setCookie).toContain('pl_mfa');
+    const plMfa = setCookie.match(/pl_mfa=[^;]+/)?.[0] || '';
+
+    // 4) complete the second factor with a fresh code + the handoff cookie → session.
+    const step = await post('/auth/totp/verify', { code: totpCode(secret) }, { cookie: plMfa });
+    expect(step.status).toBe(200);
+    const { token } = await step.json();
+    const { payload } = await verify(token);
+    expect(payload.sub).toBe('u-mfa');
+  });
+  it('a wrong code → 401 invalid_credentials', async () => {
+    const r = await post('/auth/totp/verify', { identifier: MFA, code: '000000' });
+    expect(r.status).toBe(401);
+  });
+});
+
+describe('passkeys / WebAuthn', () => {
+  const rpID = new URL(BASE).hostname;
+  it('register a credential, then authenticate with it → session', async () => {
+    const authr = makeAuthenticator();
+
+    // 1) registration ceremony, bound to the demo user.
+    const rc = await post('/auth/passkey/challenge', { mode: 'register', identifier: USER });
+    expect(rc.status).toBe(200);
+    const rCookie = (rc.headers.get('set-cookie') || '').match(/pl_webauthn=[^;]+/)?.[0] || '';
+    const attestation = authr.register(await rc.json(), { origin: BASE, rpID });
+    const rv = await post('/auth/passkey/verify', { response: attestation }, { cookie: rCookie });
+    expect(rv.status).toBe(200);
+    expect((await rv.json()).ok).toBe(true);
+
+    // 2) usernameless authentication with that credential → a session.
+    const ac = await post('/auth/passkey/challenge', { mode: 'auth' });
+    const aCookie = (ac.headers.get('set-cookie') || '').match(/pl_webauthn=[^;]+/)?.[0] || '';
+    const assertion = authr.authenticate(await ac.json(), { origin: BASE, rpID });
+    const av = await post('/auth/passkey/verify', { response: assertion }, { cookie: aCookie });
+    expect(av.status).toBe(200);
+    const { token } = await av.json();
+    const { payload } = await verify(token);
+    expect(payload.sub).toBe('u-demo');
+  });
+  it('an unknown / garbage assertion → 401', async () => {
+    const ac = await post('/auth/passkey/challenge', { mode: 'auth' });
+    const aCookie = (ac.headers.get('set-cookie') || '').match(/pl_webauthn=[^;]+/)?.[0] || '';
+    const av = await post('/auth/passkey/verify', {
+      response: { id: 'AAAA', rawId: 'AAAA', type: 'public-key', clientExtensionResults: {},
+        response: { clientDataJSON: 'e30', authenticatorData: 'AAAA', signature: 'AAAA' } },
+    }, { cookie: aCookie });
+    expect(av.status).toBe(401);
+  });
+});
+
 describe('oauth start', () => {
   it('enabled provider → 302 to the provider with PKCE + state', async () => {
     const r = await fetch(BASE + '/auth/oauth/google/start', { redirect: 'manual' });
@@ -174,5 +250,30 @@ describe('oauth start', () => {
     const r = await fetch(BASE + '/auth/oauth/github/start', { redirect: 'manual' });
     expect(r.status).toBe(403);
     expect((await r.json()).error.code).toBe('not_enabled');
+  });
+  it('full round-trip against a mock provider → code exchange → session', async () => {
+    // start → grab the state and the sealed state cookie the callback will check.
+    const start = await fetch(BASE + '/auth/oauth/mockoauth/start', { redirect: 'manual' });
+    expect(start.status).toBe(302);
+    const state = new URL(start.headers.get('location') || '').searchParams.get('state');
+    const oauthCookie = (start.headers.get('set-cookie') || '').match(/pl_oauth=[^;]+/)?.[0] || '';
+    expect(oauthCookie).toBeTruthy();
+
+    // callback: the code is exchanged at the mock token endpoint, profile fetched,
+    // account upserted, session issued → 302 back to the app with a session cookie.
+    const cb = await fetch(`${BASE}/auth/oauth/mockoauth/callback?code=mock-code&state=${state}`,
+      { headers: { cookie: oauthCookie }, redirect: 'manual' });
+    expect(cb.status).toBe(302);
+    const token = (cb.headers.get('set-cookie') || '').match(/planetlogin_session=([^;]+)/)?.[1];
+    expect(token).toBeTruthy();
+    const { payload } = await verify(token!);
+    expect(typeof payload.sub).toBe('string'); // the upserted OAuth account
+  });
+  it('callback with a mismatched state → 400 (CSRF guard)', async () => {
+    const start = await fetch(BASE + '/auth/oauth/mockoauth/start', { redirect: 'manual' });
+    const oauthCookie = (start.headers.get('set-cookie') || '').match(/pl_oauth=[^;]+/)?.[0] || '';
+    const cb = await fetch(`${BASE}/auth/oauth/mockoauth/callback?code=mock-code&state=WRONG`,
+      { headers: { cookie: oauthCookie }, redirect: 'manual' });
+    expect(cb.status).toBe(400);
   });
 });
