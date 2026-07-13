@@ -20,6 +20,9 @@
       rateLimited: 'Too many attempts — please wait a moment.', unavailable: 'Service unavailable, try again shortly.',
       netErr: 'Network error — check your connection.', passkeyCancel: 'Passkey sign-in cancelled.',
       badCode: 'That code isn’t right — try again.',
+      name: 'Name', signup: 'Create account', newHere: 'New here? Create an account',
+      haveAccount: 'Already have an account? Sign in',
+      emailTaken: 'That email is already registered.', regErr: 'Could not create the account.',
     },
     es: {
       greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
@@ -31,6 +34,9 @@
       rateLimited: 'Demasiados intentos — espera un momento.', unavailable: 'Servicio no disponible, inténtalo en breve.',
       netErr: 'Error de red — revisa tu conexión.', passkeyCancel: 'Acceso con passkey cancelado.',
       badCode: 'Ese código no es correcto — inténtalo de nuevo.',
+      name: 'Nombre', signup: 'Crear cuenta', newHere: '¿Nuevo? Crea una cuenta',
+      haveAccount: '¿Ya tienes cuenta? Entra',
+      emailTaken: 'Ese email ya está registrado.', regErr: 'No se pudo crear la cuenta.',
     },
     fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter' },
     de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden' },
@@ -119,9 +125,30 @@
 
   let mfa = $state(false);
   let code = $state('');
+  let mode = $state<'login' | 'register'>('login');
+  let name = $state('');
+
+  async function register() {
+    busy = true; msg = '';
+    try {
+      const r = await fetch(`${base}/auth/password/register`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password, name, locale }),
+      });
+      const data = await r.json();
+      ok = r.ok;
+      msg = r.ok ? t.signedIn
+        : data.error?.code === 'email_taken' ? t.emailTaken
+        : data.error?.code === 'rate_limited' ? t.rateLimited
+        : t.regErr;
+      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
+    } catch { ok = false; msg = t.netErr; }
+    finally { busy = false; }
+  }
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
+    if (mode === 'register') { await register(); return; }
     busy = true; msg = '';
     try {
       const r = await fetch(`${base}/auth/password/login`, {
@@ -207,28 +234,41 @@
       <h1>{copy.title ?? t.greet}</h1>
       <p class="sub">{copy.subtitle ?? t.sub}</p>
 
+      {#if mode === 'register'}
+        <label for="name">{t.name}</label>
+        <input id="name" type="text" bind:value={name} placeholder={t.name} autocomplete="name" />
+      {/if}
+
       <label for="email">{t.email}</label>
       <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
 
       {#if providers.password?.enabled}
         <label for="pass">{t.pass}</label>
-        <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete="current-password" />
-        <button type="submit" disabled={busy}>{busy ? '…' : t.cta}</button>
+        <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete={mode === 'register' ? 'new-password' : 'current-password'} />
+        <button type="submit" disabled={busy}>{busy ? '…' : mode === 'register' ? t.signup : t.cta}</button>
+        {#if providers.password?.allowRegister}
+          <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
+        {/if}
+        {#if mode === 'login' && brand.homeUrl}
+          <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>¿Olvidaste tu contraseña?</a>
+        {/if}
       {/if}
 
-      {#if providers.magicLink?.enabled}
-        <button type="button" class="alt" disabled={busy} onclick={magicRequest}>{t.magic}</button>
-      {/if}
+      {#if mode === 'login'}
+        {#if providers.magicLink?.enabled}
+          <button type="button" class="alt" disabled={busy} onclick={magicRequest}>{t.magic}</button>
+        {/if}
 
-      {#if providers.passkeys?.enabled || (providers.oauth?.length)}
-        <div class="div">{t.or}</div>
+        {#if providers.passkeys?.enabled || (providers.oauth?.length)}
+          <div class="div">{t.or}</div>
+        {/if}
+        {#if providers.passkeys?.enabled}
+          <button type="button" class="soc" disabled={busy} onclick={passkeyLogin}>{t.passkey}</button>
+        {/if}
+        {#each providers.oauth ?? [] as o}
+          <button type="button" class="soc" disabled={busy} onclick={() => oauthStart(o.id)}>Continue with {o.label ?? o.id}</button>
+        {/each}
       {/if}
-      {#if providers.passkeys?.enabled}
-        <button type="button" class="soc" disabled={busy} onclick={passkeyLogin}>{t.passkey}</button>
-      {/if}
-      {#each providers.oauth ?? [] as o}
-        <button type="button" class="soc" disabled={busy} onclick={() => oauthStart(o.id)}>Continue with {o.label ?? o.id}</button>
-      {/each}
 
       {#if msg}<p class="msg" class:ok class:err={!ok}>{msg}</p>{/if}
 
@@ -281,6 +321,10 @@
   button.soc:hover { border-color: #9aa7bd; }
   .div { display: flex; align-items: center; gap: .6rem; color: #9aa7bd; font-size: .72rem; margin: 1rem 0 .2rem; }
   .div::before, .div::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.12); }
+  .forgot { display: inline-block; margin-top: .7rem; font-size: .82rem; color: var(--pl-muted, #9aa7bd); text-decoration: none; }
+  .forgot:hover { color: var(--pl-accent, #f6a13c); }
+  button.toggle { display: block; width: 100%; background: transparent; border: none; box-shadow: none; margin-top: .7rem; padding: 0; font-size: .82rem; color: var(--pl-muted, #9aa7bd); cursor: pointer; }
+  button.toggle:hover { color: var(--pl-accent, #f6a13c); }
   .msg { font-size: .82rem; margin: .9rem 0 0; }
   .msg.ok { color: #9ad19a; } .msg.err { color: #ff9b9b; }
   .chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1.2rem; font-size: .72rem; }
