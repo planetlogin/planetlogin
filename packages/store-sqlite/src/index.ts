@@ -14,7 +14,7 @@
 // Backed by `node:sqlite` (Node ≥ 22.5) — zero npm runtime deps beyond the peer
 // `@planetlogin/core`. The schema is created on first use (idempotent).
 import { DatabaseSync } from 'node:sqlite';
-import { hashPassword } from '@planetlogin/core';
+import { hashPassword, DownstreamConflictError } from '@planetlogin/core';
 import type { DownstreamStore, DownstreamUser, UserPreferences, Locale } from '@planetlogin/core';
 
 export interface SqliteStoreOptions {
@@ -204,6 +204,9 @@ export function sqliteStore(opts: SqliteStoreOptions = {}): SqliteStore {
 
     // --- Account management (the wedge from anon → login) -----------------
     async createUser({ email, password, passwordHash, name, locale, id }) {
+      // Contract (§4): a taken email is a conflict, not a crash — so self-serve
+      // sign-up can answer "that email is already registered".
+      if (findRow(email.toLowerCase())) throw new DownstreamConflictError('email already registered');
       const hash = password ? await hashPassword(password) : passwordHash ?? null;
       const uid = id ?? `u-${randomId()}`;
       db.prepare('INSERT INTO users (id,email,name,password_hash,locale) VALUES (?,?,?,?,?)').run(

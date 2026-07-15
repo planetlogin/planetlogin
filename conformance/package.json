@@ -4,5 +4,5 @@
   "type": "module",
   "description": "Black-box conformance suite — every PlanetLogin flavor must pass it.",
   "scripts": { "test": "vitest run" },
-  "devDependencies": { "jose": "^5.9.6", "otpauth": "^9.3.4", "vitest": "^2.1.0" }
+  "devDependencies": { "hash-wasm": "^4.11.0", "jose": "^5.9.6", "otpauth": "^9.3.4", "vitest": "^2.1.0" }
 }

@@ -12,7 +12,7 @@ OAUTH_PORT=8798 node mock-oauth.mjs & OAUTH=$!
 FLAVOR_PORT=8810
 # Enable every contract flow the suite exercises: password, magic link, anonymous,
 # OAuth (google), and account-bound preferences (locale.persist).
-export PLANETLOGIN_CONFIG='{"spec":1,"brand":{"name":"Conformance"},"providers":{"password":{"enabled":true},"magicLink":{"enabled":true},"anonymous":{"enabled":true},"totp":{"enabled":true},"passkeys":{"enabled":true},"oauth":[{"id":"google"},{"id":"mockoauth"}]},"locale":{"persist":true}}'
+export PLANETLOGIN_CONFIG='{"spec":1,"brand":{"name":"Conformance"},"providers":{"password":{"enabled":true,"allowRegister":true},"magicLink":{"enabled":true},"anonymous":{"enabled":true},"totp":{"enabled":true},"passkeys":{"enabled":true},"oauth":[{"id":"google"},{"id":"mockoauth"}]},"locale":{"persist":true}}'
 export PLANETLOGIN_DOWNSTREAM_URL="http://127.0.0.1:8799"
 export PLANETLOGIN_DOWNSTREAM_SECRET="test-secret"
 export PLANETLOGIN_BASE_URL="http://127.0.0.1:${FLAVOR_PORT}"

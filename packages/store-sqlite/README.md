@@ -50,7 +50,7 @@ Everything in core's `DownstreamStore` — `findUser`, `upsertUser`, `deliverMag
 
 | Helper | Purpose |
 | --- | --- |
-| `createUser({ email, password?, passwordHash?, name?, locale?, id? })` | Create an account. `password` is hashed with argon2id; or pass a precomputed `passwordHash`; or neither for an OAuth/passkey-only user. |
+| `createUser({ email, password?, passwordHash?, name?, locale?, id? })` | Create an account. `password` is hashed with argon2id; or pass a precomputed `passwordHash`; or neither for an OAuth/passkey-only user. A duplicate email raises `DownstreamConflictError` — which self-serve sign-up turns into a 409. |
 | `setPassword(identifier, password)` | Replace a user's password (argon2id). |
 | `deleteUser(identifier)` | Remove a user and their passkeys/TOTP/preferences. |
 | `db` | The underlying `DatabaseSync` — for migrations, backups, advanced queries. |

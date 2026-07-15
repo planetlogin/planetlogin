@@ -4,8 +4,14 @@
 // verified black-box. A test-only GET /_test/* helper (no auth) lets the suite read
 // what the flavor delivered.
 import { createServer } from 'node:http';
+import { randomBytes } from 'node:crypto';
+import { argon2id } from 'hash-wasm';
 
 const HASH = '$argon2id$v=19$m=19456,t=2,p=1$EJwyyeUzrVXHevjAneSm8A$BwU9+neuzB759IK6i7zwo13CmmZFfX7HSfJiokPVyBk'; // argon2id of "planet42"
+// The downstream owns password storage: it hashes. Same OWASP argon2id params the
+// core uses, so a registered account can log in right after.
+const hashPassword = (password) =>
+  argon2id({ password, salt: randomBytes(16), parallelism: 1, iterations: 2, memorySize: 19456, hashLength: 32, outputType: 'encoded' });
 const users = new Map([
   ['demo@planetlogin.test', { id: 'u-demo', email: 'demo@planetlogin.test', name: 'Demo', passwordHash: HASH, locale: { language: 'en', timezone: 'UTC', country: 'US' } }],
   // Separate account for the 2FA flow so enabling TOTP never affects the demo user's
@@ -21,7 +27,7 @@ const passkeys = new Map();    // userId -> [ credential ]
 const server = createServer((req, res) => {
   let body = '';
   req.on('data', (c) => (body += c));
-  req.on('end', () => {
+  req.on('end', async () => {
     const send = (s, o) => { res.writeHead(s, { 'content-type': 'application/json' }); res.end(o === undefined ? '' : JSON.stringify(o)); };
     const url = req.url || '';
 
@@ -38,6 +44,15 @@ const server = createServer((req, res) => {
     if (url === '/users/find') {
       const u = users.get(d.identifier) ?? byId(d.identifier);
       return u ? send(200, u) : send(404);
+    }
+    // Self-serve sign-up: WE hash and store the password (PlanetLogin never does).
+    if (url === '/users/create') {
+      const email = String(d.email ?? '').toLowerCase();
+      if (!email || !d.password) return send(400, { error: 'bad_request' });
+      if (users.has(email)) return send(409, { error: 'email_taken' }); // taken
+      const u = { id: 'u-' + email.split('@')[0], email, name: d.name, passwordHash: await hashPassword(d.password), locale: d.locale };
+      users.set(email, u);
+      return send(200, { id: u.id, email: u.email, name: u.name });
     }
     if (url === '/users/upsert') {
       const existing = d.email && users.get(d.email);

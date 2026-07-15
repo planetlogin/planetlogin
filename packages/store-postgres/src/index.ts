@@ -11,7 +11,7 @@
 //   await store.ensureSchema();                 // idempotent; run once at boot
 //   await store.createUser({ email: 'ada@example.com', password: 'hunter2' });
 //   await passwordLogin({ downstream: store, verifyPassword, signSession }, input);
-import { hashPassword } from '@planetlogin/core';
+import { hashPassword, DownstreamConflictError } from '@planetlogin/core';
 import type { DownstreamStore, DownstreamUser, UserPreferences, Locale } from '@planetlogin/core';
 
 /** The minimal query surface this store needs — satisfied by `pg`'s Pool/Client,
@@ -179,6 +179,9 @@ export function postgresStore(db: PgQueryable, opts: PostgresStoreOptions = {}):
 
     // --- Account management (the wedge from anon → login) -----------------
     async createUser({ email, password, passwordHash, name, locale, id }) {
+      // Contract (§4): a taken email is a conflict, not a crash — so self-serve
+      // sign-up can answer "that email is already registered".
+      if (await findRow(email.toLowerCase())) throw new DownstreamConflictError('email already registered');
       const hash = password ? await hashPassword(password) : passwordHash ?? null;
       const uid = id ?? `u-${randomId()}`;
       await q(

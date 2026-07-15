@@ -45,6 +45,15 @@ describe('postgresStore — DownstreamStore contract', () => {
     assert.equal(await store.findUser('nobody@nowhere'), null);
   });
 
+  it('createUser rejects a duplicate email as a conflict (contract §4 → 409)', async () => {
+    const store = await freshStore();
+    await store.createUser({ email: 'dup@x.io', password: 'first-pass' });
+    await assert.rejects(
+      () => store.createUser({ email: 'DUP@x.io', password: 'second-pass' }), // same email, any case
+      (e: Error) => e.name === 'DownstreamConflictError',
+    );
+  });
+
   it('createUser without a password yields a credential-less account', async () => {
     const store = await freshStore();
     const u = await store.createUser({ email: 'oauth@only.io' });

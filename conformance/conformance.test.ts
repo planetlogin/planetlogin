@@ -78,6 +78,32 @@ describe('password login', () => {
   });
 });
 
+describe('self-serve registration', () => {
+  const NEW = 'signup@planetlogin.test';
+  const NEWPASS = 'hunter2planet';
+  it('register → the downstream creates + hashes → session; the new account can log in', async () => {
+    const r = await post('/auth/password/register', { email: NEW, password: NEWPASS, name: 'New' });
+    expect(r.status).toBe(200);
+    expect(r.headers.get('set-cookie')).toBeTruthy(); // auto sign-in
+    const { token } = await r.json();
+    const { payload } = await verify(token);
+    expect(typeof payload.sub).toBe('string');
+
+    // Proof the downstream really hashed it: the fresh account logs in normally.
+    const login = await post('/auth/password/login', { identifier: NEW, password: NEWPASS });
+    expect(login.status).toBe(200);
+  });
+  it('a duplicate email → 409 email_taken', async () => {
+    const r = await post('/auth/password/register', { email: USER, password: 'whatever8' });
+    expect(r.status).toBe(409);
+    expect((await r.json()).error.code).toBe('email_taken');
+  });
+  it('a too-short password → 400', async () => {
+    const r = await post('/auth/password/register', { email: 'x@y.test', password: 'short' });
+    expect(r.status).toBe(400);
+  });
+});
+
 describe('session', () => {
   it('validates a real token, rejects when absent', async () => {
     const token = await login();

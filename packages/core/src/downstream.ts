@@ -26,10 +26,24 @@ export interface UserPreferences {
   data?: Record<string, unknown>;
 }
 
+/** Thrown by `createUser` when the identity already exists (HTTP 409 downstream).
+ *  Lets self-serve sign-up answer "that email is taken" without leaking anything
+ *  else, and keeps the happy path's return type clean. */
+export class DownstreamConflictError extends Error {
+  constructor(message = 'already exists') {
+    super(message);
+    this.name = 'DownstreamConflictError';
+  }
+}
+
 /** The §4 contract. Implement it in-process (DB calls) or use the HTTP `Downstream`.
  *  Only the methods your enabled providers need are ever called. */
 export interface DownstreamStore {
   findUser(identifier: string): Promise<DownstreamUser | null>;
+  /** Self-serve sign-up (spec §3 /auth/password/register). The downstream owns
+   *  password storage: it hashes and stores. Throws `DownstreamConflictError`
+   *  when the email is already registered. */
+  createUser(data: { email: string; password: string; name?: string; locale?: Locale }): Promise<DownstreamUser>;
   upsertUser(data: { provider: string; providerUserId?: string; email?: string; name?: string; profile?: unknown }): Promise<DownstreamUser | null>;
   deliverMagic(data: { identifier: string; link: string; locale?: Locale }): Promise<unknown>;
   passkeysFind(query: { userId?: string; credentialId?: string }): Promise<{ userId: string; credentials: any[] } | null>;
@@ -52,6 +66,7 @@ export function defineStore(impl: Partial<DownstreamStore>): DownstreamStore {
   const miss = (m: string) => async () => { throw new Error(`@planetlogin/core: downstream.${m}() is required by an enabled provider but not implemented`); };
   return {
     findUser: impl.findUser ?? miss('findUser'),
+    createUser: impl.createUser ?? miss('createUser'),
     upsertUser: impl.upsertUser ?? miss('upsertUser'),
     deliverMagic: impl.deliverMagic ?? miss('deliverMagic'),
     passkeysFind: impl.passkeysFind ?? miss('passkeysFind'),
@@ -83,6 +98,7 @@ export class Downstream implements DownstreamStore {
         signal: ctrl.signal,
       });
       if (res.status === 404) return null;
+      if (res.status === 409) throw new DownstreamConflictError(`downstream ${path} → 409`);
       if (!res.ok) throw new Error(`downstream ${path} → ${res.status}`);
       const text = await res.text();
       return (text ? JSON.parse(text) : null) as T; // tolerate empty 201/204 bodies
@@ -93,6 +109,14 @@ export class Downstream implements DownstreamStore {
 
   findUser(identifier: string): Promise<DownstreamUser | null> {
     return this.call<DownstreamUser>('/users/find', { identifier });
+  }
+
+  /** Self-serve sign-up: the downstream hashes + stores the password and returns
+   *  the new account. A 409 surfaces as `DownstreamConflictError` (email taken). */
+  async createUser(data: { email: string; password: string; name?: string; locale?: Locale }): Promise<DownstreamUser> {
+    const user = await this.call<DownstreamUser>('/users/create', data);
+    if (!user?.id) throw new Error('downstream /users/create returned no user');
+    return user;
   }
 
   upsertUser(data: {

@@ -99,6 +99,7 @@ route table (also the method names of the in-process contract):
 | Method · Path | PlanetLogin sends | Expects |
 |---|---|---|
 | `POST /users/find` | `{identifier}` | `{id, email, name?, passwordHash?, locale?}` or 404 |
+| `POST /users/create` | `{email, password, name?, locale?}` | `{id, email?, name?}` · **409** if the email is taken. Self-serve sign-up only (§3 `/auth/password/register`) — **you hash and store the password**; PlanetLogin never persists it. |
 | `POST /users/upsert` | `{provider, providerUserId?, email?, name?, profile}` | `{id, email, name?}` |
 | `POST /sessions` | `{userId, kind:"refresh", expiresAt}` | `{id}` (only if refresh/revocation used) |
 | `DELETE /sessions/{id}` | — | 204 |

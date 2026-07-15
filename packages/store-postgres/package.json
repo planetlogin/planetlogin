@@ -1,6 +1,6 @@
 {
   "name": "@planetlogin/store-postgres",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Batteries-included Postgres DownstreamStore for PlanetLogin — real accounts (password, OAuth, passkeys, TOTP, preferences) over any pg-compatible client, zero driver deps.",
   "exports": {
@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "@planetlogin/core": ">=0.6.0"
+    "@planetlogin/core": ">=0.9.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",

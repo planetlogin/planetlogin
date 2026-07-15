@@ -4,7 +4,16 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — in-process downstream
+## [Unreleased] — self-serve sign-up
+
+### Added (`@planetlogin/core` 0.9.0)
+- **`createUser` joins the §4 contract** — `DownstreamStore.createUser({ email, password, name?, locale? })`; the HTTP `Downstream` maps it to `POST /users/create` and `defineStore` wires it (fail-closed if unimplemented). The downstream owns password storage: **it** hashes and stores; PlanetLogin never persists a password.
+- **`DownstreamConflictError`** — a taken email surfaces as a typed conflict (downstream 409), so self-serve sign-up can answer "that email is already registered" without leaking anything else. The HTTP client maps any 409 to it.
+- The Svelte flavor's `/auth/password/register` now goes **through the contract client**, so **in-process stores (`defineStore`) support sign-up too** — it previously hand-rolled an HTTP fetch, which locked sign-up to the REST downstream.
+- `@planetlogin/store-sqlite` / `@planetlogin/store-postgres` **0.2.0**: `createUser` raises `DownstreamConflictError` on a duplicate email (now require core ≥ 0.9.0).
+- Conformance **26 checks** (+3): register → the downstream creates + hashes → session, and the fresh account logs in; duplicate → 409; too-short password → 400. The reference `examples/downstream` implements `/users/create` hashing with node's built-in **scrypt** (still zero deps) — which also proves the all-terrain verifier accepts a non-argon2 store.
+
+## [0.6.0] — in-process downstream
 
 ### Added (`@planetlogin/core`)
 - **In-process downstream** — the §4 contract is now an exported interface `DownstreamStore`, and `defineStore({ findUser, … })` builds one from local functions. A SvelteKit/monolith app can talk to its DB directly (no REST routes, no HTTP hop); implement only the methods your enabled providers use (unimplemented ones throw a clear fail-closed error). The HTTP `Downstream` now `implements DownstreamStore`, and every flow takes a `DownstreamStore` — so in-process and HTTP are interchangeable.

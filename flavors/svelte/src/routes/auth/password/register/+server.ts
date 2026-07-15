@@ -1,6 +1,6 @@
 import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { loadConfig, signSession, getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
+import { loadConfig, signSession, getStore, rateLimit, ruleFor, rlKey, downstreamFromEnv, DownstreamConflictError } from '@planetlogin/core';
 
 // POST /auth/password/register — self-serve sign-up. Creates the account in the
 // downstream (which hashes + stores the password), then auto-signs-in. Gated by
@@ -20,27 +20,16 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
   if (!rl.ok)
     return json({ error: { code: 'rate_limited', message: 'Too many attempts, try again later' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 
-  // Create the account downstream (it owns password storage; hashes argon2id).
-  const url = process.env.PLANETLOGIN_DOWNSTREAM_URL;
-  const secret = process.env.PLANETLOGIN_DOWNSTREAM_SECRET;
-  if (!url || !secret)
-    return json({ error: { code: 'downstream_unavailable', message: 'Service unavailable' } }, { status: 503 });
-
-  let res: Response;
+  // Create the account downstream (it owns password storage; it hashes + stores).
+  // Via the core's contract client, so an in-process store (defineStore) works too.
+  let user;
   try {
-    res = await fetch(url.replace(/\/$/, '') + '/users/create', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${secret}` },
-      body: JSON.stringify({ email, password, name }),
-    });
-  } catch {
+    user = await downstreamFromEnv().createUser({ email, password, name, locale });
+  } catch (e) {
+    if (e instanceof DownstreamConflictError)
+      return json({ error: { code: 'email_taken', message: 'That email is already registered' } }, { status: 409 });
     return json({ error: { code: 'downstream_unavailable', message: 'Service unavailable' } }, { status: 503 });
   }
-  if (res.status === 409)
-    return json({ error: { code: 'email_taken', message: 'That email is already registered' } }, { status: 409 });
-  if (!res.ok)
-    return json({ error: { code: 'bad_request', message: 'Could not create the account' } }, { status: 400 });
-  const user = (await res.json()) as { id: string; email?: string; name?: string };
 
   // Auto sign-in: mint a session and set the cookie, exactly like login.
   const token = await signSession(

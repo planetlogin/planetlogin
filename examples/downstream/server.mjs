@@ -16,6 +16,19 @@
 //   DEMO_SEED                    '1' (default) seeds demo@planetlogin.test / "planet42"
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
+import { scrypt as _scrypt, randomBytes } from 'node:crypto';
+import { promisify } from 'node:util';
+const scrypt = promisify(_scrypt);
+
+// Sign-up: the downstream owns password storage, so WE hash. Zero deps — node's
+// built-in scrypt, emitted in the PHC format PlanetLogin's all-terrain verifier
+// reads (it accepts argon2 / bcrypt / scrypt / pbkdf2, so pick what you already use).
+async function hashPassword(password) {
+  const N = 16384, r = 8, p = 1;
+  const salt = randomBytes(16);
+  const key = await scrypt(password, salt, 32, { N, r, p, maxmem: 256 * N * r });
+  return `$scrypt$ln=${Math.log2(N)},r=${r},p=${p}$${salt.toString('base64')}$${key.toString('base64')}`;
+}
 
 const PORT = Number(process.env.PORT) || 8799;
 const SECRET = process.env.PLANETLOGIN_DOWNSTREAM_SECRET || 'change-me';
@@ -58,6 +71,18 @@ const routes = {
   '/users/find': ({ identifier }) => {
     const r = db.prepare('SELECT * FROM users WHERE email = ? OR id = ?').get(identifier, identifier);
     return r ? [200, rowToUser(r)] : [404];
+  },
+  // createUser({email, password, name, locale}) — self-serve sign-up. WE hash and
+  // store; PlanetLogin never persists the password. 409 when the email is taken.
+  '/users/create': async ({ email, password, name, locale }) => {
+    const e = String(email ?? '').toLowerCase();
+    if (!e || !password) return [400, { error: 'bad_request' }];
+    if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(e)) return [409, { error: 'email_taken' }];
+    const id = `u-${cryptoRandom()}`;
+    db.prepare('INSERT INTO users (id,email,name,password_hash,locale) VALUES (?,?,?,?,?)').run(
+      id, e, name ?? null, await hashPassword(password), locale ? JSON.stringify(locale) : null,
+    );
+    return [200, { id, email: e, name: name ?? null }];
   },
   // upsertUser({provider, providerUserId, email, name}) — used by OAuth. Creates or
   // updates by email. (Password users are created by your app, not here.)
@@ -135,13 +160,13 @@ function cryptoRandom() { return Math.abs(Number(BigInt('0x' + Buffer.from(crypt
 createServer((req, res) => {
   let body = '';
   req.on('data', (c) => (body += c));
-  req.on('end', () => {
+  req.on('end', async () => {
     const send = (status, obj) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(obj === undefined ? '' : JSON.stringify(obj)); };
     if (req.headers.authorization !== `Bearer ${SECRET}`) return send(401, { error: 'unauthorized' });
     const handler = routes[req.url ?? ''];
     if (!handler) return send(404, { error: 'not_found' });
     try {
-      const [status, obj] = handler(body ? JSON.parse(body) : {});
+      const [status, obj] = await handler(body ? JSON.parse(body) : {});
       send(status, obj);
     } catch (e) {
       console.error('[downstream] error:', e);

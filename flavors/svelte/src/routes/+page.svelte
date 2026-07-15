@@ -23,6 +23,7 @@
       name: 'Name', signup: 'Create account', newHere: 'New here? Create an account',
       haveAccount: 'Already have an account? Sign in',
       emailTaken: 'That email is already registered.', regErr: 'Could not create the account.',
+      forgot: 'Forgot your password?',
     },
     es: {
       greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
@@ -37,10 +38,11 @@
       name: 'Nombre', signup: 'Crear cuenta', newHere: '¿Nuevo? Crea una cuenta',
       haveAccount: '¿Ya tienes cuenta? Entra',
       emailTaken: 'Ese email ya está registrado.', regErr: 'No se pudo crear la cuenta.',
+      forgot: '¿Olvidaste tu contraseña?',
     },
-    fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter' },
-    de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden' },
-    pt: { greet: 'Bem-vindo', sub: 'Escolhe onde estás — falamos a tua língua.', email: 'Email', pass: 'Senha', cta: 'Entrar' },
+    fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' },
+    de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' },
+    pt: { greet: 'Bem-vindo', sub: 'Escolhe onde estás — falamos a tua língua.', email: 'Email', pass: 'Senha', cta: 'Entrar', forgot: 'Esqueceste a palavra-passe?' },
     it: { greet: 'Benvenuto', sub: 'Scegli dove sei — ti salutiamo nella tua lingua.', email: 'Email', pass: 'Password', cta: 'Accedi' },
     ja: { greet: 'ようこそ', sub: '現在地を選んでください。あなたの言語でご案内します。', email: 'メール', pass: 'パスワード', cta: 'ログイン' },
   };
@@ -249,8 +251,10 @@
         {#if providers.password?.allowRegister}
           <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
         {/if}
+        <!-- Recuperar contraseña vive en el downstream (brand.homeUrl + /forgot):
+             PlanetLogin no persiste nada, las cuentas y los hashes son suyos. -->
         {#if mode === 'login' && brand.homeUrl}
-          <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>¿Olvidaste tu contraseña?</a>
+          <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>{t.forgot}</a>
         {/if}
       {/if}
 

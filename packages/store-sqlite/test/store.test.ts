@@ -28,6 +28,16 @@ describe('sqliteStore — DownstreamStore contract', () => {
     store.close();
   });
 
+  it('createUser rejects a duplicate email as a conflict (contract §4 → 409)', async () => {
+    const store = sqliteStore();
+    await store.createUser({ email: 'dup@x.io', password: 'first-pass' });
+    await assert.rejects(
+      () => store.createUser({ email: 'DUP@x.io', password: 'second-pass' }), // same email, any case
+      (e: Error) => e.name === 'DownstreamConflictError',
+    );
+    store.close();
+  });
+
   it('createUser without a password yields a credential-less account', async () => {
     const store = sqliteStore();
     const u = await store.createUser({ email: 'oauth@only.io' });
