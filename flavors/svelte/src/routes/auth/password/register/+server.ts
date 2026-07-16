@@ -1,12 +1,13 @@
 import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { loadConfig, signSession, getStore, rateLimit, ruleFor, rlKey, downstreamFromEnv, DownstreamConflictError } from '@planetlogin/core';
+import { signSession, getStore, rateLimit, ruleFor, rlKey, DownstreamConflictError } from '@planetlogin/core';
+import { tenantDownstream } from '$lib/tenant';
 
 // POST /auth/password/register — self-serve sign-up. Creates the account in the
 // downstream (which hashes + stores the password), then auto-signs-in. Gated by
 // config.providers.password.allowRegister.
-export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
-  const cfg = loadConfig();
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals }) => {
+  const cfg = locals.tenant.config;
   const pw = cfg.providers.password;
   if (!pw?.enabled || !pw?.allowRegister)
     return json({ error: { code: 'not_enabled', message: 'Registration disabled' } }, { status: 403 });
@@ -24,7 +25,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
   // Via the core's contract client, so an in-process store (defineStore) works too.
   let user;
   try {
-    user = await downstreamFromEnv().createUser({ email, password, name, locale });
+    user = await tenantDownstream(locals.tenant).createUser({ email, password, name, locale });
   } catch (e) {
     if (e instanceof DownstreamConflictError)
       return json({ error: { code: 'email_taken', message: 'That email is already registered' } }, { status: 409 });

@@ -42,6 +42,13 @@ flavor and publishes the matrix.
   session); a mismatched state → 400 (CSRF).
 - **error shape** — a stable `{error:{code,message}}` throughout.
 
+## Multi-tenant
+
+`./run-tenants.sh <cmd>` runs a separate suite (`tenants.test.ts`, 4 checks) against
+one flavor process serving two hosts, each with its own config **and** downstream:
+config resolves by host, unknown host → 404, provider gates are per-host, and accounts
+are isolated across tenants.
+
 ## Bench
 
 `../bench/` runs the same black-box load over a flavor and reports req/s + p50/p95/p99

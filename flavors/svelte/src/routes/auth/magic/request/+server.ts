@@ -1,13 +1,13 @@
 import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { signMagicToken } from '@planetlogin/core';
 import { requestMagicLink } from '@planetlogin/core';
 import { getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
+import { tenantDownstream } from '$lib/tenant';
 
 // POST /auth/magic/request — always 202 (no account enumeration).
-export const POST: RequestHandler = async ({ request, url, getClientAddress }) => {
-  const cfg = loadConfig();
+export const POST: RequestHandler = async ({ request, url, getClientAddress, locals }) => {
+  const cfg = locals.tenant.config;
   if (!cfg.providers.magicLink?.enabled)
     return json({ error: { code: 'not_enabled', message: 'Magic link disabled' } }, { status: 403 });
   const { identifier, locale } = await request.json().catch(() => ({}));
@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request, url, getClientAddress }) =
     return json({ error: { code: 'rate_limited', message: 'Too many requests, try again later' } }, { status: 429, headers: { 'retry-after': String(rl.retryAfter) } });
 
   await requestMagicLink(
-    { downstream: downstreamFromEnv(), signMagicToken: (id) => signMagicToken(id, cfg.providers.magicLink?.ttlSeconds) },
+    { downstream: tenantDownstream(locals.tenant), signMagicToken: (id) => signMagicToken(id, cfg.providers.magicLink?.ttlSeconds) },
     { identifier, baseUrl: process.env.PLANETLOGIN_BASE_URL || url.origin, locale },
   );
   return new Response(null, { status: 202 });

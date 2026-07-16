@@ -10,7 +10,8 @@ lives in the white-label config ([`config.schema.json`](config.schema.json));
 | Var | Required | Meaning |
 |---|---|---|
 | `PLANETLOGIN_BASE_URL` | yes | Public origin of this portal (e.g. `https://login.acme.com`). |
-| `PLANETLOGIN_CONFIG` | yes | The white-label config: a path to a JSON file **or** inline JSON, validated against `config.schema.json`. |
+| `PLANETLOGIN_CONFIG` | yes* | The white-label config: a path to a JSON file **or** inline JSON, validated against `config.schema.json`. *Not needed when multi-tenant (`PLANETLOGIN_TENANTS`). |
+| `PLANETLOGIN_TENANTS` | no | **Multi-tenant**: one process, many hosts. A path or inline JSON object mapping `host` → `{ config, downstream?: { url, secret } }`. Each host serves its own portal with its own account store; unknown hosts get 404. Unset = single-tenant. Behind a proxy, set `HOST_HEADER` so the tenant is the forwarded host. |
 
 > The auth endpoints live under a fixed `/auth` namespace (the route structure), e.g.
 > `<BASE_URL>/auth/config`. To mount the whole portal under another app's path, set

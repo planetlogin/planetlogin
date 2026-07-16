@@ -80,6 +80,26 @@ Your app verifies sessions **offline** via the JWKS at
       cross-origin.
 - [ ] The downstream secret is shared with — and required by — your downstream.
 
+## Multi-tenant (one deployment, many portals)
+
+The portal is stateless, so one container can serve many hosts — each its own brand
+and its own account store. Set `PLANETLOGIN_TENANTS` (inline JSON or a file) instead
+of `PLANETLOGIN_CONFIG`:
+
+```json
+{
+  "acme.login.example": { "config": { "spec": 1, "brand": { "name": "Acme" }, "providers": { "password": { "enabled": true } } },
+    "downstream": { "url": "https://api.acme.example/identity", "secret": "…" } },
+  "beta.login.example": { "config": { "spec": 1, "brand": { "name": "Beta" }, "providers": { "anonymous": { "enabled": true } } },
+    "downstream": { "url": "https://api.beta.example/identity", "secret": "…" } }
+}
+```
+
+Behind a reverse proxy, forward the host and tell the portal to trust it:
+`HOST_HEADER=x-forwarded-host` and `PROTOCOL_HEADER=x-forwarded-proto`. Unknown hosts
+get a 404. For a dynamic tenant list (a DB, not a static file), register your own
+resolver with `provideTenants()` from `@planetlogin/core` and build a thin custom image.
+
 ## Variants
 
 - **Path-mount** (`your.app/auth` instead of a subdomain): the mount point is baked

@@ -1,14 +1,15 @@
 import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { downstreamFromEnv, loadConfig } from '@planetlogin/core';
 import { verifyPassword } from '@planetlogin/core';
 import { signSession } from '@planetlogin/core';
 import { passwordLogin } from '@planetlogin/core';
 import { sealEnc, getStore, rateLimit, ruleFor, rlKey, savePreferences } from '@planetlogin/core';
+import { tenantDownstream } from '$lib/tenant';
 
 // POST /auth/password/login  (openapi.yaml). Thin wrapper over the tested flow.
-export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
-  const cfg = loadConfig();
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals }) => {
+  const cfg = locals.tenant.config;
+  const ds = tenantDownstream(locals.tenant);
   if (!cfg.providers.password?.enabled)
     return json({ error: { code: 'not_enabled', message: 'Password login disabled' } }, { status: 403 });
 
@@ -23,7 +24,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 
   const res = await passwordLogin(
     {
-      downstream: downstreamFromEnv(),
+      downstream: ds,
       verifyPassword,
       signSession: (c) => signSession(c, {
         issuer: cfg.token?.issuer, audience: cfg.token?.audience, ttlSeconds: cfg.token?.ttlSeconds,
@@ -57,7 +58,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
   // Tier 2 account memory (gate A): persist the picked locale to the user's
   // downstream record. Best-effort — never fail a login on a preferences write.
   if (cfg.locale?.persist && locale)
-    await savePreferences({ downstream: downstreamFromEnv() }, { userId: res.user.id, locale }).catch(() => {});
+    await savePreferences({ downstream: ds }, { userId: res.user.id, locale }).catch(() => {});
 
   return json({ token: res.token, user: res.user });
 };

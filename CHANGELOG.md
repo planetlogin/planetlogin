@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — multi-tenant
+
+### Added
+- **Multi-tenant: one stateless process serving many hosts.** `@planetlogin/core`
+  gains `Tenant`, `TenantResolver`, `provideTenants(resolver)` and
+  `resolveTenant(host)` (+ `normalizeHost`). Register a resolver → each request's
+  **config and downstream** come from its host (`acme.example.com` and
+  `beta.example.com` are separate portals with isolated accounts); no resolver →
+  single-tenant, the env config for every host (non-breaking). An unknown host → 404.
+- The Svelte flavor resolves the tenant per request in `hooks.server.ts` (→
+  `event.locals.tenant`); every route reads its config/downstream from there. Built-in
+  **`PLANETLOGIN_TENANTS`** directory (host → `{config, downstream}`, inline or a file)
+  for zero-code multi-tenant; bring your own resolver for a DB lookup.
+- Conformance: a dedicated multi-tenant run (`run-tenants.sh`, 4 checks) — config by
+  host, unknown-host 404, per-host provider gates, and account isolation across two
+  downstreams. Core +4 tests (`tenants.test.ts`).
+
 ## [Unreleased] — deploy-your-own
 
 ### Added

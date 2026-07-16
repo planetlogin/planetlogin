@@ -27,6 +27,12 @@ REST surfaces:
 
 - A flavor MUST implement the **EXPOSED API** (§3) and call the **DOWNSTREAM API**
   (§4) for every read/write of identity data.
+- **Multi-tenant (optional):** because a portal is stateless, one process MAY serve
+  many hosts. A flavor SHOULD resolve the request's **config and downstream from its
+  host** — `acme.example.com` and `beta.example.com` are then separate portals with
+  isolated accounts, sharing one deployment. An unknown host MUST get a 404. With no
+  resolver a flavor is single-tenant (one config for every host). The reference
+  resolver is `@planetlogin/core`'s `provideTenants`/`resolveTenant`.
 - A flavor MUST NOT persist user data, password hashes, sessions or magic-link
   tokens beyond the in-memory lifetime of a single in-flight flow.
 - All cryptography MUST use audited primitives (§6 of the whitepaper); a flavor

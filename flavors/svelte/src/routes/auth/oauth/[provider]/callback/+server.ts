@@ -1,12 +1,12 @@
 import { redirect, json, type RequestHandler } from '@sveltejs/kit';
-import { downstreamFromEnv } from '@planetlogin/core';
 import { signSession } from '@planetlogin/core';
 import { getProvider } from '@planetlogin/core';
 import { openOAuthState } from '@planetlogin/core';
 import { oauthCallback } from '@planetlogin/core';
+import { tenantDownstream } from '$lib/tenant';
 
 // GET /auth/oauth/{provider}/callback — verify state, exchange code → session.
-export const GET: RequestHandler = async ({ params, url, cookies }) => {
+export const GET: RequestHandler = async ({ params, url, cookies, locals }) => {
   const provider = params.provider!;
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
   const baseUrl = process.env.PLANETLOGIN_BASE_URL || url.origin;
   const up = (s: string) => process.env[`PLANETLOGIN_OAUTH_${provider.toUpperCase()}_${s}`]!;
   const res = await oauthCallback(
-    { downstream: downstreamFromEnv(), signSession },
+    { downstream: tenantDownstream(locals.tenant), signSession },
     {
       provider, providerCfg: getProvider(provider), code, codeVerifier: st.codeVerifier,
       clientId: up('CLIENT_ID'), clientSecret: up('CLIENT_SECRET'),

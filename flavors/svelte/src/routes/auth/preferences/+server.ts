@@ -1,5 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { verifySession, downstreamFromEnv, getPreferences, savePreferences } from '@planetlogin/core';
+import { verifySession, getPreferences, savePreferences } from '@planetlogin/core';
+import { tenantDownstream } from '$lib/tenant';
 
 // GET/PUT /auth/preferences — the user's own locale + open data bag (spec §4).
 // Session-gated: the bearer/cookie JWT identifies the user; we never trust a
@@ -13,16 +14,16 @@ async function sessionUserId(request: Request, token: string | undefined): Promi
 
 const cookieName = () => process.env.PLANETLOGIN_COOKIE_NAME || 'planetlogin_session';
 
-export const GET: RequestHandler = async ({ request, cookies }) => {
+export const GET: RequestHandler = async ({ request, cookies, locals }) => {
   const sub = await sessionUserId(request, cookies.get(cookieName()));
   if (!sub) return json({ error: { code: 'invalid_token', message: 'No session' } }, { status: 401 });
-  return json(await getPreferences({ downstream: downstreamFromEnv() }, { userId: sub }));
+  return json(await getPreferences({ downstream: tenantDownstream(locals.tenant) }, { userId: sub }));
 };
 
-export const PUT: RequestHandler = async ({ request, cookies }) => {
+export const PUT: RequestHandler = async ({ request, cookies, locals }) => {
   const sub = await sessionUserId(request, cookies.get(cookieName()));
   if (!sub) return json({ error: { code: 'invalid_token', message: 'No session' } }, { status: 401 });
   const body = await request.json().catch(() => ({}));
-  const r = await savePreferences({ downstream: downstreamFromEnv() }, { userId: sub, locale: body.locale, data: body.data });
+  const r = await savePreferences({ downstream: tenantDownstream(locals.tenant) }, { userId: sub, locale: body.locale, data: body.data });
   return json(r);
 };

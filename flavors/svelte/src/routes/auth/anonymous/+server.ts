@@ -1,11 +1,11 @@
 import { clientIp } from '$lib/clientIp';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { loadConfig, signSession, createAnonymousSession, getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
+import { signSession, createAnonymousSession, getStore, rateLimit, ruleFor, rlKey } from '@planetlogin/core';
 
 // POST /auth/anonymous {locale?} → a guest session (no account, no downstream).
 // The token carries anon:true; treat it as unauthenticated for anything sensitive.
-export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
-  const cfg = loadConfig();
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals }) => {
+  const cfg = locals.tenant.config;
   if (!cfg.providers.anonymous?.enabled)
     return json({ error: { code: 'not_enabled', message: 'Anonymous sessions disabled' } }, { status: 403 });
 

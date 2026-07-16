@@ -1,5 +1,4 @@
 import { redirect, json, type RequestHandler } from '@sveltejs/kit';
-import { loadConfig } from '@planetlogin/core';
 import { getProvider, oauthStart } from '@planetlogin/core';
 import { sealOAuthState } from '@planetlogin/core';
 
@@ -19,8 +18,8 @@ function safeReturnPath(returnTo: string | null, origin: string): string {
 }
 
 // GET /auth/oauth/{provider}/start — PKCE + state in an encrypted cookie, 302 out.
-export const GET: RequestHandler = async ({ params, url, cookies }) => {
-  const cfg = loadConfig();
+export const GET: RequestHandler = async ({ params, url, cookies, locals }) => {
+  const cfg = locals.tenant.config;
   const provider = params.provider!;
   if (!(cfg.providers.oauth ?? []).some((o) => o.id === provider))
     return json({ error: { code: 'not_enabled', message: 'provider not enabled' } }, { status: 403 });

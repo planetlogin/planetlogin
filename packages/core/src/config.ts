@@ -1,7 +1,7 @@
 // Load the white-label config + wiring from the environment (spec §5, ENV.md).
 // The same config schema is what demo_admin.html edits/exports.
 import { readFileSync } from 'node:fs';
-import { Downstream } from './downstream.ts';
+import { Downstream, type DownstreamStore } from './downstream.ts';
 
 export interface PlanetLoginConfig {
   spec: 1;
@@ -79,4 +79,45 @@ export function downstreamFromEnv(): Downstream {
   const secret = process.env.PLANETLOGIN_DOWNSTREAM_SECRET;
   if (!url || !secret) throw new Error('PLANETLOGIN_DOWNSTREAM_URL and _SECRET are required');
   return new Downstream(url, secret);
+}
+
+// ── Multi-tenant: one stateless portal serving many hosts ────────────────────
+// A single deployment resolves each request's config (and, optionally, its own
+// downstream) from the request's host — so `acme.example.com` and `beta.example.com`
+// are different portals sharing one process. Single-tenant is just "no resolver
+// registered" → the env config for every host, exactly as before (non-breaking).
+
+/** What a hostname resolves to: its white-label config, and optionally its own
+ *  downstream (a per-tenant account store). Omit `downstream` to use the env one. */
+export interface Tenant {
+  config: PlanetLoginConfig;
+  downstream?: DownstreamStore;
+}
+
+/** Resolve a request host → its tenant, or `null` for an unknown host (the flavor
+ *  answers 404). May be async (a DB/directory lookup). Register it once at boot. */
+export type TenantResolver = (host: string) => Tenant | null | Promise<Tenant | null>;
+
+let tenants: TenantResolver | null = null;
+
+/** Turn this deployment multi-tenant: resolve config/downstream per host. Without
+ *  it, `resolveTenant` returns the single env config for every host. */
+export function provideTenants(resolver: TenantResolver): void {
+  tenants = resolver;
+}
+
+/** Normalize a Host header to a bare lowercased hostname (drop port, trim dot). */
+export function normalizeHost(host: string): string {
+  return String(host || '').toLowerCase().split(':')[0].replace(/\.$/, '').trim();
+}
+
+/** Resolve the tenant for a request host. Multi-tenant → the registered resolver
+ *  (validated: spec 1 + brand.name); single-tenant → the env config for any host. */
+export async function resolveTenant(host: string): Promise<Tenant | null> {
+  if (!tenants) return { config: loadConfig() };
+  const t = await tenants(normalizeHost(host));
+  if (!t) return null;
+  if (t.config?.spec !== 1) throw new Error(`tenant "${host}": unsupported config spec ${t.config?.spec}`);
+  if (!t.config.brand?.name) throw new Error(`tenant "${host}": config.brand.name is required`);
+  return t;
 }
