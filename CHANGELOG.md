@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — deploy-your-own
+
+### Added
+- **Prebuilt portal image** `ghcr.io/planetlogin/portal` — a CI workflow builds &
+  publishes the SvelteKit flavor (linux/amd64 + arm64) on every `main` push;
+  `portal-v*` tags cut versioned images. Deploy-your-own is now `docker run`, no
+  clone/build.
+- **[DEPLOY.md](DEPLOY.md)** — zero-to-live guide (config + key + compose + checklist).
+- **Studio "docker-compose.yml" tab** — the white-label studio exports a ready-to-run
+  compose (image + env + volumes + the 4 steps) alongside `config.json` / `.env`.
+
 ## [Unreleased] — self-serve sign-up
 
 ### Added (`@planetlogin/core` 0.9.0)

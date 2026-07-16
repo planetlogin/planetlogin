@@ -240,6 +240,15 @@ zero downstream code? Drop in a batteries-included store.
 
 **Flavors:** [`flavors/svelte`](flavors/svelte) (SvelteKit — reference) ·
 [`flavors/vanilla`](flavors/vanilla) (plain Node). More welcome.
+
+**Run your own** in one container from the prebuilt image — design it in the
+[white-label studio](https://planetlogin.org/demo_admin.html) (it exports the config
++ `docker-compose.yml`), then follow **[DEPLOY.md](DEPLOY.md)**:
+
+```bash
+docker run -p 3000:3000 --env-file .env ghcr.io/planetlogin/portal:latest
+```
+
 The whole idea: **[whitepaper](https://planetlogin.org/whitepaper.html)** · [SPEC](SPEC.md) · [integration guide](INTEGRATION.md).
 
 ## Develop
