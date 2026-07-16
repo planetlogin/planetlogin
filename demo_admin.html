@@ -166,6 +166,7 @@
       <div class="tabs">
         <button class="on" data-t="json">config.json</button>
         <button data-t="env">.env</button>
+        <button data-t="compose">docker-compose.yml</button>
         <span class="sp"></span>
         <button class="copy" id="copy">Copy</button>
       </div>
@@ -244,6 +245,55 @@
     return lines.join('\n');
   }
 
+  // Ready-to-run compose using the prebuilt image — save the config.json tab next
+  // to it and `docker compose up -d`. Full guide: DEPLOY.md in the repo.
+  function toCompose(c) {
+    const host = (c.brand.name || 'app').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const alg = c.token?.algorithm || 'EdDSA';
+    const env = [
+      `PLANETLOGIN_BASE_URL=https://login.${host}.com`,
+      `PLANETLOGIN_APP_ORIGIN=https://${host}.com`,
+      `PLANETLOGIN_COOKIE_DOMAIN=.${host}.com`,
+      'PLANETLOGIN_CONFIG=/app/planetlogin.config.json',
+    ];
+    if (alg !== 'EdDSA') env.push(`PLANETLOGIN_JWT_ALG=${alg}`);
+    env.push(alg === 'HS256' ? 'PLANETLOGIN_JWT_SECRET=${PLANETLOGIN_JWT_SECRET}' : 'PLANETLOGIN_JWT_PRIVATE_KEY=/run/secrets/pl.pem');
+    env.push(`PLANETLOGIN_JWT_KID=${host}-2026a`);
+    if (c.token?.encrypt) env.push('PLANETLOGIN_JWT_ENCRYPT=true', 'PLANETLOGIN_JWE_KEY=${PLANETLOGIN_JWE_KEY}');
+    env.push(
+      'PLANETLOGIN_DOWNSTREAM_URL=https://api.example.com/identity',
+      'PLANETLOGIN_DOWNSTREAM_SECRET=${PLANETLOGIN_DOWNSTREAM_SECRET}',
+      // rate limiting + single-use links need a store; never ship `none`
+      `PLANETLOGIN_SESSION_STORE=${c.session?.store && c.session.store !== 'none' ? c.session.store : 'memory'}`,
+      'PLANETLOGIN_TRUST_PROXY=true',
+    );
+    if (c.security?.rateLimit?.login) env.push(`PLANETLOGIN_RATELIMIT_LOGIN_LIMIT=${c.security.rateLimit.login.limit}`);
+    if (c.security?.cors?.origins?.length) env.push('PLANETLOGIN_CORS_ORIGINS=' + c.security.cors.origins.join(','));
+    for (const o of c.providers.oauth) {
+      const u = o.id.toUpperCase();
+      env.push(`PLANETLOGIN_OAUTH_${u}_CLIENT_ID=…`, `PLANETLOGIN_OAUTH_${u}_CLIENT_SECRET=…`);
+    }
+    const volumes = ['./planetlogin.config.json:/app/planetlogin.config.json:ro'];
+    if (alg !== 'HS256') volumes.push('./pl.pem:/run/secrets/pl.pem:ro');
+    return [
+      '# 1) save the config.json tab as planetlogin.config.json next to this file',
+      ...(alg !== 'HS256' ? ['# 2) npx planetlogin-keygen pl.pem'] : ['# 2) export PLANETLOGIN_JWT_SECRET=$(openssl rand -hex 32)']),
+      '# 3) export PLANETLOGIN_DOWNSTREAM_SECRET=$(openssl rand -hex 32)   # your downstream requires it too',
+      '# 4) docker compose up -d   →   point your reverse proxy at 127.0.0.1:3000',
+      '# guide: github.com/planetlogin/planetlogin/blob/main/DEPLOY.md',
+      'services:',
+      '  planetlogin:',
+      '    image: ghcr.io/planetlogin/portal:latest',
+      '    restart: unless-stopped',
+      '    ports:',
+      '      - "127.0.0.1:3000:3000"',
+      '    environment:',
+      ...env.map((e) => `      - ${e}`),
+      '    volumes:',
+      ...volumes.map((v) => `      - ${v}`),
+    ].join('\n');
+  }
+
   let globe; // recreate to apply accent live
   function renderGlobe(c) {
     const wrap = $('globe-wrap');
@@ -283,7 +333,7 @@
   }
 
   function renderExport(c) {
-    $('out').textContent = tab === 'json' ? JSON.stringify(c, null, 2) : toEnv(c);
+    $('out').textContent = tab === 'json' ? JSON.stringify(c, null, 2) : tab === 'env' ? toEnv(c) : toCompose(c);
   }
 
   let globeTimer;
