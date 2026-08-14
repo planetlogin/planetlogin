@@ -7,9 +7,11 @@ visitor's **timezone**, **language** and **location** — so your app greets the
 their tongue, in their hours, from the first second.
 
 [![npm](https://img.shields.io/npm/v/@planetlogin/planetlogin?color=f6a13c)](https://www.npmjs.com/package/@planetlogin/planetlogin)
+[![downloads](https://img.shields.io/npm/dm/@planetlogin/planetlogin?color=f6a13c)](https://www.npmjs.com/package/@planetlogin/planetlogin)
 [![license](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/planetlogin/planetlogin/actions/workflows/ci.yml/badge.svg)](https://github.com/planetlogin/planetlogin/actions/workflows/ci.yml)
 [![bundle](https://img.shields.io/bundlephobia/minzip/@planetlogin/planetlogin?label=gzip)](https://bundlephobia.com/package/@planetlogin/planetlogin)
+[![stars](https://img.shields.io/github/stars/planetlogin/planetlogin?style=flat&color=f6a13c)](https://github.com/planetlogin/planetlogin)
 
 **[Live demo → planetlogin.org](https://planetlogin.org)** · `npm i @planetlogin/planetlogin`
 
