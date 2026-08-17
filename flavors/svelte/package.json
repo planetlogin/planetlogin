@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "PlanetLogin — SvelteKit flavor (routes + globe front) over @planetlogin/core. Auth logic + tests live in the core. Spec: github.com/planetlogin/planetlogin",
+  "description": "PlanetLogin \u2014 SvelteKit flavor (routes + globe front) over @planetlogin/core. Auth logic + tests live in the core. Spec: github.com/planetlogin/planetlogin",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -11,7 +11,7 @@
     "check": "svelte-check"
   },
   "dependencies": {
-    "@planetlogin/core": "^0.10.0",
+    "@planetlogin/core": "file:../../packages/core",
     "@planetlogin/planetlogin": "^0.3.0",
     "@simplewebauthn/browser": "^13.3.0"
   },
