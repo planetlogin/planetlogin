@@ -21,7 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck -w @planetlogin/core
       - run: npm test -w @planetlogin/core
-      - run: npx tsup -w @planetlogin/core
+      - run: npm run build -w @planetlogin/core
       - run: npm publish -w @planetlogin/core --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

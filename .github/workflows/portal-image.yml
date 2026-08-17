@@ -1,17 +1,9 @@
-# Build & publish the ready-to-run portal image (the SvelteKit flavor) to GHCR —
-# what makes deploy-your-own truly 1-click:
-#
-#   docker run ghcr.io/planetlogin/portal -e PLANETLOGIN_CONFIG=... (see DEPLOY.md)
-#
-# `latest` tracks main; version tags come from `portal-v*` git tags. The image is
-# the subdomain build (PLANETLOGIN_BASE=""); path-mount users build their own with
-# --build-arg PLANETLOGIN_BASE=/auth.
 name: Portal image
 
 on:
   push:
     branches: [main]
-    paths: ['flavors/svelte/**', '.github/workflows/portal-image.yml']
+    paths: ['flavors/svelte/**', 'packages/core/**', '.github/workflows/portal-image.yml']
     tags: ['portal-v*']
   workflow_dispatch:
 
@@ -35,11 +27,12 @@ jobs:
         with:
           images: ghcr.io/planetlogin/portal
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{is_default_branch}}
             type=match,pattern=portal-v(.*),group=1
       - uses: docker/build-push-action@v6
         with:
-          context: flavors/svelte
+          context: .
+          file: flavors/svelte/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
