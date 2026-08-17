@@ -35,6 +35,7 @@ export interface PlanetLoginConfig {
     // Needs PLANETLOGIN_JWT_ENCRYPT=true + a shared PLANETLOGIN_JWE_KEY (32B base64url).
     encrypt?: boolean;
   };
+  loginFlow?: 'classic' | 'email-first';
   session?: { store?: 'none' | 'memory' | 'redis' | 'sqlite' | 'downstream' };
   security?: {
     // Cross-origin allowlist for the auth API (exact origins, or ["*"] without
@@ -71,6 +72,7 @@ export function publicConfig(c = loadConfig()) {
     copy: c.copy ?? {}, layout: c.layout ?? {},
     // Only the client-relevant gate (flyToOnLogin drives the post-login fly-to).
     locale: { flyToOnLogin: c.locale?.flyToOnLogin ?? false },
+    loginFlow: c.loginFlow ?? 'classic',
   };
 }
 

@@ -238,7 +238,7 @@
             "HS256"
           ],
           "default": "EdDSA",
-          "description": "Asymmetric (EdDSA/RS256/ES256) \u2192 multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
+          "description": "Asymmetric (EdDSA/RS256/ES256) → multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
         },
         "encrypt": {
           "type": "boolean",
@@ -277,7 +277,9 @@
           "properties": {
             "origins": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Allowed origins (exact). ['*'] reflects any origin only when credentials=false."
             },
             "credentials": {
@@ -291,23 +293,49 @@
           "additionalProperties": false,
           "description": "Per-action fixed-window limits. No-op unless session.store is configured. Fails open if the store is down.",
           "properties": {
-            "login": { "$ref": "#/$defs/rateRule" },
-            "magic": { "$ref": "#/$defs/rateRule" },
-            "totp": { "$ref": "#/$defs/rateRule" },
-            "anon": { "$ref": "#/$defs/rateRule" }
+            "login": {
+              "$ref": "#/$defs/rateRule"
+            },
+            "magic": {
+              "$ref": "#/$defs/rateRule"
+            },
+            "totp": {
+              "$ref": "#/$defs/rateRule"
+            },
+            "anon": {
+              "$ref": "#/$defs/rateRule"
+            }
           }
         }
       }
+    },
+    "loginFlow": {
+      "type": "string",
+      "enum": [
+        "classic",
+        "email-first"
+      ],
+      "default": "classic",
+      "description": "Login UX mode. classic = email+password together (default). email-first = email only first, then check if account exists and show password or registration. Note: email-first enables email enumeration (mitigated by rate limiting)."
     }
   },
   "$defs": {
     "rateRule": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["limit", "windowSeconds"],
+      "required": [
+        "limit",
+        "windowSeconds"
+      ],
       "properties": {
-        "limit": { "type": "integer", "minimum": 1 },
-        "windowSeconds": { "type": "integer", "minimum": 1 }
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "windowSeconds": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     }
   }

@@ -19,3 +19,4 @@ export * from './flows/magicLink.ts';
 export * from './flows/oauthLogin.ts';
 export * from './flows/passkey.ts';
 export * from './flows/totp.ts';
+export * from './flows/emailCheck.ts';

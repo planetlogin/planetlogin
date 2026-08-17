@@ -24,6 +24,7 @@
       haveAccount: 'Already have an account? Sign in',
       emailTaken: 'That email is already registered.', regErr: 'Could not create the account.',
       forgot: 'Forgot your password?',
+      continue: 'Continue', back: '← Change email',
     },
     es: {
       greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
@@ -39,6 +40,7 @@
       haveAccount: '¿Ya tienes cuenta? Entra',
       emailTaken: 'Ese email ya está registrado.', regErr: 'No se pudo crear la cuenta.',
       forgot: '¿Olvidaste tu contraseña?',
+      continue: 'Continuar', back: '← Cambiar email',
     },
     fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' },
     de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' },
@@ -92,6 +94,7 @@
       flyOnLogin = c.locale?.flyToOnLogin ?? false;
       brand = c.brand ?? brand;
       copy = c.copy ?? copy;
+      loginFlow = c.loginFlow ?? 'classic';
       const root = document.documentElement.style;
       if (brand.accent) root.setProperty('--pl-accent', brand.accent);
       if (brand.accentFg) root.setProperty('--pl-accent-fg', brand.accentFg);
@@ -129,6 +132,8 @@
   let code = $state('');
   let mode = $state<'login' | 'register'>('login');
   let name = $state('');
+  let loginFlow = $state<'classic' | 'email-first'>('classic');
+  let step = $state<'email' | 'credentials' | 'register'>('email');
 
   async function register() {
     busy = true; msg = '';
@@ -148,8 +153,25 @@
     finally { busy = false; }
   }
 
+  async function checkEmail() {
+    if (!email) { msg = t.needEmail; ok = false; return; }
+    busy = true; msg = '';
+    try {
+      const r = await fetch(`${base}/auth/email/check`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ identifier: email }),
+      });
+      const data = await r.json();
+      if (!r.ok) { ok = false; msg = data.error?.code === 'rate_limited' ? t.rateLimited : t.unavailable; return; }
+      step = data.exists ? 'credentials' : 'register';
+      mode = data.exists ? 'login' : 'register';
+    } catch { ok = false; msg = t.netErr; }
+    finally { busy = false; }
+  }
+
   async function submit(e: SubmitEvent) {
     e.preventDefault();
+    if (loginFlow === 'email-first' && step === 'email') { await checkEmail(); return; }
     if (mode === 'register') { await register(); return; }
     busy = true; msg = '';
     try {
@@ -236,29 +258,53 @@
       <h1>{copy.title ?? t.greet}</h1>
       <p class="sub">{copy.subtitle ?? t.sub}</p>
 
-      {#if mode === 'register'}
-        <label for="name">{t.name}</label>
-        <input id="name" type="text" bind:value={name} placeholder={t.name} autocomplete="name" />
+      {#if loginFlow === 'email-first' && step !== 'email'}
+        <div class="email-display">
+          <span>{email}</span>
+          <button type="button" class="toggle back" onclick={() => { step = 'email'; msg = ''; }}>{t.back}</button>
+        </div>
       {/if}
 
-      <label for="email">{t.email}</label>
-      <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
-
-      {#if providers.password?.enabled}
+      {#if loginFlow === 'email-first' && step === 'email'}
+        <label for="email">{t.email}</label>
+        <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
+        <button type="submit" disabled={busy}>{busy ? '…' : t.continue}</button>
+      {:else if loginFlow === 'email-first' && step === 'credentials'}
         <label for="pass">{t.pass}</label>
-        <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete={mode === 'register' ? 'new-password' : 'current-password'} />
-        <button type="submit" disabled={busy}>{busy ? '…' : mode === 'register' ? t.signup : t.cta}</button>
-        {#if providers.password?.allowRegister}
-          <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
-        {/if}
-        <!-- Recuperar contraseña vive en el downstream (brand.homeUrl + /forgot):
-             PlanetLogin no persiste nada, las cuentas y los hashes son suyos. -->
-        {#if mode === 'login' && brand.homeUrl}
+        <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete="current-password" />
+        <button type="submit" disabled={busy}>{busy ? '…' : t.cta}</button>
+        {#if brand.homeUrl}
           <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>{t.forgot}</a>
         {/if}
+      {:else if loginFlow === 'email-first' && step === 'register'}
+        <label for="name">{t.name}</label>
+        <input id="name" type="text" bind:value={name} placeholder={t.name} autocomplete="name" />
+        <label for="pass">{t.pass}</label>
+        <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete="new-password" />
+        <button type="submit" disabled={busy}>{busy ? '…' : t.signup}</button>
+      {:else}
+        {#if mode === 'register'}
+          <label for="name">{t.name}</label>
+          <input id="name" type="text" bind:value={name} placeholder={t.name} autocomplete="name" />
+        {/if}
+
+        <label for="email">{t.email}</label>
+        <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
+
+        {#if providers.password?.enabled}
+          <label for="pass">{t.pass}</label>
+          <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete={mode === 'register' ? 'new-password' : 'current-password'} />
+          <button type="submit" disabled={busy}>{busy ? '…' : mode === 'register' ? t.signup : t.cta}</button>
+          {#if providers.password?.allowRegister}
+            <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
+          {/if}
+          {#if mode === 'login' && brand.homeUrl}
+            <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>{t.forgot}</a>
+          {/if}
+        {/if}
       {/if}
 
-      {#if mode === 'login'}
+      {#if mode === 'login' && (loginFlow === 'classic' || step === 'email')}
         {#if providers.magicLink?.enabled}
           <button type="button" class="alt" disabled={busy} onclick={magicRequest}>{t.magic}</button>
         {/if}
@@ -327,6 +373,8 @@
   .div::before, .div::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.12); }
   .forgot { display: inline-block; margin-top: .7rem; font-size: .82rem; color: var(--pl-muted, #9aa7bd); text-decoration: none; }
   .forgot:hover { color: var(--pl-accent, #f6a13c); }
+  .email-display { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: .5rem .7rem; margin-bottom: .4rem; display: flex; align-items: center; justify-content: space-between; font-size: .9rem; color: #eef2fb; }
+  button.toggle.back { width: auto; margin: 0; padding: 0; font-size: .78rem; }
   button.toggle { display: block; width: 100%; background: transparent; border: none; box-shadow: none; margin-top: .7rem; padding: 0; font-size: .82rem; color: var(--pl-muted, #9aa7bd); cursor: pointer; }
   button.toggle:hover { color: var(--pl-accent, #f6a13c); }
   .msg { font-size: .82rem; margin: .9rem 0 0; }
