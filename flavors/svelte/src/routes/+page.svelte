@@ -315,9 +315,9 @@
   input:focus { outline: 0; border-color: var(--pl-accent, #f6a13c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pl-accent, #f6a13c) 22%, transparent); }
   button { width: 100%; margin-top: 1.1rem; border: 0; border-radius: 11px; padding: .7rem; font-weight: 700;
     background: var(--pl-accent, #f6a13c); color: var(--pl-accent-fg, #231400); cursor: pointer; font-size: .98rem; }
-  button[type="submit"] { box-shadow: 0 5px 0 var(--pl-accent-dark, #256e33);
+  button[type="submit"] { box-shadow: 0 5px 0 var(--pl-accent-dark, color-mix(in srgb, var(--pl-accent, #f6a13c) 60%, black));
     transition: transform .22s cubic-bezier(.34,1.65,.5,1), box-shadow .22s cubic-bezier(.34,1.65,.5,1); }
-  button[type="submit"]:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pl-accent-dark, #256e33);
+  button[type="submit"]:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pl-accent-dark, color-mix(in srgb, var(--pl-accent, #f6a13c) 60%, black));
     transition: transform .05s, box-shadow .05s; }
   button:disabled { opacity: .6; cursor: progress; }
   button.alt { background: transparent; color: var(--pl-accent, #f6a13c); border: 1px solid var(--pl-accent, #f6a13c); box-shadow: none; margin-top: .6rem; }
