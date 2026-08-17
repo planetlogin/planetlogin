@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { passwordStrength } from '@planetlogin/core/passwordStrength';
   import { base } from '$app/paths';
   import SiteNav from '$lib/SiteNav.svelte';
   import Footer from '$lib/Footer.svelte';
@@ -25,6 +26,7 @@
       emailTaken: 'That email is already registered.', regErr: 'Could not create the account.',
       forgot: 'Forgot your password?',
       continue: 'Continue', back: '← Change email',
+      strengthLabels: { very_weak: 'Very weak', weak: 'Weak', fair: 'Fair', strong: 'Strong', very_strong: 'Very strong' },
     },
     es: {
       greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
@@ -41,6 +43,7 @@
       emailTaken: 'Ese email ya está registrado.', regErr: 'No se pudo crear la cuenta.',
       forgot: '¿Olvidaste tu contraseña?',
       continue: 'Continuar', back: '← Cambiar email',
+      strengthLabels: { very_weak: 'Muy débil', weak: 'Débil', fair: 'Aceptable', strong: 'Fuerte', very_strong: 'Muy fuerte' },
     },
     fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' , continue: 'Continuer', back: '\u2190 Changer d\'e-mail' },
     de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' , continue: 'Weiter', back: '\u2190 E-Mail \u00e4ndern' },
@@ -132,6 +135,7 @@
   let code = $state('');
   let mode = $state<'login' | 'register'>('login');
   let name = $state('');
+  let strength = $derived(password ? passwordStrength(password, providers.password?.minPasswordLength) : null);
   let loginFlow = $state<'classic' | 'email-first'>('classic');
   let step = $state<'email' | 'credentials' | 'register'>('email');
 
@@ -281,6 +285,12 @@
         <input id="name" type="text" bind:value={name} placeholder={t.name} autocomplete="name" />
         <label for="pass">{t.pass}</label>
         <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete="new-password" />
+        {#if providers.password?.strengthMeter && strength && (mode === 'register' || step === 'register')}
+          <div class="strength-meter">
+            <div class="strength-bar" style="width: {(strength.score + 1) * 20}%; background: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};"></div>
+          </div>
+          <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
+        {/if}
         <button type="submit" disabled={busy}>{busy ? '…' : t.signup}</button>
       {:else}
         {#if mode === 'register'}
@@ -294,6 +304,12 @@
         {#if providers.password?.enabled}
           <label for="pass">{t.pass}</label>
           <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete={mode === 'register' ? 'new-password' : 'current-password'} />
+        {#if providers.password?.strengthMeter && strength && (mode === 'register' || step === 'register')}
+          <div class="strength-meter">
+            <div class="strength-bar" style="width: {(strength.score + 1) * 20}%; background: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};"></div>
+          </div>
+          <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
+        {/if}
           <button type="submit" disabled={busy}>{busy ? '…' : mode === 'register' ? t.signup : t.cta}</button>
           {#if providers.password?.allowRegister}
             <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
@@ -390,4 +406,8 @@
     .stage { flex-direction: column; } planet-login { flex: none; height: 50vh; }
     .panel { max-width: none; border-left: 0; border-top: 1px solid rgba(255,255,255,.12); }
   }
+
+  .strength-meter { height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; margin-top: .4rem; overflow: hidden; }
+  .strength-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+  .strength-label { font-size: .72rem; margin-top: .2rem; display: block; }
 </style>

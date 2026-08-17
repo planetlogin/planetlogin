@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./passwordStrength": {
+      "types": "./dist/passwordStrength.d.ts",
+      "import": "./dist/passwordStrength.js"
     }
   },
   "main": "./dist/index.js",
