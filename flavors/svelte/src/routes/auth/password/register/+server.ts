@@ -13,7 +13,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
     return json({ error: { code: 'not_enabled', message: 'Registration disabled' } }, { status: 403 });
 
   const { email, password, name, locale } = await request.json().catch(() => ({}));
-  if (!email || !password || String(password).length < 8)
+  const minLen = pw?.minPasswordLength ?? 8;
+  if (!email || !password || String(password).length < minLen)
     return json({ error: { code: 'bad_request', message: 'email and password (8+ chars) required' } }, { status: 400 });
 
   // Reuse the login brute-force rule, keyed by IP+email.

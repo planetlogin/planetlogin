@@ -278,7 +278,7 @@
         <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete="current-password" />
         <button type="submit" disabled={busy}>{busy ? '…' : t.cta}</button>
         {#if brand.homeUrl}
-          <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>{t.forgot}</a>
+          <a class="forgot" href={`${base}/reset`}>{t.forgot}</a>
         {/if}
       {:else if loginFlow === 'email-first' && step === 'register'}
         <label for="name">{t.name}</label>
@@ -315,7 +315,7 @@
             <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
           {/if}
           {#if mode === 'login' && brand.homeUrl}
-            <a class="forgot" href={`${brand.homeUrl.replace(/\/$/, '')}/forgot`}>{t.forgot}</a>
+            <a class="forgot" href={`${base}/reset`}>{t.forgot}</a>
           {/if}
         {/if}
       {/if}

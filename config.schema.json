@@ -74,6 +74,12 @@
               "default": 8,
               "minimum": 4,
               "description": "Minimum password length"
+            },
+            "resetTokenTtlSeconds": {
+              "type": "integer",
+              "default": 3600,
+              "minimum": 300,
+              "description": "Password reset token TTL in seconds (default 1 hour)"
             }
           }
         },
@@ -160,7 +166,7 @@
         "anonymous": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Guest sessions \u2014 no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
+          "description": "Guest sessions — no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -249,7 +255,7 @@
             "HS256"
           ],
           "default": "EdDSA",
-          "description": "Asymmetric (EdDSA/RS256/ES256) \u2192 multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
+          "description": "Asymmetric (EdDSA/RS256/ES256) → multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
         },
         "encrypt": {
           "type": "boolean",
@@ -284,7 +290,7 @@
         "cors": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' \u2014 the concrete origin is echoed.",
+          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' — the concrete origin is echoed.",
           "properties": {
             "origins": {
               "type": "array",

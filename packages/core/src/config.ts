@@ -7,7 +7,7 @@ export interface PlanetLoginConfig {
   spec: 1;
   brand: { name: string; logoUrl?: string; accent?: string; background?: string };
   providers: {
-    password?: { enabled?: boolean; allowRegister?: boolean; strengthMeter?: boolean; minPasswordLength?: number };
+    password?: { enabled?: boolean; allowRegister?: boolean; strengthMeter?: boolean; minPasswordLength?: number; resetTokenTtlSeconds?: number };
     oauth?: Array<{ id: string; label?: string; clientIdEnv?: string }>;
     magicLink?: { enabled?: boolean; ttlSeconds?: number };
     passkeys?: { enabled?: boolean };

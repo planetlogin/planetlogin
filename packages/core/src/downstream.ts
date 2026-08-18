@@ -52,6 +52,10 @@ export interface DownstreamStore {
   totpSave(data: { userId: string; secret: string; enabled: boolean }): Promise<unknown>;
   preferencesGet(query: { userId: string }): Promise<UserPreferences | null>;
   preferencesSave(data: { userId: string } & UserPreferences): Promise<unknown>;
+  /** Password reset: the downstream updates the stored password hash. */
+  updatePassword(data: { userId: string; password: string }): Promise<void>;
+  /** Deliver a password-reset email/notification to the user. */
+  deliverReset(data: { email: string; link: string; locale?: Locale }): Promise<unknown>;
 }
 
 /**
@@ -75,6 +79,8 @@ export function defineStore(impl: Partial<DownstreamStore>): DownstreamStore {
     totpSave: impl.totpSave ?? miss('totpSave'),
     preferencesGet: impl.preferencesGet ?? miss('preferencesGet'),
     preferencesSave: impl.preferencesSave ?? miss('preferencesSave'),
+    updatePassword: impl.updatePassword ?? miss('updatePassword'),
+    deliverReset: impl.deliverReset ?? miss('deliverReset'),
   };
 }
 
@@ -152,5 +158,13 @@ export class Downstream implements DownstreamStore {
   }
   preferencesSave(data: { userId: string } & UserPreferences): Promise<unknown> {
     return this.call('/preferences/save', data);
+  }
+
+  async updatePassword(data: { userId: string; password: string }): Promise<void> {
+    await this.call('/users/update-password', data);
+  }
+
+  deliverReset(data: { email: string; link: string; locale?: Locale }): Promise<unknown> {
+    return this.call('/reset/deliver', data);
   }
 }

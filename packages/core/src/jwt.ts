@@ -196,3 +196,31 @@ export async function verifyMagicToken(token: string): Promise<{ identifier: str
     return null;
   }
 }
+
+// ── Password-reset tokens ────────────────────────────────────────────────────
+// Same pattern as magic-link tokens: signed, short-lived, purpose-scoped.
+// Contains the userId + email so the reset endpoint can update the right account.
+export async function signResetToken(userId: string, email: string, ttlSeconds = 3600): Promise<string> {
+  const k = await getKeys();
+  return new SignJWT({ purpose: 'reset', email })
+    .setProtectedHeader({ alg: k.alg, kid: k.kid })
+    .setSubject(userId)
+    .setJti(crypto.randomUUID())
+    .setIssuedAt()
+    .setExpirationTime(`${ttlSeconds}s`)
+    .setIssuer('planetlogin')
+    .setAudience('planetlogin:reset')
+    .sign(k.sign as any);
+}
+
+export async function verifyResetToken(token: string): Promise<{ userId: string; email: string; jti: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, (await verifier()) as any, {
+      issuer: 'planetlogin', audience: 'planetlogin:reset',
+    });
+    if (payload.purpose !== 'reset' || !payload.sub || !payload.jti || !payload.email) return null;
+    return { userId: payload.sub, email: payload.email as string, jti: payload.jti };
+  } catch {
+    return null;
+  }
+}

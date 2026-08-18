@@ -21,3 +21,4 @@ export * from './flows/passkey.ts';
 export * from './flows/totp.ts';
 export * from './flows/emailCheck.ts';
 export * from './passwordStrength.ts';
+export * from './flows/passwordReset.ts';
