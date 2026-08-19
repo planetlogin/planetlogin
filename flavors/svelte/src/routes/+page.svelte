@@ -28,6 +28,7 @@
       continue: 'Continue', back: '← Change email',
       strengthLabels: { very_weak: 'Very weak', weak: 'Weak', fair: 'Fair', strong: 'Strong', very_strong: 'Very strong' },
       remember: 'Remember me',
+      terms: 'I agree to the', termsLink: 'Terms of Service', privacyLink: 'Privacy Policy', and: 'and', termsRequired: 'You must accept the terms to continue.',
     },
     es: {
       greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
@@ -46,6 +47,7 @@
       continue: 'Continuar', back: '← Cambiar email',
       strengthLabels: { very_weak: 'Muy débil', weak: 'Débil', fair: 'Aceptable', strong: 'Fuerte', very_strong: 'Muy fuerte' },
       remember: 'Recuérdame',
+      terms: 'Acepto los', termsLink: 'Términos de servicio', privacyLink: 'Política de privacidad', and: 'y la', termsRequired: 'Debes aceptar los términos para continuar.',
     },
     fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' , continue: 'Continuer', back: '\u2190 Changer d\'e-mail' },
     de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' , continue: 'Weiter', back: '\u2190 E-Mail \u00e4ndern' },
@@ -70,7 +72,8 @@
     discord: '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="#5865F2" d="M19.27 5.33A18.17 18.17 0 0 0 14.89 4a12.58 12.58 0 0 0-.57 1.16 16.85 16.85 0 0 0-5.06 0c-.18-.39-.37-.77-.57-1.15A18.15 18.15 0 0 0 4.37 5.7 19.3 19.3 0 0 0 1.2 17.78a18.39 18.39 0 0 0 5.6 2.83 13.17 13.17 0 0 0 1.17-1.9 11.73 11.73 0 0 1-1.86-.89c.16-.11.31-.23.46-.35a13.25 13.25 0 0 0 11.4 0c.15.12.3.24.46.35a11.73 11.73 0 0 1-1.86.89c.35.67.74 1.3 1.17 1.9a18.36 18.36 0 0 0 5.6-2.83A19.31 19.31 0 0 0 19.27 5.33zM8.01 15.33c-1.18 0-2.15-1.09-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.2 0 2.17 1.09 2.15 2.42 0 1.33-.95 2.42-2.15 2.42zm7.98 0c-1.18 0-2.15-1.09-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.2 0 2.17 1.09 2.15 2.42 0 1.33-.95 2.42-2.15 2.42z"/></svg>',
   };
 
-  let locale = $state<any>(null);
+  let loading = $state(true);
+  let locale = $state<any>({ language: typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en' });
   let email = $state('');
   let password = $state('');
   let busy = $state(false);
@@ -121,11 +124,30 @@
       embedOrigins = c.embed?.allowedOrigins ?? [];
       const root = document.documentElement.style;
       if (brand.accent) root.setProperty('--pl-accent', brand.accent);
+      // Theme: apply light mode CSS variables
+      const theme = brand.theme ?? 'dark';
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = theme === 'dark' || (theme === 'auto' && prefersDark);
+      if (!isDark) {
+        root.setProperty('--pl-bg', '#f5f6f8');
+        root.setProperty('--pl-card-bg', '#ffffff');
+        root.setProperty('--pl-input-bg', '#f0f1f3');
+        root.setProperty('--pl-text', '#1a1a2e');
+        root.setProperty('--pl-muted', '#6b7280');
+        root.setProperty('--pl-border', 'rgba(0,0,0,.12)');
+        root.setProperty('--pl-success', '#16a34a');
+        root.setProperty('--pl-error', '#dc2626');
+        root.setProperty('--pl-skeleton', 'rgba(0,0,0,.08)');
+        root.setProperty('--pl-skeleton-light', 'rgba(0,0,0,.05)');
+        root.setProperty('--pl-accent-fg', brand.accentFg ?? '#ffffff');
+        document.body.style.background = '#f5f6f8';
+      }
       if (brand.accentFg) root.setProperty('--pl-accent-fg', brand.accentFg);
       if (brand.accentDark) root.setProperty('--pl-accent-dark', brand.accentDark);
       if (brand.font) root.setProperty('--pl-font', brand.font);
       if (brand.accent) globeEl?.setAttribute('accent', brand.accent);
     } catch {}
+    loading = false;
 
     // Embed auto-resize: notify parent of content height changes
     if (embed) {
@@ -174,8 +196,10 @@
   let lastUser = $state<any>(null);
   let step = $state<'email' | 'credentials' | 'register'>('email');
   let rememberMe = $state(false);
+  let termsAccepted = $state(false);
 
   async function register() {
+    if (brand.termsUrl && !termsAccepted) { msg = t.termsRequired; ok = false; return; }
     busy = true; msg = '';
     try {
       const r = await fetch(`${base}/auth/password/register`, {
@@ -286,6 +310,9 @@
   {/if}
 
   <aside class="panel" class:embed>
+    {#if loading}
+      <div class="skeleton"><div class="sk-title"></div><div class="sk-line"></div><div class="sk-input"></div><div class="sk-input"></div><div class="sk-btn"></div></div>
+    {:else}
     {#if mfa}
       <form class="card" onsubmit={(e) => { e.preventDefault(); totpVerify(); }} aria-label="Two-factor authentication">
         <h1>{t.greet}</h1>
@@ -353,7 +380,13 @@
           <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
         {/if}
           <button type="submit" disabled={busy} aria-busy={busy}>{busy ? '…' : mode === 'register' ? t.signup : t.cta}</button>
-          {#if providers.password?.allowRegister}
+          {#if mode === 'register' && brand.termsUrl}
+          <label class="terms">
+            <input type="checkbox" bind:checked={termsAccepted} />
+            {t.terms} <a href={brand.termsUrl} target="_blank" rel="noopener">{t.termsLink}</a>{#if brand.privacyUrl} {t.and} <a href={brand.privacyUrl} target="_blank" rel="noopener">{t.privacyLink}</a>{/if}
+          </label>
+        {/if}
+        {#if providers.password?.allowRegister}
             <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
           {/if}
           {#if mode === 'login' && brand.homeUrl}
@@ -380,7 +413,7 @@
 
       {#if msg}<p class="msg" class:ok class:err={!ok} role="alert" aria-live="polite">{msg}</p>{/if}
 
-      {#if locale}
+      {#if locale && !loading}
         <div class="chips">
           <span class="chip">{locale.label}</span>
           <span class="chip"><b>{locale.timezone}</b></span>
@@ -389,6 +422,7 @@
       {/if}
     </form>
     {/if}
+  {/if}
   </aside>
 </div>
 
@@ -405,17 +439,17 @@
 
 <style>
   :global(body) { font-family: var(--pl-font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif); }
-  .stage { position: relative; display: flex; height: 100vh; color: #eef2fb; animation: pl-fade .45s ease both; }
+  .stage { position: relative; display: flex; height: 100vh; color: var(--pl-text, #eef2fb); animation: pl-fade .45s ease both; }
   @keyframes pl-fade { from { opacity: 0; } to { opacity: 1; } }
   planet-login { flex: 1 1 auto; min-width: 0; height: 100vh; display: block; }
-  .panel { flex: 0 0 380px; max-width: 42vw; background: #0d1422; border-left: 1px solid rgba(255,255,255,.12);
+  .panel { flex: 0 0 380px; max-width: 42vw; background: var(--pl-card-bg, #0d1422); border-left: 1px solid var(--pl-border, rgba(255,255,255,.12));
     display: grid; place-items: center; padding: 2rem; }
   .card { width: 100%; max-width: 300px; }
   h1 { font-size: 1.3rem; margin: 0 0 .25rem; }
-  .sub { color: #9aa7bd; font-size: .85rem; margin: 0 0 1.4rem; }
-  label { display: block; font-size: .78rem; color: #9aa7bd; margin: .8rem 0 .3rem; }
-  input { width: 100%; background: #131c2e; border: 1px solid rgba(255,255,255,.12); border-radius: 10px;
-    padding: .6rem .7rem; color: #eef2fb; font-size: .95rem; }
+  .sub { color: var(--pl-muted, #9aa7bd); font-size: .85rem; margin: 0 0 1.4rem; }
+  label { display: block; font-size: .78rem; color: var(--pl-muted, #9aa7bd); margin: .8rem 0 .3rem; }
+  input { width: 100%; background: var(--pl-input-bg, #131c2e); border: 1px solid var(--pl-border, rgba(255,255,255,.12)); border-radius: 10px;
+    padding: .6rem .7rem; color: var(--pl-text, #eef2fb); font-size: .95rem; }
   input:focus { outline: 0; border-color: var(--pl-accent, #f6a13c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pl-accent, #f6a13c) 22%, transparent); }
   button { width: 100%; margin-top: 1.1rem; border: 0; border-radius: 11px; padding: .7rem; font-weight: 700;
     background: var(--pl-accent, #f6a13c); color: var(--pl-accent-fg, #231400); cursor: pointer; font-size: .98rem; }
@@ -425,36 +459,47 @@
     transition: transform .05s, box-shadow .05s; }
   button:disabled { opacity: .6; cursor: progress; }
   button.alt { background: transparent; color: var(--pl-accent, #f6a13c); border: 1px solid var(--pl-accent, #f6a13c); box-shadow: none; margin-top: .6rem; }
-  button.soc { background: #131c2e; display: flex; align-items: center; justify-content: center; gap: .5rem; color: #eef2fb; border: 1px solid rgba(255,255,255,.12); margin-top: .5rem; font-weight: 600; }
-  button.soc:hover { border-color: #9aa7bd; }
-  .div { display: flex; align-items: center; gap: .6rem; color: #9aa7bd; font-size: .72rem; margin: 1rem 0 .2rem; }
-  .div::before, .div::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.12); }
+  button.soc { background: var(--pl-input-bg, #131c2e); display: flex; align-items: center; justify-content: center; gap: .5rem; color: var(--pl-text, #eef2fb); border: 1px solid var(--pl-border, rgba(255,255,255,.12)); margin-top: .5rem; font-weight: 600; }
+  button.soc:hover { border-color: var(--pl-muted, #9aa7bd); }
+  .div { display: flex; align-items: center; gap: .6rem; color: var(--pl-muted, #9aa7bd); font-size: .72rem; margin: 1rem 0 .2rem; }
+  .div::before, .div::after { content: ''; flex: 1; height: 1px; background: var(--pl-border, rgba(255,255,255,.12)); }
   .forgot { display: inline-block; margin-top: .7rem; font-size: .82rem; color: var(--pl-muted, #9aa7bd); text-decoration: none; }
   .forgot:hover { color: var(--pl-accent, #f6a13c); }
-  .email-display { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: .5rem .7rem; margin-bottom: .4rem; display: flex; align-items: center; justify-content: space-between; font-size: .9rem; color: #eef2fb; }
+  .email-display { background: var(--pl-skeleton-light, rgba(255,255,255,.06)); border: 1px solid var(--pl-border, rgba(255,255,255,.12)); border-radius: 10px; padding: .5rem .7rem; margin-bottom: .4rem; display: flex; align-items: center; justify-content: space-between; font-size: .9rem; color: var(--pl-text, #eef2fb); }
   button.toggle.back { width: auto; margin: 0; padding: 0; font-size: .78rem; }
   button.toggle { display: block; width: 100%; background: transparent; border: none; box-shadow: none; margin-top: .7rem; padding: 0; font-size: .82rem; color: var(--pl-muted, #9aa7bd); cursor: pointer; }
   button.toggle:hover { color: var(--pl-accent, #f6a13c); }
   .msg { font-size: .82rem; margin: .9rem 0 0; }
-  .msg.ok { color: #9ad19a; } .msg.err { color: #ff9b9b; }
+  .msg.ok { color: var(--pl-success, #9ad19a); } .msg.err { color: var(--pl-error, #ff9b9b); }
   .chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1.2rem; font-size: .72rem; }
-  .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: .2rem .6rem; }
+  .chip { background: var(--pl-skeleton, rgba(255,255,255,.08)); border: 1px solid var(--pl-border, rgba(255,255,255,.12)); border-radius: 999px; padding: .2rem .6rem; }
   .chip b { color: var(--pl-accent, #f6a13c); }
-  :global(:root) { --snav-accent: var(--pl-accent, #3fb950); --snav-fg: #e6edf3; --snav-muted: #cdd6df;
-    --snav-border: rgba(255,255,255,.14); --snav-bg: #0b0e11; --snav-font: var(--pl-font, inherit); }
+  :global(:root) { --snav-accent: var(--pl-accent, #3fb950); --snav-fg: var(--pl-text, #e6edf3); --snav-muted: var(--pl-muted, #cdd6df);
+    --snav-border: var(--pl-border, rgba(255,255,255,.14)); --snav-bg: var(--pl-card-bg, #0b0e11); --snav-font: var(--pl-font, inherit); }
   .snav-back { color: #e6edf3; text-decoration: none; font-size: .9rem; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
   .snav-back:hover { color: var(--pl-accent, #f6a13c); }
   @media (max-width: 820px) {
     .stage { flex-direction: column; } planet-login { flex: none; height: 50vh; }
-    .panel { max-width: none; border-left: 0; border-top: 1px solid rgba(255,255,255,.12); }
+    .panel { max-width: none; border-left: 0; border-top: 1px solid var(--pl-border, rgba(255,255,255,.12)); }
   }
 
-  .remember { display: flex; align-items: center; gap: .4rem; font-size: .82rem; color: #9aa7bd; margin: .6rem 0 0; cursor: pointer; }
+  .terms { display: flex; align-items: flex-start; gap: .4rem; font-size: .78rem; color: var(--pl-muted, #9aa7bd); margin: .6rem 0 0; cursor: pointer; line-height: 1.4; }
+  .terms input[type="checkbox"] { accent-color: var(--pl-accent, #f6a13c); width: 14px; height: 14px; cursor: pointer; margin-top: 2px; flex-shrink: 0; }
+  .terms a { color: var(--pl-accent, #f6a13c); text-decoration: none; }
+  .terms a:hover { text-decoration: underline; }
+  .remember { display: flex; align-items: center; gap: .4rem; font-size: .82rem; color: var(--pl-muted, #9aa7bd); margin: .6rem 0 0; cursor: pointer; }
   .remember input[type="checkbox"] { accent-color: var(--pl-accent, #f6a13c); width: 14px; height: 14px; cursor: pointer; }
   .strength-meter { height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; margin-top: .4rem; overflow: hidden; }
   .strength-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   .strength-label { font-size: .72rem; margin-top: .2rem; display: block; }
+
+  .skeleton { width: 100%; max-width: 300px; animation: sk-pulse 1.5s ease-in-out infinite; }
+  .sk-title { height: 1.3rem; width: 60%; background: var(--pl-skeleton, rgba(255,255,255,.08)); border-radius: 6px; margin-bottom: 1.2rem; }
+  .sk-line { height: .8rem; width: 80%; background: var(--pl-skeleton-light, rgba(255,255,255,.05)); border-radius: 4px; margin-bottom: 1.4rem; }
+  .sk-input { height: 2.4rem; width: 100%; background: var(--pl-skeleton-light, rgba(255,255,255,.06)); border-radius: 10px; margin-bottom: .8rem; }
+  .sk-btn { height: 2.6rem; width: 100%; background: var(--pl-skeleton, rgba(255,255,255,.08)); border-radius: 11px; margin-top: .4rem; }
+  @keyframes sk-pulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
 
   .stage.embed { height: 100vh; justify-content: center; align-items: center; background: transparent; }
   .panel.embed { flex: none; max-width: none; border-left: none; background: transparent; padding: 1rem; }

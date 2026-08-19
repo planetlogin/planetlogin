@@ -40,11 +40,35 @@
           "default": "#070b16"
         },
         "theme": {
-          "type": "object",
-          "description": "Optional semantic token overrides.",
-          "additionalProperties": {
-            "type": "string"
-          }
+          "type": "string",
+          "enum": [
+            "dark",
+            "light",
+            "auto"
+          ],
+          "default": "dark",
+          "description": "Color theme. dark = default dark mode, light = light mode, auto = follows prefers-color-scheme."
+        },
+        "accentFg": {
+          "type": "string",
+          "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "default": "#ffffff",
+          "description": "Foreground color for accent buttons (text on accent background)."
+        },
+        "termsUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to Terms of Service page. When set, a checkbox appears on registration."
+        },
+        "privacyUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to Privacy Policy page. Shown alongside terms if both are set."
+        },
+        "homeUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the brand's homepage, used for logo link."
         }
       }
     },
@@ -166,7 +190,7 @@
         "anonymous": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Guest sessions — no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
+          "description": "Guest sessions \u2014 no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -255,7 +279,7 @@
             "HS256"
           ],
           "default": "EdDSA",
-          "description": "Asymmetric (EdDSA/RS256/ES256) → multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
+          "description": "Asymmetric (EdDSA/RS256/ES256) \u2192 multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
         },
         "encrypt": {
           "type": "boolean",
@@ -296,7 +320,7 @@
         "cors": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' — the concrete origin is echoed.",
+          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' \u2014 the concrete origin is echoed.",
           "properties": {
             "origins": {
               "type": "array",
