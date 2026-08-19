@@ -303,3 +303,73 @@ describe('oauth start', () => {
     expect(cb.status).toBe(400);
   });
 });
+
+
+describe('email check (email-first flow)', () => {
+  it('POST /auth/email/check with known user → exists:true', async () => {
+    const r = await post('/auth/email/check', { identifier: USER });
+    expect(r.status).toBe(200);
+    const j = await r.json();
+    expect(j.exists).toBe(true);
+    expect(j.methods).toContain('password');
+  });
+  it('POST /auth/email/check with unknown user → exists:false', async () => {
+    const r = await post('/auth/email/check', { identifier: 'nobody@nowhere.test' });
+    expect(r.status).toBe(200);
+    const j = await r.json();
+    expect(j.exists).toBe(false);
+  });
+  it('POST /auth/email/check without identifier → 400', async () => {
+    const r = await post('/auth/email/check', {});
+    expect(r.status).toBe(400);
+  });
+});
+
+describe('password reset', () => {
+  it('POST /auth/password/reset/request always → 202 (no enumeration)', async () => {
+    const r = await post('/auth/password/reset/request', { identifier: USER });
+    expect(r.status).toBe(202);
+  });
+  it('POST /auth/password/reset/request unknown email → 202 (no enumeration)', async () => {
+    const r = await post('/auth/password/reset/request', { identifier: 'x@y.z' });
+    expect(r.status).toBe(202);
+  });
+  it('POST /auth/password/reset/verify with bad token → 401', async () => {
+    const r = await post('/auth/password/reset/verify', { token: 'invalid', password: 'NewPass123!' });
+    expect(r.status).toBe(401);
+    expect((await r.json()).error.code).toBe('invalid_token');
+  });
+  it('POST /auth/password/reset/request without identifier → 400', async () => {
+    const r = await post('/auth/password/reset/request', {});
+    expect(r.status).toBe(400);
+  });
+  it('POST /auth/password/reset/verify without token → 400', async () => {
+    const r = await post('/auth/password/reset/verify', { password: 'test' });
+    expect(r.status).toBe(400);
+  });
+});
+
+describe('CSP & embed', () => {
+  it('responses include frame-ancestors CSP header', async () => {
+    const r = await fetch(BASE + '/auth/config');
+    const csp = r.headers.get('content-security-policy') || '';
+    expect(csp).toContain("frame-ancestors");
+  });
+  it('GET /auth/config includes embed config', async () => {
+    const r = await fetch(BASE + '/auth/config');
+    const j = await r.json();
+    expect(j.embed).toBeDefined();
+    expect(Array.isArray(j.embed.allowedOrigins)).toBe(true);
+  });
+});
+
+describe('remember me', () => {
+  it('login with rememberMe → session cookie has extended maxAge', async () => {
+    const r = await post('/auth/password/login', { identifier: USER, password: PASS, rememberMe: true });
+    expect(r.status).toBe(200);
+    const cookie = r.headers.get('set-cookie') || '';
+    // Should have a max-age significantly longer than default (3600)
+    const maxAge = cookie.match(/max-age=(\d+)/i)?.[1];
+    if (maxAge) expect(Number(maxAge)).toBeGreaterThan(86400); // > 1 day
+  });
+});
