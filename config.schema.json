@@ -334,6 +334,21 @@
       ],
       "default": "classic",
       "description": "Login UX mode. classic = email+password together (default). email-first = email only first, then check if account exists and show password or registration. Note: email-first enables email enumeration (mitigated by rate limiting)."
+    },
+    "embed": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Iframe embed settings. When allowedOrigins is set, PlanetLogin can be embedded via ?mode=embed.",
+      "properties": {
+        "allowedOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Origins allowed to embed PlanetLogin in an iframe (e.g. [\"https://calcat.app\"]). Controls CSP frame-ancestors."
+        }
+      }
     }
   },
   "$defs": {

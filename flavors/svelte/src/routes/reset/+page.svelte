@@ -41,6 +41,8 @@
   let msg = $state('');
   let ok = $state(false);
   let brand = $state<any>({});
+  let embed = $state(false);
+  let embedOrigins = $state<string[]>([]);
   let providers = $state<any>({ password: { enabled: true } });
   let locale = $state<string>('en');
 
@@ -49,6 +51,7 @@
 
   onMount(async () => {
     token = new URLSearchParams(location.search).get('token') ?? '';
+    embed = new URLSearchParams(location.search).get('mode') === 'embed';
     try {
       const c = await (await fetch(`${base}/auth/config`)).json();
       brand = c.brand ?? brand;
@@ -59,6 +62,7 @@
       if (brand.accentDark) root.setProperty('--pl-accent-dark', brand.accentDark);
       if (brand.font) root.setProperty('--pl-font', brand.font);
       locale = document.documentElement.lang || 'en';
+      embedOrigins = c.embed?.allowedOrigins ?? [];
     } catch {}
   });
 
@@ -92,7 +96,11 @@
       ok = r.ok;
       if (r.ok) {
         msg = t.done;
-        setTimeout(() => { window.location.href = `${base}/`; }, 1500);
+        if (embed) {
+          window.parent.postMessage({ type: 'planetlogin:reset', token: data.token, user: data.user }, embedOrigins[0] || '*');
+        } else {
+          setTimeout(() => { window.location.href = `${base}/`; }, 1500);
+        }
       } else {
         msg = data.error?.code === 'invalid_token' ? t.expired
           : data.error?.code === 'rate_limited' ? t.rateLimited
@@ -103,7 +111,7 @@
   }
 </script>
 
-<div class="reset-page">
+<div class="reset-page" class:embed>
   <div class="card">
     {#if token}
       <h1>{t.newTitle}</h1>
@@ -131,7 +139,7 @@
       </form>
     {/if}
     {#if msg}<p class="msg" class:ok class:err={!ok}>{msg}</p>{/if}
-    <a class="back" href={`${base}/`}>{t.backToLogin}</a>
+    {#if !embed}<a class="back" href={`${base}/`}>{t.backToLogin}</a>{/if}
   </div>
 </div>
 
@@ -160,4 +168,7 @@
   .strength-meter { height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; margin-top: .4rem; overflow: hidden; }
   .strength-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
   .strength-label { font-size: .72rem; margin-top: .2rem; display: block; }
+
+  .reset-page.embed { background: transparent; }
+  .reset-page.embed .card { max-width: 340px; }
 </style>

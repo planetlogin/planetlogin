@@ -75,7 +75,14 @@
   let returnTo = '/';
   // returnTo is a sanitised same-origin path; for a subdomain portal we prepend the
   // trusted app origin (data.appOrigin) so login on auth.calcat.app returns to calcat.app.
-  function goReturn() { window.location.href = (data.appOrigin || '') + returnTo; }
+  function goReturn() {
+    if (embed) {
+      const target = embedOrigins[0] || '*';
+      window.parent.postMessage({ type: 'planetlogin:login', token: lastToken, user: lastUser }, target);
+      return;
+    }
+    window.location.href = (data.appOrigin || '') + returnTo;
+  }
 
   const t = $derived({ ...T.en, ...(T[locale?.language as string] ?? {}) });
 
@@ -83,6 +90,7 @@
     // Same-origin path only — mirrors core's safeReturnPath (can't import it client-side:
     // the core bundle pulls node deps). Must start with "/" but not "//" or "/\" (browsers
     // fold "\"→"/", so "/\evil.com" → "//evil.com" → open redirect).
+    embed = new URLSearchParams(location.search).get('mode') === 'embed';
     const rt = new URLSearchParams(location.search).get('return_to');
     if (rt && /^\/[^/\\]/.test(rt)) returnTo = rt;
     await import('@planetlogin/planetlogin'); // registers <planet-login>
@@ -98,6 +106,7 @@
       brand = c.brand ?? brand;
       copy = c.copy ?? copy;
       loginFlow = c.loginFlow ?? 'classic';
+      embedOrigins = c.embed?.allowedOrigins ?? [];
       const root = document.documentElement.style;
       if (brand.accent) root.setProperty('--pl-accent', brand.accent);
       if (brand.accentFg) root.setProperty('--pl-accent-fg', brand.accentFg);
@@ -137,6 +146,10 @@
   let name = $state('');
   let strength = $derived(password ? passwordStrength(password, providers.password?.minPasswordLength) : null);
   let loginFlow = $state<'classic' | 'email-first'>('classic');
+  let embed = $state(false);
+  let embedOrigins = $state<string[]>([]);
+  let lastToken = $state('');
+  let lastUser = $state<any>(null);
   let step = $state<'email' | 'credentials' | 'register'>('email');
 
   async function register() {
@@ -152,7 +165,7 @@
         : data.error?.code === 'email_taken' ? t.emailTaken
         : data.error?.code === 'rate_limited' ? t.rateLimited
         : t.regErr;
-      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
+      if (r.ok) { lastToken = data.token; lastUser = data.user; await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = t.netErr; }
     finally { busy = false; }
   }
@@ -187,7 +200,7 @@
       if (r.ok && data.requires === 'totp') { mfa = true; msg = ''; return; }
       ok = r.ok;
       msg = r.ok ? t.signedIn : errMsg(data.error?.code);
-      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
+      if (r.ok) { lastToken = data.token; lastUser = data.user; await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = t.netErr; }
     finally { busy = false; }
   }
@@ -201,7 +214,7 @@
       const data = await r.json();
       ok = r.ok; mfa = !r.ok;
       msg = r.ok ? t.signedIn : t.badCode;
-      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
+      if (r.ok) { lastToken = data.token; lastUser = data.user; await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = t.netErr; }
     finally { busy = false; }
   }
@@ -220,7 +233,7 @@
       const data = await r.json();
       ok = r.ok;
       msg = r.ok ? t.signedIn : errMsg(data.error?.code);
-      if (r.ok) { await maybeFlyToAccount(); goReturn(); }
+      if (r.ok) { lastToken = data.token; lastUser = data.user; await maybeFlyToAccount(); goReturn(); }
     } catch { ok = false; msg = t.passkeyCancel; }
     finally { busy = false; }
   }
@@ -231,7 +244,8 @@
   };
 </script>
 
-<div class="stage">
+<div class="stage" class:embed>
+  {#if !embed}
   {#snippet back()}
     <a class="snav-back" href={brand.homeUrl}>← {brand.backLabel ?? 'Volver'}</a>
   {/snippet}
@@ -246,8 +260,9 @@
   <!-- Tier 0 locale memory: remember the picked place on this device and fly back
        to it on return — zero backend. (Per-account memory is a Tier 2 upgrade.) -->
   <planet-login bind:this={globeEl} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
+  {/if}
 
-  <aside class="panel">
+  <aside class="panel" class:embed>
     {#if mfa}
       <form class="card" onsubmit={(e) => { e.preventDefault(); totpVerify(); }}>
         <h1>{t.greet}</h1>
@@ -350,7 +365,7 @@
   </aside>
 </div>
 
-{#if copy.footer}
+{#if copy.footer && !embed}
   <Footer
     brand={{ label: (brand.name ?? 'PlanetLogin').toLowerCase(), href: brand.homeUrl }}
     tagline={copy.footer.tagline}
@@ -410,4 +425,8 @@
   .strength-meter { height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; margin-top: .4rem; overflow: hidden; }
   .strength-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
   .strength-label { font-size: .72rem; margin-top: .2rem; display: block; }
+
+  .stage.embed { height: 100vh; justify-content: center; align-items: center; background: transparent; }
+  .panel.embed { flex: none; max-width: none; border-left: none; background: transparent; padding: 1rem; }
+  .panel.embed .card { max-width: 340px; margin: 0 auto; }
 </style>

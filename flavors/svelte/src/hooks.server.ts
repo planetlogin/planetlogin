@@ -48,5 +48,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   const response = await resolve(event);
   for (const [k, v] of Object.entries(corsHeaders(origin, cors))) response.headers.set(k, v);
+
+  // CSP frame-ancestors: restrict who can embed PlanetLogin in an iframe.
+  // Default: only self. When embed.allowedOrigins is configured, those origins too.
+  const embedOrigins = tenant.config.embed?.allowedOrigins ?? [];
+  const ancestors = embedOrigins.length
+    ? "frame-ancestors 'self' " + embedOrigins.join(' ')
+    : "frame-ancestors 'self'";
+  response.headers.set('Content-Security-Policy', ancestors);
   return response;
 };
