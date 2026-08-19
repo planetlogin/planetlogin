@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
   if (!pw?.enabled || !pw?.allowRegister)
     return json({ error: { code: 'not_enabled', message: 'Registration disabled' } }, { status: 403 });
 
-  const { email, password, name, locale } = await request.json().catch(() => ({}));
+  const { email, password, name, locale, rememberMe } = await request.json().catch(() => ({}));
   const minLen = pw?.minPasswordLength ?? 8;
   if (!email || !password || String(password).length < minLen)
     return json({ error: { code: 'bad_request', message: 'email and password (8+ chars) required' } }, { status: 400 });
@@ -36,11 +36,14 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
   // Auto sign-in: mint a session and set the cookie, exactly like login.
   const token = await signSession(
     { sub: user.id, email: user.email, name: user.name, locale },
-    { issuer: cfg.token?.issuer, audience: cfg.token?.audience, ttlSeconds: cfg.token?.ttlSeconds },
+    { issuer: cfg.token?.issuer, audience: cfg.token?.audience,
+      ttlSeconds: rememberMe ? (cfg.token?.rememberMeTtlSeconds ?? 2592000) : cfg.token?.ttlSeconds },
   );
+  const cookieTtl = rememberMe ? (cfg.token?.rememberMeTtlSeconds ?? 2592000) : (cfg.token?.ttlSeconds ?? 3600);
   cookies.set(process.env.PLANETLOGIN_COOKIE_NAME || 'planetlogin_session', token, {
     path: '/', httpOnly: true, secure: true, sameSite: 'lax',
     domain: process.env.PLANETLOGIN_COOKIE_DOMAIN || undefined,
+    maxAge: cookieTtl,
   });
   return json({ token, user });
 };

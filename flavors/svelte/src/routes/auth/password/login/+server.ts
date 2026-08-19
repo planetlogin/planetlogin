@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
   if (!cfg.providers.password?.enabled)
     return json({ error: { code: 'not_enabled', message: 'Password login disabled' } }, { status: 403 });
 
-  const { identifier, password, locale } = await request.json().catch(() => ({}));
+  const { identifier, password, locale, rememberMe } = await request.json().catch(() => ({}));
   if (!identifier || !password)
     return json({ error: { code: 'bad_request', message: 'identifier and password required' } }, { status: 400 });
 
@@ -27,7 +27,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
       downstream: ds,
       verifyPassword,
       signSession: (c) => signSession(c, {
-        issuer: cfg.token?.issuer, audience: cfg.token?.audience, ttlSeconds: cfg.token?.ttlSeconds,
+        issuer: cfg.token?.issuer, audience: cfg.token?.audience,
+        ttlSeconds: rememberMe ? (cfg.token?.rememberMeTtlSeconds ?? 2592000) : cfg.token?.ttlSeconds,
       }),
     },
     { identifier, password, locale },
@@ -50,9 +51,11 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
   // PLANETLOGIN_COOKIE_DOMAIN (e.g. .calcat.app) lets a subdomain portal
   // (auth.calcat.app) set a cookie the app on calcat.app reads — same-site, not
   // third-party-blocked. Empty = host-only. (Set it on every provider you enable.)
+  const cookieTtl = rememberMe ? (cfg.token?.rememberMeTtlSeconds ?? 2592000) : (cfg.token?.ttlSeconds ?? 3600);
   cookies.set(process.env.PLANETLOGIN_COOKIE_NAME || 'planetlogin_session', res.token, {
     path: '/', httpOnly: true, secure: true, sameSite: 'lax',
     domain: process.env.PLANETLOGIN_COOKIE_DOMAIN || undefined,
+    maxAge: cookieTtl,
   });
 
   // Tier 2 account memory (gate A): persist the picked locale to the user's

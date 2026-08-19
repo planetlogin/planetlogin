@@ -261,6 +261,12 @@
           "type": "boolean",
           "default": false,
           "description": "Encrypt the session token (nested JWS-in-JWE, dir+A256GCM) so claims are confidential. Needs PLANETLOGIN_JWT_ENCRYPT=true + PLANETLOGIN_JWE_KEY. Single trust domain; the inner signature is preserved."
+        },
+        "rememberMeTtlSeconds": {
+          "type": "integer",
+          "default": 2592000,
+          "minimum": 3600,
+          "description": "Session TTL in seconds when Remember Me is checked (default 30 days)"
         }
       }
     },

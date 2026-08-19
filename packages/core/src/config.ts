@@ -34,6 +34,7 @@ export interface PlanetLoginConfig {
     // Encrypt the session token (nested JWS-in-JWE) so claims are confidential.
     // Needs PLANETLOGIN_JWT_ENCRYPT=true + a shared PLANETLOGIN_JWE_KEY (32B base64url).
     encrypt?: boolean;
+    rememberMeTtlSeconds?: number;
   };
   embed?: { allowedOrigins?: string[] };
   loginFlow?: 'classic' | 'email-first';
