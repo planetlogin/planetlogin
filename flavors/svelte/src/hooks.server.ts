@@ -46,7 +46,17 @@ export const handle: Handle = async ({ event, resolve }) => {
     return new Response(null, { status: 204, headers: corsHeaders(origin, cors) });
   }
 
+  const t0 = Date.now();
   const response = await resolve(event);
+  const ms = Date.now() - t0;
+  const status = response.status;
+  const method = event.request.method;
+  const path = event.url.pathname;
+  const tenantName = tenant.config.brand?.name ?? "?";
+  if (path !== "/health") {
+    const level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
+    console.log(JSON.stringify({ level, ts: new Date().toISOString(), tenant: tenantName, method, path, status, ms }));
+  }
   for (const [k, v] of Object.entries(corsHeaders(origin, cors))) response.headers.set(k, v);
 
   // CSP frame-ancestors: restrict who can embed PlanetLogin in an iframe.
