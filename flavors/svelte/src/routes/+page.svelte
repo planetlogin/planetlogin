@@ -83,7 +83,7 @@
   let flyOnLogin = $state(false);
   let brand = $state<any>({});
   let copy = $state<any>({});
-  let globeEl: HTMLElement;
+  let globeEl = $state<HTMLElement>(undefined!);
 
   // Same-origin path-mount (e.g. calcat.app/auth): on success, hand control back to
   // the host app. Sanitised to a same-origin path to avoid open redirects.
@@ -336,7 +336,7 @@
 
       {#if loginFlow === 'email-first' && step === 'email'}
         <label for="email">{t.email}</label>
-        <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" autofocus />
+        <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
         <button type="submit" disabled={busy} aria-busy={busy}>{busy ? '…' : t.continue}</button>
       {:else if loginFlow === 'email-first' && step === 'credentials'}
         <label for="pass">{t.pass}</label>
@@ -491,7 +491,6 @@
   .remember input[type="checkbox"] { accent-color: var(--pl-accent, #f6a13c); width: 14px; height: 14px; cursor: pointer; }
   .strength-meter { height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; margin-top: .4rem; overflow: hidden; }
   .strength-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
-  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   .strength-label { font-size: .72rem; margin-top: .2rem; display: block; }
 
   .skeleton { width: 100%; max-width: 300px; animation: sk-pulse 1.5s ease-in-out infinite; }
