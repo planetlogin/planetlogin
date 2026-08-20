@@ -5,7 +5,7 @@ import { Downstream, type DownstreamStore } from './downstream.ts';
 
 export interface PlanetLoginConfig {
   spec: 1;
-  brand: { name: string; logoUrl?: string; accent?: string; accentFg?: string; background?: string; theme?: 'dark' | 'light' | 'auto'; termsUrl?: string; privacyUrl?: string; homeUrl?: string };
+  brand: { name: string; logoUrl?: string; accent?: string; accentFg?: string; background?: string; theme?: 'dark' | 'light' | 'auto'; termsUrl?: string; privacyUrl?: string; homeUrl?: string; backLabel?: string; navLinks?: Array<{ label: string; href: string }>; footerLinks?: Array<{ label: string; href: string }> };
   providers: {
     password?: { enabled?: boolean; allowRegister?: boolean; strengthMeter?: boolean; minPasswordLength?: number; resetTokenTtlSeconds?: number };
     oauth?: Array<{ id: string; label?: string; clientIdEnv?: string }>;

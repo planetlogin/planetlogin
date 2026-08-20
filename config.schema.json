@@ -69,6 +69,52 @@
           "type": "string",
           "format": "uri",
           "description": "URL to the brand's homepage, used for logo link."
+        },
+        "navLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "href"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "href": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "description": "Navigation links shown in the top bar."
+        },
+        "footerLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "href"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "href": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "description": "Links shown in the footer."
+        },
+        "backLabel": {
+          "type": "string",
+          "description": "Label for the back-to-app link (e.g. 'Back to Acme')."
         }
       }
     },
