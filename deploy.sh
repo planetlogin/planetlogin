@@ -21,10 +21,12 @@ echo "  current: $CURRENT"
 echo "  building: planetlogin:$TAG"
 echo ""
 
-# 1. Sync flavor source to VPS
+# 1. Sync flavor source to VPS (preserve standalone Dockerfile + package.json)
 echo "[1/3] rsync flavor -> VPS..."
 rsync -az --delete \
   --exclude=node_modules --exclude=.svelte-kit --exclude=.git --exclude=dist \
+  --exclude=Dockerfile --exclude=package.json --exclude=package-lock.json \
+  --exclude=core-local --exclude=packages \
   "$SRC" "$VPS:$REMOTE_DIR/" \
   --rsync-path="sudo -u $VPS_USER rsync"
 
