@@ -32,6 +32,7 @@ export const DEFAULT_RULES: Record<string, RateLimitRule> = {
   magic: { limit: 5, windowSeconds: 900 },    // 5 / 15 min
   totp: { limit: 10, windowSeconds: 300 },
   anon: { limit: 30, windowSeconds: 300 },    // 30 / 5 min — cheap, but cap spam
+  email_check: { limit: 10, windowSeconds: 300 },
 };
 
 /**
@@ -64,7 +65,7 @@ export function ruleFor(
 ): RateLimitRule {
   const envLimit = process.env[`PLANETLOGIN_RATELIMIT_${action.toUpperCase()}_LIMIT`];
   const envWindow = process.env[`PLANETLOGIN_RATELIMIT_${action.toUpperCase()}_WINDOW`];
-  const base = overrides?.[action] ?? DEFAULT_RULES[action];
+  const base = overrides?.[action] ?? DEFAULT_RULES[action] ?? DEFAULT_RULES.login;
   return {
     limit: envLimit ? Number(envLimit) : base.limit,
     windowSeconds: envWindow ? Number(envWindow) : base.windowSeconds,

@@ -66,5 +66,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     ? "frame-ancestors 'self' " + embedOrigins.join(' ')
     : "frame-ancestors 'self'";
   response.headers.set('Content-Security-Policy', ancestors);
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   return response;
 };
