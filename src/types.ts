@@ -21,8 +21,22 @@ export interface PlanetLoginOptions {
   accent?: string;
   /** Show the built-in search box. Default true. */
   search?: boolean;
-  /** Placeholder for the search box. Default "Postal code, city or country…". */
+  /**
+   * Placeholder for the search box. Overrides whatever `lang` would give.
+   * @deprecated Prefer `lang`, or `labels.placeholder` to override just this one.
+   */
   placeholder?: string;
+  /**
+   * Language for the globe's own strings — the search box, the Locate button and
+   * the screen-reader description. Accepts "es" or "es-ES". Ships en, es, fr, de,
+   * pt, it and ja; anything else falls back to English. Default: English.
+   *
+   * Set it to whatever the host page is in, so the globe does not speak English
+   * underneath a heading that does not.
+   */
+  lang?: string;
+  /** Override individual strings, whatever `lang` says. */
+  labels?: Partial<import('./strings').PlanetLoginLabels>;
   /** Gentle auto-rotation until the first selection. Default true. */
   autoSpin?: boolean;
   /** Border detail of the country data. Default "110m". */

@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [@planetlogin/planetlogin 0.4.0] — 2026-09-20 — the globe speaks the page's language
+
+### Added
+- **`lang` option and `<planet-login lang="es">` attribute.** The globe's own
+  strings — the search placeholder, the Locate button and the screen-reader
+  description of the canvas — were hardcoded English, so a Spanish portal showed
+  *"Postal code, city or country…"* underneath a heading that said *"Bienvenido"*.
+  Ships `en`, `es`, `fr`, `de`, `pt`, `it` and `ja`, matching the Svelte flavor's
+  own catalogue; any other language falls back to English in full.
+- **`labels`** overrides any individual string, whatever `lang` says — so a
+  consumer never has to wait for a release to reword one label.
+- **`setLang(lang, labels?)`** retranslates a mounted globe. This is not a
+  convenience: PlanetLogin discovers the language *from* the globe, so nothing
+  knows it until the visitor picks a country, and by then the widget is already on
+  screen. Rebuilding it would lose the rotation, the zoom and the selection;
+  retranslating three nodes costs nothing. `<planet-login>` wires it to the `lang`
+  attribute through `attributeChangedCallback`, which the element declared in
+  `observedAttributes` but never implemented.
+
+### Deprecated
+- **`placeholder`** in favour of `lang` (or `labels.placeholder`). Still honoured,
+  and still wins over both.
+
 ## [@planetlogin/core 0.10.0] — 2026-07-16 — multi-tenant + deploy-your-own
 
 ### Added

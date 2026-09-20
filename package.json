@@ -1,6 +1,6 @@
 {
   "name": "@planetlogin/planetlogin",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Sign in with a planet \u2014 interactive globe locale picker that detects timezone, language and location. Framework-agnostic (Web Component).",
   "type": "module",
   "license": "AGPL-3.0-or-later",

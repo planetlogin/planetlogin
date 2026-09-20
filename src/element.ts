@@ -17,7 +17,7 @@ import type { PlanetLoginOptions } from './types';
  * ```
  */
 export class PlanetLoginElement extends HTMLElement {
-  static get observedAttributes() { return ['accent', 'resolution', 'search', 'placeholder']; }
+  static get observedAttributes() { return ['accent', 'resolution', 'search', 'placeholder', 'lang']; }
   private instance?: PlanetLogin;
 
   connectedCallback(): void {
@@ -29,6 +29,9 @@ export class PlanetLoginElement extends HTMLElement {
       // never depends on a third-party CDN at runtime (CSP/adblock/offline proof).
       dataUrl: this.getAttribute('data-url') ?? undefined,
       placeholder: this.getAttribute('placeholder') ?? undefined,
+      // `lang` es un atributo estándar de HTML: <planet-login lang="es"> traduce
+      // el globo y además dice la verdad sobre el idioma de su contenido.
+      lang: this.getAttribute('lang') ?? undefined,
       search: this.getAttribute('search') !== 'false',
       autoSpin: this.getAttribute('autospin') !== 'false',
       // Boolean attributes: present (any value incl. "") → on.
@@ -38,6 +41,12 @@ export class PlanetLoginElement extends HTMLElement {
       storage: (this.getAttribute('storage') as 'local' | 'session' | 'none') ?? undefined,
     };
     this.instance = new PlanetLogin(this, opts);
+  }
+
+  attributeChangedCallback(name: string, prev: string | null, next: string | null): void {
+    // Solo `lang`: los demás atributos observados se leen al montar y cambiarlos
+    // en caliente exigiría reconstruir el globo, que perdería la selección.
+    if (name === 'lang' && prev !== next) this.instance?.setLang(next ?? undefined);
   }
 
   disconnectedCallback(): void {

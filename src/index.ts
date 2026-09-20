@@ -1,4 +1,5 @@
 export type { PlanetLocale, PlanetLoginOptions, PlanetLoginEvent } from './types';
+export { labelsFor, LANGUAGES, type PlanetLoginLabels } from './strings';
 export { PlanetLogin } from './planetlogin';
 export { PlanetLoginElement } from './element';
 // Tier 0 locale memory — device-local, no backend. Usable without an instance.

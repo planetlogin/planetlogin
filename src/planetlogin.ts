@@ -12,6 +12,7 @@ import { geocode, reverseMeta } from './geocode';
 import { countryToLanguage } from './locale';
 import { readSavedLocale, writeSavedLocale, clearSavedLocale, DEFAULT_STORAGE_KEY } from './memory';
 import type { PlanetLocale, PlanetLoginOptions } from './types';
+import { labelsFor, type PlanetLoginLabels } from './strings';
 
 type Mode = 'idle' | 'travel' | 'zoom';
 type Listener = (l: PlanetLocale) => void;
@@ -32,7 +33,10 @@ export class PlanetLogin {
   private opts: Required<Pick<PlanetLoginOptions, 'accent' | 'search' | 'autoSpin' | 'resolution'>> & PlanetLoginOptions;
   private cv: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  /** Textos visibles, resueltos una vez en el constructor. */
+  private labels: PlanetLoginLabels;
   private input?: HTMLInputElement;
+  private locateBtn?: HTMLButtonElement;
   private wm?: HTMLAnchorElement;
   private listeners: Listener[] = [];
 
@@ -71,6 +75,7 @@ export class PlanetLogin {
       resolution: options.resolution ?? '110m',
       ...options,
     };
+    this.labels = labelsFor(options.lang, options.labels);
     // Respect the user's motion preference: no idle auto-rotation for users
     // who asked for reduced motion (fly-to is also shortened in the loop).
     this.reduceMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -85,7 +90,7 @@ export class PlanetLogin {
     // picks the country at the centre. Also usable via the search box below.
     this.cv.tabIndex = 0;
     this.cv.setAttribute('role', 'application');
-    this.cv.setAttribute('aria-label', 'Interactive globe. Arrow keys rotate, plus and minus zoom, Enter selects the country at the centre. Or use the search box below.');
+    this.cv.setAttribute('aria-label', this.labels.globeAria);
     Object.assign(this.cv.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block', cursor: 'grab', touchAction: 'none' } as CSSStyleDeclaration);
     target.appendChild(this.cv);
     this.ctx = this.cv.getContext('2d')!;
@@ -184,15 +189,15 @@ export class PlanetLogin {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, { position: 'absolute', left: '50%', bottom: '7%', transform: 'translateX(-50%)', zIndex: '5', display: 'flex', gap: '8px', width: 'min(440px,90%)', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: '14px', padding: '7px 7px 7px 14px', backdropFilter: 'blur(8px)' } as CSSStyleDeclaration);
     const input = document.createElement('input');
-    input.placeholder = this.opts.placeholder ?? 'Postal code, city or country…';
-    input.setAttribute('aria-label', 'Search by postal code, city or country');
+    input.placeholder = this.opts.placeholder ?? this.labels.placeholder;
+    input.setAttribute('aria-label', this.labels.searchAria);
     input.type = 'search';
     input.autocomplete = 'off';
     Object.assign(input.style, { flex: '1', background: 'none', border: '0', outline: '0', color: '#eef2fb', fontSize: '1rem', minWidth: '0', fontFamily: 'inherit' } as CSSStyleDeclaration);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = 'Locate';
-    btn.setAttribute('aria-label', 'Locate and select this place');
+    btn.textContent = this.labels.locate;
+    btn.setAttribute('aria-label', this.labels.locateAria);
     Object.assign(btn.style, { border: '0', cursor: 'pointer', borderRadius: '10px', padding: '9px 16px', fontWeight: '600', background: this.opts.accent, color: '#231400', fontFamily: 'inherit' } as CSSStyleDeclaration);
     const go = () => this.search(input.value);
     btn.addEventListener('click', go);
@@ -200,6 +205,28 @@ export class PlanetLogin {
     wrap.append(input, btn);
     this.target.appendChild(wrap);
     this.input = input;
+    this.locateBtn = btn;
+  }
+
+  /**
+   * Cambiar el idioma del globo después de montarlo.
+   *
+   * Hace falta porque el idioma de la página lo decide el propio globo: hasta
+   * que no eliges un país no se sabe, y para entonces el componente ya está en
+   * pantalla. Retraducir los tres nodos cuesta nada; reconstruirlo perdería la
+   * rotación, el zoom y la selección.
+   */
+  setLang(lang?: string, labels?: Partial<PlanetLoginLabels>): void {
+    this.labels = labelsFor(lang, labels);
+    this.cv.setAttribute('aria-label', this.labels.globeAria);
+    if (this.input) {
+      this.input.placeholder = this.opts.placeholder ?? this.labels.placeholder;
+      this.input.setAttribute('aria-label', this.labels.searchAria);
+    }
+    if (this.locateBtn) {
+      this.locateBtn.textContent = this.labels.locate;
+      this.locateBtn.setAttribute('aria-label', this.labels.locateAria);
+    }
   }
 
   // Attribution required by the license (AGPLv3 §7b). Please keep it.

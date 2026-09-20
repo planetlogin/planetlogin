@@ -29,6 +29,10 @@
       strengthLabels: { very_weak: 'Very weak', weak: 'Weak', fair: 'Fair', strong: 'Strong', very_strong: 'Very strong' },
       remember: 'Remember me',
       terms: 'I agree to the', termsLink: 'Terms of Service', privacyLink: 'Privacy Policy', and: 'and', termsRequired: 'You must accept the terms to continue.',
+      // Lo que solo oye quien no ve la pantalla. Estaba escrito en ingles fijo,
+      // de modo que un lector de pantalla en espanol anunciaba «Sign in».
+      emailPlaceholder: 'you@email.com', ariaSignIn: 'Sign in',
+      ariaTotp: 'Two-factor authentication', ariaStrength: 'Password strength',
     },
     es: {
       greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
@@ -48,6 +52,8 @@
       strengthLabels: { very_weak: 'Muy débil', weak: 'Débil', fair: 'Aceptable', strong: 'Fuerte', very_strong: 'Muy fuerte' },
       remember: 'Recuérdame',
       terms: 'Acepto los', termsLink: 'Términos de servicio', privacyLink: 'Política de privacidad', and: 'y la', termsRequired: 'Debes aceptar los términos para continuar.',
+      emailPlaceholder: 'tu@correo.com', ariaSignIn: 'Acceder',
+      ariaTotp: 'Verificación en dos pasos', ariaStrength: 'Seguridad de la contraseña',
     },
     fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' , continue: 'Continuer', back: '\u2190 Changer d\'e-mail' },
     de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' , continue: 'Weiter', back: '\u2190 E-Mail \u00e4ndern' },
@@ -306,7 +312,11 @@
   {/if}
   <!-- Tier 0 locale memory: remember the picked place on this device and fly back
        to it on return — zero backend. (Per-account memory is a Tier 2 upgrade.) -->
-  <planet-login bind:this={globeEl} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
+  <!-- `lang` viaja con el idioma de la página: antes el globo decía «Postal code,
+       city or country…» debajo de un título que decía «Bienvenido». Cambia solo
+       cuando eliges país, que es cuando se sabe el idioma, y el componente se
+       retraduce sin perder la rotación ni la selección. -->
+  <planet-login bind:this={globeEl} lang={locale?.language ?? 'en'} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
   {/if}
 
   <aside class="panel" class:embed>
@@ -314,7 +324,7 @@
       <div class="skeleton"><div class="sk-title"></div><div class="sk-line"></div><div class="sk-input"></div><div class="sk-input"></div><div class="sk-btn"></div></div>
     {:else}
     {#if mfa}
-      <form class="card" onsubmit={(e) => { e.preventDefault(); totpVerify(); }} aria-label="Two-factor authentication">
+      <form class="card" onsubmit={(e) => { e.preventDefault(); totpVerify(); }} aria-label={t.ariaTotp}>
         <h1>{t.greet}</h1>
         <p class="sub">{t.mfaHint}</p>
         <label for="code">{t.code}</label>
@@ -323,7 +333,7 @@
         {#if msg}<p class="msg" class:ok class:err={!ok} role="alert" aria-live="polite">{msg}</p>{/if}
       </form>
     {:else}
-    <form class="card" onsubmit={submit} aria-label="Sign in">
+    <form class="card" onsubmit={submit} aria-label={t.ariaSignIn}>
       <h1>{copy.title ?? t.greet}</h1>
       <p class="sub">{copy.subtitle ?? t.sub}</p>
 
@@ -336,7 +346,7 @@
 
       {#if loginFlow === 'email-first' && step === 'email'}
         <label for="email">{t.email}</label>
-        <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
+        <input id="email" type="email" bind:value={email} placeholder={t.emailPlaceholder} autocomplete="username" />
         <button type="submit" disabled={busy} aria-busy={busy}>{busy ? '…' : t.continue}</button>
       {:else if loginFlow === 'email-first' && step === 'credentials'}
         <label for="pass">{t.pass}</label>
@@ -352,7 +362,7 @@
         <label for="pass">{t.pass}</label>
         <input id="pass" type="password" bind:value={password} placeholder="••••••••" autocomplete="new-password" />
         {#if providers.password?.strengthMeter && strength && (mode === 'register' || step === 'register')}
-          <div class="strength-meter" role="meter" aria-label="Password strength" aria-valuemin="0" aria-valuemax="4" aria-valuenow={strength?.score ?? 0}>
+          <div class="strength-meter" role="meter" aria-label={t.ariaStrength} aria-valuemin="0" aria-valuemax="4" aria-valuenow={strength?.score ?? 0}>
             <div class="strength-bar" style="width: {(strength.score + 1) * 20}%; background: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};"></div>
           </div>
           <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
@@ -365,7 +375,7 @@
         {/if}
 
         <label for="email">{t.email}</label>
-        <input id="email" type="email" bind:value={email} placeholder="you@email.com" autocomplete="username" />
+        <input id="email" type="email" bind:value={email} placeholder={t.emailPlaceholder} autocomplete="username" />
 
         {#if providers.password?.enabled}
           <label for="pass">{t.pass}</label>
@@ -374,7 +384,7 @@
           <label class="remember"><input type="checkbox" bind:checked={rememberMe} /> {t.remember}</label>
         {/if}
         {#if providers.password?.strengthMeter && strength && (mode === 'register' || step === 'register')}
-          <div class="strength-meter" role="meter" aria-label="Password strength" aria-valuemin="0" aria-valuemax="4" aria-valuenow={strength?.score ?? 0}>
+          <div class="strength-meter" role="meter" aria-label={t.ariaStrength} aria-valuemin="0" aria-valuemax="4" aria-valuenow={strength?.score ?? 0}>
             <div class="strength-bar" style="width: {(strength.score + 1) * 20}%; background: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};"></div>
           </div>
           <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
