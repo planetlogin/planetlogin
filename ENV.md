@@ -83,8 +83,8 @@ Redirect URI to register at the provider: `<BASE_URL><BASE>/auth/oauth/<id>/call
 | Var | Required | Meaning |
 |---|---|---|
 | `PLANETLOGIN_COOKIE_NAME` | no | Default `planetlogin_session`. |
-| `PLANETLOGIN_COOKIE_DOMAIN` | no | Cookie `Domain` (e.g. `.calcat.app`) so a subdomain portal (`auth.calcat.app`) sets a session the app on `calcat.app` reads. Empty = host-only. |
-| `PLANETLOGIN_APP_ORIGIN` | no | Subdomain portal: trusted app origin (e.g. `https://calcat.app`) prepended to the sanitised `return_to` after login. Empty = same-origin path-mount. |
+| `PLANETLOGIN_COOKIE_DOMAIN` | no | Cookie `Domain` (e.g. `.example.com`) so a subdomain portal (`auth.example.com`) sets a session the app on `example.com` reads. Empty = host-only. |
+| `PLANETLOGIN_APP_ORIGIN` | no | Subdomain portal: trusted app origin (e.g. `https://example.com`) prepended to the sanitised `return_to` after login. Empty = same-origin path-mount. |
 | `PLANETLOGIN_BASE` | no | SvelteKit base path (build-time) when mounting the portal under another app's path (e.g. `/auth`). Empty = stand-alone subdomain. |
 
 ## SAML (enterprise, optional)

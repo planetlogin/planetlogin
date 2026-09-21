@@ -48,8 +48,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
       { status: res.code === 'downstream_unavailable' ? 503 : 401 },
     );
 
-  // PLANETLOGIN_COOKIE_DOMAIN (e.g. .calcat.app) lets a subdomain portal
-  // (auth.calcat.app) set a cookie the app on calcat.app reads — same-site, not
+  // PLANETLOGIN_COOKIE_DOMAIN (e.g. .example.com) lets a subdomain portal
+  // (auth.example.com) set a cookie the app on example.com reads — same-site, not
   // third-party-blocked. Empty = host-only. (Set it on every provider you enable.)
   const cookieTtl = rememberMe ? (cfg.token?.rememberMeTtlSeconds ?? 2592000) : (cfg.token?.ttlSeconds ?? 3600);
   cookies.set(process.env.PLANETLOGIN_COOKIE_NAME || 'planetlogin_session', res.token, {

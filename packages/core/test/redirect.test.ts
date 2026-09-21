@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { safeReturnPath } from '../src/redirect.ts';
 
-const SELF = 'https://auth.calcat.app';
+const SELF = 'https://auth.example.com';
 
 describe('safeReturnPath', () => {
   it('keeps a normal same-origin path', () => {
@@ -20,10 +20,10 @@ describe('safeReturnPath', () => {
   });
   it('blocks off-site absolute URLs and prefix-match tricks', () => {
     expect(safeReturnPath('https://evil.com/x', SELF)).toBe('/');
-    expect(safeReturnPath('https://auth.calcat.app.evil.com/x', SELF)).toBe('/');
-    expect(safeReturnPath('https://auth.calcat.app@evil.com/x', SELF)).toBe('/');
+    expect(safeReturnPath('https://auth.example.com.evil.com/x', SELF)).toBe('/');
+    expect(safeReturnPath('https://auth.example.com@evil.com/x', SELF)).toBe('/');
   });
   it('reduces a same-origin absolute URL to its path', () => {
-    expect(safeReturnPath('https://auth.calcat.app/dashboard?a=b', SELF)).toBe('/dashboard?a=b');
+    expect(safeReturnPath('https://auth.example.com/dashboard?a=b', SELF)).toBe('/dashboard?a=b');
   });
 });

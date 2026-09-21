@@ -11,7 +11,7 @@
 		label: string;
 		href: string;
 	}
-	// Portable, self-contained footer shared across apps (barcinet.com + the
+	// Portable, self-contained footer shared across apps (a product site + the
 	// PlanetLogin portal). Data-driven; themed via the --snav-* CSS vars. Canonical
 	// copy lives here; synced to the portal by scripts/sync-ui.sh.
 	let {

@@ -6,3 +6,6 @@ build/
 .DS_Store
 .env
 conformance/node_modules/
+
+# Real deployment target — see deploy.env.example
+deploy.env

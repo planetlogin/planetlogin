@@ -8,7 +8,7 @@
 		label: string;
 		href: string;
 	}
-	// Portable, self-contained top nav shared across apps (barcinet.com + the
+	// Portable, self-contained top nav shared across apps (a product site + the
 	// PlanetLogin portal). Zero global-CSS / AuthNav dependency: theme via the
 	// --snav-* CSS vars and pass the right-side content (auth or back link) as a
 	// snippet. Canonical copy lives here; synced to the portal by scripts/sync-ui.sh.

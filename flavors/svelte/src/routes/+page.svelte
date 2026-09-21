@@ -91,11 +91,11 @@
   let copy = $state<any>({});
   let globeEl = $state<HTMLElement>(undefined!);
 
-  // Same-origin path-mount (e.g. calcat.app/auth): on success, hand control back to
+  // Same-origin path-mount (e.g. example.com/auth): on success, hand control back to
   // the host app. Sanitised to a same-origin path to avoid open redirects.
   let returnTo = '/';
   // returnTo is a sanitised same-origin path; for a subdomain portal we prepend the
-  // trusted app origin (data.appOrigin) so login on auth.calcat.app returns to calcat.app.
+  // trusted app origin (data.appOrigin) so login on auth.example.com returns to example.com.
   function goReturn() {
     if (embed) {
       const target = embedOrigins[0] || '*';

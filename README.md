@@ -283,5 +283,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) — issues and PRs welcome.
 ## Credits
 
 Created by **Ricard** ([Ricajos](https://ricajos.com)) · [@rricajos](https://github.com/rricajos).
-Born as the onboarding for [calcat](https://calcat.app), released standalone as a
+Born as the onboarding for a booking product of his own, released standalone as a
 community project.

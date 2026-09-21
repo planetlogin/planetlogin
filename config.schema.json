@@ -422,7 +422,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Origins allowed to embed PlanetLogin in an iframe (e.g. [\"https://calcat.app\"]). Controls CSP frame-ancestors."
+          "description": "Origins allowed to embed PlanetLogin in an iframe (e.g. [\"https://example.com\"]). Controls CSP frame-ancestors."
         }
       }
     }

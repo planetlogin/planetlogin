@@ -34,7 +34,7 @@ export const GET: RequestHandler = async ({ params, url, cookies, locals }) => {
     domain: process.env.PLANETLOGIN_COOKIE_DOMAIN || undefined,
   });
   // st.redirectTo is a sanitised same-origin path; prepend the trusted app origin so
-  // a subdomain portal (auth.calcat.app) hands back to the app (calcat.app), matching
+  // a subdomain portal (auth.example.com) hands back to the app (example.com), matching
   // the client flows. Empty APP_ORIGIN → same-origin path-mount.
   throw redirect(302, (process.env.PLANETLOGIN_APP_ORIGIN || '') + st.redirectTo);
 };
