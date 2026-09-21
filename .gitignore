@@ -9,3 +9,7 @@ conformance/node_modules/
 
 # Real deployment target — see deploy.env.example
 deploy.env
+
+# Notas operativas de lanzamiento: internas, nombran infraestructura propia.
+# Sin esta linea, un `git add -A` las publicaria en un repositorio publico.
+planetlogin-launch/
