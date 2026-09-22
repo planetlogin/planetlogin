@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@planetlogin/core": "file:../../packages/core",
-    "@planetlogin/planetlogin": "^0.3.0",
+    "@planetlogin/planetlogin": "^0.4.0",
     "@simplewebauthn/browser": "^13.3.0"
   },
   "devDependencies": {
