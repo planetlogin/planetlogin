@@ -28,6 +28,13 @@ export interface SqliteStoreOptions {
    * link is logged to the console (dev only) and always recorded in `magic_log`.
    */
   deliverMagic?: (data: { identifier: string; link: string; locale?: Locale }) => void | Promise<void>;
+
+  /**
+   * How to deliver a password-reset link. Same division of labour as `deliverMagic`:
+   * the store persists and verifies, sending the mail is your side effect. If omitted,
+   * the link is recorded in `magic_log` and logged to the console (dev only).
+   */
+  deliverReset?: (data: { email: string; link: string; locale?: Locale }) => void | Promise<void>;
 }
 
 /** A `DownstreamStore` plus the account-management helpers to seed/manage users. */
@@ -223,6 +230,23 @@ export function sqliteStore(opts: SqliteStoreOptions = {}): SqliteStore {
       const row = findRow(identifier);
       if (!row) throw new Error(`@planetlogin/store-sqlite: no user "${identifier}"`);
       db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(await hashPassword(password), row.id);
+    },
+
+    async updatePassword({ userId, password }) {
+      const row = findRow(userId);
+      if (!row) throw new Error(`@planetlogin/store-sqlite: no user "${userId}"`);
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(await hashPassword(password), row.id);
+    },
+
+    async deliverReset(data) {
+      db.prepare('INSERT INTO magic_log (identifier, link, ts) VALUES (?,?,?)').run(
+        data.email,
+        data.link,
+        new Date().toISOString(),
+      );
+      if (opts.deliverReset) return void (await opts.deliverReset(data));
+      console.warn(`[store-sqlite] PASSWORD RESET for ${data.email}: ${data.link} (set opts.deliverReset to send it for real)`);
+      return undefined;
     },
 
     async deleteUser(identifier) {

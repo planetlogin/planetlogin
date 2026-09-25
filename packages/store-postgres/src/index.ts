@@ -26,6 +26,8 @@ export interface PostgresStoreOptions {
   tablePrefix?: string;
   /** How to actually deliver a magic link (email/SMS). Omitted → logged + recorded. */
   deliverMagic?: (data: { identifier: string; link: string; locale?: Locale }) => void | Promise<void>;
+  /** How to deliver a password-reset link. Omitted -> recorded and logged. */
+  deliverReset?: (data: { email: string; link: string; locale?: Locale }) => void | Promise<void>;
 }
 
 /** A `DownstreamStore` plus schema + account-management helpers. */
@@ -195,6 +197,19 @@ export function postgresStore(db: PgQueryable, opts: PostgresStoreOptions = {}):
       const row = await findRow(identifier);
       if (!row) throw new Error(`@planetlogin/store-postgres: no user "${identifier}"`);
       await q(`UPDATE ${T.users} SET password_hash = $1 WHERE id = $2`, [await hashPassword(password), row.id]);
+    },
+
+    async updatePassword({ userId, password }) {
+      const row = await findRow(userId);
+      if (!row) throw new Error(`@planetlogin/store-postgres: no user "${userId}"`);
+      await q(`UPDATE ${T.users} SET password_hash = $1 WHERE id = $2`, [await hashPassword(password), row.id]);
+    },
+
+    async deliverReset(data) {
+      await q(`INSERT INTO ${T.magic} (identifier, link) VALUES ($1,$2)`, [data.email, data.link]);
+      if (opts.deliverReset) return void (await opts.deliverReset(data));
+      console.warn(`[store-postgres] PASSWORD RESET for ${data.email}: ${data.link} (set opts.deliverReset to send it for real)`);
+      return undefined;
     },
 
     async deleteUser(identifier) {

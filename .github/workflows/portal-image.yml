@@ -26,8 +26,12 @@ jobs:
         id: meta
         with:
           images: ghcr.io/planetlogin/portal
+          # `{{is_default_branch}}` is docker/metadata-action's own template:
+          # double braces, no dollar. Written as `${{ }}` it is a GitHub Actions
+          # expression instead, and Actions has no such context — the workflow
+          # failed to start at all (0s, five runs out of five, nothing published).
           tags: |
-            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=match,pattern=portal-v(.*),group=1
       - uses: docker/build-push-action@v6
         with:
