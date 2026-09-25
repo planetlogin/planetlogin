@@ -18,6 +18,12 @@ cd "$REPO"
 
 VPS="${PLANETLOGIN_VPS:?set PLANETLOGIN_VPS (ssh host or alias) in deploy.env}"
 VPS_USER="${PLANETLOGIN_VPS_USER:?set PLANETLOGIN_VPS_USER in deploy.env}"
+# Se entra DIRECTAMENTE como el usuario del proyecto que consume planetlogin,
+# no como el administrador con sudo. Cada proyecto del VPS tiene su usuario, su
+# home en 750 y su clave: PLANETLOGIN_VPS debe ser ese alias (calcat-vps), no
+# ricajos-vps. Los usuarios de proyecto estan en el grupo docker, asi que build
+# y service update no necesitan sudo — y no lo tienen.
+
 SERVICE="${PLANETLOGIN_SERVICE:?set PLANETLOGIN_SERVICE (swarm service) in deploy.env}"
 HEALTH_URL="${PLANETLOGIN_HEALTH_URL:-}"
 REMOTE_DIR="${PLANETLOGIN_REMOTE_DIR:-/home/$VPS_USER/planetlogin}"
@@ -34,8 +40,13 @@ SRC="./flavors/svelte/"
 # So compare the two and refuse, unless the drift is one of the `file:` links
 # that is supposed to differ.
 LOCAL_PKG="$REPO/flavors/svelte/package.json"
-REMOTE_PKG=$(ssh "$VPS" "sudo -u $VPS_USER cat $REMOTE_DIR/package.json" 2>/dev/null || true)
+REMOTE_PKG=$(ssh "$VPS" "cat $REMOTE_DIR/package.json" 2>/dev/null || true)
 if [ -n "$REMOTE_PKG" ] && command -v node >/dev/null 2>&1; then
+  # Sin 2>/dev/null a proposito: este mismo bloque llevaba un salto de linea
+  # literal dentro de la cadena de out.join(), un error de sintaxis que node
+  # cantaba y el redirigido se tragaba. Con set -e el guion moria aqui sin
+  # imprimir nada, y solo se vio cuando el ssh empezo a devolver package.json:
+  # antes fallaba y el if de arriba saltaba el guardian entero.
   DRIFT=$(LOCAL="$LOCAL_PKG" REMOTE="$REMOTE_PKG" node -e '
     const fs = require("fs");
     const local = JSON.parse(fs.readFileSync(process.env.LOCAL, "utf8")).dependencies ?? {};
@@ -46,9 +57,8 @@ if [ -n "$REMOTE_PKG" ] && command -v node >/dev/null 2>&1; then
       const has = remote[name];
       if (has !== want) out.push(`  ${name}: repo ${want} -> VPS ${has ?? "(ausente)"}`);
     }
-    if (out.length) console.log(out.join("
-"));
-  ' 2>/dev/null)
+    if (out.length) console.log(out.join("\n"));
+  ')
   if [ -n "$DRIFT" ]; then
     echo "The VPS installs different versions than this repo declares:" >&2
     echo "$DRIFT" >&2
@@ -61,7 +71,7 @@ if [ -n "$REMOTE_PKG" ] && command -v node >/dev/null 2>&1; then
 fi
 
 # Auto-tag: v<N+1> from current running image
-CURRENT=$(ssh "$VPS" "sudo docker service inspect $SERVICE --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'" 2>/dev/null || echo "planetlogin:v0")
+CURRENT=$(ssh "$VPS" "docker service inspect $SERVICE --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'" 2>/dev/null || echo "planetlogin:v0")
 CURRENT_NUM=$(echo "$CURRENT" | grep -oP 'v\K[0-9]+' || echo "0")
 NEXT_NUM=$((CURRENT_NUM + 1))
 TAG="${1:-v$NEXT_NUM}"
@@ -79,13 +89,13 @@ tar -C "$SRC" \
   --exclude=core-local --exclude=packages \
   --exclude=planetlogin.config.json --exclude='*.bak.*' \
   -cf - . \
-  | ssh "$VPS" "sudo -u $VPS_USER bash -c 'mkdir -p $REMOTE_DIR && cd $REMOTE_DIR && tar xf -'"
+  | ssh "$VPS" "mkdir -p $REMOTE_DIR && cd $REMOTE_DIR && tar xf -"
 
 echo "[2/3] docker build on VPS..."
-ssh "$VPS" "sudo -u $VPS_USER bash -c 'cd $REMOTE_DIR && docker build -t planetlogin:$TAG . 2>&1'" | tail -5
+ssh "$VPS" "cd $REMOTE_DIR && docker build -t planetlogin:$TAG . 2>&1" | tail -5
 
 echo "[3/3] swarm update..."
-ssh "$VPS" "sudo docker service update --image planetlogin:$TAG $SERVICE 2>&1" | tail -3
+ssh "$VPS" "docker service update --image planetlogin:$TAG $SERVICE 2>&1" | tail -3
 
 echo ""
 if [ -n "$HEALTH_URL" ]; then
