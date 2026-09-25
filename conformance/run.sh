@@ -11,8 +11,11 @@ MOCK_PORT=8799 node mock-downstream.mjs & MOCK=$!
 OAUTH_PORT=8798 node mock-oauth.mjs & OAUTH=$!
 FLAVOR_PORT=8810
 # Enable every contract flow the suite exercises: password, magic link, anonymous,
-# OAuth (google), and account-bound preferences (locale.persist).
-export PLANETLOGIN_CONFIG='{"spec":1,"brand":{"name":"Conformance"},"providers":{"password":{"enabled":true,"allowRegister":true},"magicLink":{"enabled":true},"anonymous":{"enabled":true},"totp":{"enabled":true},"passkeys":{"enabled":true},"oauth":[{"id":"google"},{"id":"mockoauth"}]},"locale":{"persist":true}}'
+# OAuth (google), account-bound preferences (locale.persist) and the email-first
+# login flow. That last one was missing: /auth/email/check answers 403 not_enabled
+# unless loginFlow is "email-first", so the whole "email check" block failed with
+# 403 where it expected 200 and 400 — the suite tested a flow the harness had off.
+export PLANETLOGIN_CONFIG='{"spec":1,"brand":{"name":"Conformance"},"providers":{"password":{"enabled":true,"allowRegister":true},"magicLink":{"enabled":true},"anonymous":{"enabled":true},"totp":{"enabled":true},"passkeys":{"enabled":true},"oauth":[{"id":"google"},{"id":"mockoauth"}]},"locale":{"persist":true},"loginFlow":"email-first"}'
 export PLANETLOGIN_DOWNSTREAM_URL="http://127.0.0.1:8799"
 export PLANETLOGIN_DOWNSTREAM_SECRET="test-secret"
 export PLANETLOGIN_BASE_URL="http://127.0.0.1:${FLAVOR_PORT}"
@@ -33,6 +36,7 @@ export PLANETLOGIN_RATELIMIT_LOGIN_LIMIT="100000"
 export PLANETLOGIN_RATELIMIT_MAGIC_LIMIT="100000"
 export PLANETLOGIN_RATELIMIT_ANON_LIMIT="100000"
 export PLANETLOGIN_RATELIMIT_TOTP_LIMIT="100000"
+export PLANETLOGIN_RATELIMIT_EMAIL_CHECK_LIMIT="100000"
 "$@" & FLAVOR=$!
 trap "kill $MOCK $OAUTH $FLAVOR 2>/dev/null" EXIT
 

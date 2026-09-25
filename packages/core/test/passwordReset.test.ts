@@ -44,7 +44,15 @@ describe('requestPasswordReset', () => {
 });
 
 describe('verifyPasswordReset', () => {
-  const makeStore = () => ({ claimOnce: vi.fn().mockResolvedValue(true), get: vi.fn(), set: vi.fn() });
+  // The whole SessionStore, not just the three methods this suite happens to call:
+  // a partial stub typechecks as a different type and broke `tsc --noEmit` in CI.
+  const makeStore = () => ({
+    claimOnce: vi.fn().mockResolvedValue(true),
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    incr: vi.fn().mockResolvedValue(1),
+  });
 
   it('rejects invalid token', async () => {
     const result = await verifyPasswordReset(
