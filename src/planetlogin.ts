@@ -445,8 +445,10 @@ export class PlanetLogin {
     if (this.bordersMesh) { ctx.beginPath(); path(this.bordersMesh); ctx.strokeStyle = 'rgba(10,28,48,.85)'; ctx.lineWidth = 0.6; ctx.stroke(); }
     ctx.restore();
 
-    ctx.strokeStyle = 'rgba(150,200,255,.25)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    if (!this.transparent) {
+      ctx.strokeStyle = 'rgba(150,200,255,.25)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    }
   }
 
   private hexA(hex: string, a: number): string {
