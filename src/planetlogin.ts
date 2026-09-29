@@ -57,8 +57,11 @@ export class PlanetLogin {
   private lon0 = 20; private lat0 = 25;
   private fromLon = 0; private fromLat = 0; private toLon = 0; private toLat = 0;
   private t0 = 0; private zStart = 1; private zTarget = 2.6; private zFrom = 1;
-  private dragging = false; private vlon = 0.12; private vlat = 0; private zoomK = 1;
+  private dragging = false; private vlon = 0; private vlat = 0; private zoomK = 1;
+  private spinSpeedVal = 0.12;
   private autoSpin: boolean;
+  private transparent: boolean;
+  private showShadow: boolean;
   private reduceMotion = false;
   private detected: PlanetLocale | null = null;
 
@@ -81,6 +84,11 @@ export class PlanetLogin {
     this.reduceMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.autoSpin = this.reduceMotion ? false : this.opts.autoSpin;
+    this.transparent = options.transparent ?? false;
+    this.showShadow = options.shadow ?? true;
+    this.spinSpeedVal = options.spinSpeed ?? 0.12;
+    this.vlon = this.spinSpeedVal;
+    if (options.tilt != null) this.lat0 = -options.tilt;
 
     if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
     target.style.overflow = 'hidden';
@@ -339,7 +347,10 @@ export class PlanetLogin {
     });
     cv.addEventListener('pointercancel', end);
     cv.addEventListener('pointerleave', (e) => { end(e); this.hoverFeat = null; });
+    const wz = this.opts.wheelZoom ?? 'always';
     cv.addEventListener('wheel', (e) => {
+      if (wz === 'never') return;
+      if (wz === 'after-drag' && !this.dragging && this.zoomK === 1) return;
       e.preventDefault();
       if (this.mode !== 'idle') { this.mode = 'idle'; this.autoSpin = false; }
       this.zoomK = clamp(this.zoomK * Math.exp(-e.deltaY * 0.0012), 0.7, 9);
@@ -374,7 +385,7 @@ export class PlanetLogin {
   private loop(now: number): void {
     if (this.mode === 'idle') {
       if (!this.dragging) {
-        this.vlon += ((this.autoSpin ? 0.12 : 0) - this.vlon) * (this.autoSpin ? 0.035 : 0.08);
+        this.vlon += ((this.autoSpin ? this.spinSpeedVal : 0) - this.vlon) * (this.autoSpin ? 0.035 : 0.08);
         this.vlat += (0 - this.vlat) * 0.06;
         this.lon0 += this.vlon; this.lat0 = clamp(this.lat0 + this.vlat, -82, 82);
       }
@@ -397,16 +408,18 @@ export class PlanetLogin {
   private draw(now: number): void {
     const { ctx, cx, cy, R, W, H } = this;
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#070b16'; ctx.fillRect(0, 0, W, H);
-    for (const s of this.stars) {
-      const tw = 0.6 + 0.4 * Math.sin(now / 700 + s.p);
-      ctx.globalAlpha = s.a * tw; ctx.fillStyle = '#cdd8f0';
-      ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 7); ctx.fill();
+    if (!this.transparent) {
+      ctx.fillStyle = '#070b16'; ctx.fillRect(0, 0, W, H);
+      for (const s of this.stars) {
+        const tw = 0.6 + 0.4 * Math.sin(now / 700 + s.p);
+        ctx.globalAlpha = s.a * tw; ctx.fillStyle = '#cdd8f0';
+        ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      const halo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.25);
+      halo.addColorStop(0, 'rgba(120,170,255,.18)'); halo.addColorStop(1, 'rgba(120,170,255,0)');
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.25, 0, 7); ctx.fill();
     }
-    ctx.globalAlpha = 1;
-    const halo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.25);
-    halo.addColorStop(0, 'rgba(120,170,255,.18)'); halo.addColorStop(1, 'rgba(120,170,255,0)');
-    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.25, 0, 7); ctx.fill();
 
     ctx.save();
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
