@@ -396,7 +396,7 @@ export class PlanetLogin {
     }, { passive: false });
 
     // Keyboard: rotate with arrows, zoom with +/-, pick the centre with Enter.
-    cv.addEventListener('focus', () => { cv.style.outline = `2px solid ${this.opts.accent}`; cv.style.outlineOffset = '-2px'; });
+    cv.addEventListener('focus', () => { if (!this.transparent) { cv.style.outline = `2px solid ${this.opts.accent}`; cv.style.outlineOffset = '-2px'; } });
     cv.addEventListener('blur', () => { cv.style.outline = 'none'; this.hoverFeat = null; });
     cv.addEventListener('keydown', (e) => {
       const step = 6 / this.zoomK;
