@@ -77,6 +77,12 @@ export interface PlanetLoginOptions {
   wheelZoom?: 'always' | 'after-drag' | 'never';
   /** Hide the "PlanetLogin · by Ricajos" watermark. Default false. */
   hideWatermark?: boolean;
+  /** Color for the hovered country. Default: accent at 50% opacity. Set "transparent" to hide. */
+  hoverColor?: string;
+  /** Color for the selected/active country. Default: accent at 70% opacity. Set "transparent" to hide. */
+  activeColor?: string;
+  /** Border color for the selected country. Default: accent. Set "transparent" to hide. */
+  activeBorder?: string;
 }
 
 export type PlanetLoginEvent = 'locale';

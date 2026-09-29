@@ -45,6 +45,9 @@ export class PlanetLoginElement extends HTMLElement {
       tilt: this.hasAttribute('tilt') ? parseFloat(this.getAttribute('tilt')!) : undefined,
       hideWatermark: this.hasAttribute('hide-watermark'),
       wheelZoom: (this.getAttribute('wheel-zoom') as 'always' | 'after-drag' | 'never') ?? undefined,
+      hoverColor: this.getAttribute('hover-color') ?? undefined,
+      activeColor: this.getAttribute('active-color') ?? undefined,
+      activeBorder: this.getAttribute('active-border') ?? undefined,
     };
     this.instance = new PlanetLogin(this, opts);
   }

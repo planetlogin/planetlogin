@@ -433,12 +433,14 @@ export class PlanetLogin {
     ctx.beginPath(); path(this.graticule); ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.stroke();
     if (this.countriesFC) { ctx.beginPath(); path(this.countriesFC); ctx.fillStyle = 'rgba(70,160,116,.92)'; ctx.fill(); }
     if (this.selectedFeat) {
-      ctx.beginPath(); path(this.selectedFeat);
-      ctx.fillStyle = this.hexA(this.opts.accent, 0.7); ctx.fill();
-      ctx.strokeStyle = this.opts.accent; ctx.lineWidth = 1.4; ctx.stroke();
+      const ac = this.opts.activeColor ?? this.hexA(this.opts.accent, 0.7);
+      const ab = this.opts.activeBorder ?? this.opts.accent;
+      if (ac !== 'transparent') { ctx.beginPath(); path(this.selectedFeat); ctx.fillStyle = ac; ctx.fill(); }
+      if (ab !== 'transparent') { ctx.beginPath(); path(this.selectedFeat); ctx.strokeStyle = ab; ctx.lineWidth = 1.4; ctx.stroke(); }
     }
     if (this.hoverFeat && this.hoverFeat !== this.selectedFeat) {
-      ctx.beginPath(); path(this.hoverFeat); ctx.fillStyle = this.hexA(this.opts.accent, 0.5); ctx.fill();
+      const hc = this.opts.hoverColor ?? this.hexA(this.opts.accent, 0.5);
+      if (hc !== 'transparent') { ctx.beginPath(); path(this.hoverFeat); ctx.fillStyle = hc; ctx.fill(); }
     }
     if (this.bordersMesh) { ctx.beginPath(); path(this.bordersMesh); ctx.strokeStyle = 'rgba(10,28,48,.85)'; ctx.lineWidth = 0.6; ctx.stroke(); }
     ctx.restore();
