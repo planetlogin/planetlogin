@@ -91,7 +91,7 @@ export class PlanetLogin {
     if (options.tilt != null) this.lat0 = -options.tilt;
 
     if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
-    target.style.overflow = 'hidden';
+    if (!this.transparent) target.style.overflow = 'hidden';
 
     this.cv = document.createElement('canvas');
     // Keyboard-accessible: focusable, arrow keys rotate, +/- zoom, Enter/Space
