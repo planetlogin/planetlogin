@@ -96,7 +96,7 @@ export class PlanetLogin {
     this.ctx = this.cv.getContext('2d')!;
 
     if (this.opts.search) this.buildSearch();
-    this.buildWatermark();
+    if (!options.hideWatermark) this.buildWatermark();
     this.bindEvents();
     this.loadData();
     this.resize();

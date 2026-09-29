@@ -63,6 +63,20 @@ export interface PlanetLoginOptions {
   storageKey?: string;
   /** Where to persist: "local" (default), "session", or "none" (disable). */
   storage?: 'local' | 'session' | 'none';
+
+  // ── Visual options ────────────────────────────────────────────────────────
+  /** Transparent background (no starfield). Default false. */
+  transparent?: boolean;
+  /** Show the shadow under the globe. Default true. */
+  shadow?: boolean;
+  /** Auto-spin speed in radians/frame. Default 0.12. */
+  spinSpeed?: number;
+  /** Initial tilt in degrees. Default 0. */
+  tilt?: number;
+  /** When mousewheel zooms: "always", "after-drag", "never". Default "always". */
+  wheelZoom?: 'always' | 'after-drag' | 'never';
+  /** Hide the "PlanetLogin · by Ricajos" watermark. Default false. */
+  hideWatermark?: boolean;
 }
 
 export type PlanetLoginEvent = 'locale';

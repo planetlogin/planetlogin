@@ -39,6 +39,12 @@ export class PlanetLoginElement extends HTMLElement {
       flyToSaved: this.hasAttribute('fly-to-saved'),
       storageKey: this.getAttribute('storage-key') ?? undefined,
       storage: (this.getAttribute('storage') as 'local' | 'session' | 'none') ?? undefined,
+      transparent: this.hasAttribute('transparent'),
+      shadow: this.getAttribute('shadow') !== 'false',
+      spinSpeed: this.hasAttribute('spin-speed') ? parseFloat(this.getAttribute('spin-speed')!) : undefined,
+      tilt: this.hasAttribute('tilt') ? parseFloat(this.getAttribute('tilt')!) : undefined,
+      hideWatermark: this.hasAttribute('hide-watermark'),
+      wheelZoom: (this.getAttribute('wheel-zoom') as 'always' | 'after-drag' | 'never') ?? undefined,
     };
     this.instance = new PlanetLogin(this, opts);
   }
