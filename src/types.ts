@@ -77,6 +77,12 @@ export interface PlanetLoginOptions {
   wheelZoom?: 'always' | 'after-drag' | 'never';
   /** Hide the "PlanetLogin · by Ricajos" watermark. Default false. */
   hideWatermark?: boolean;
+  /** Horizontal anchor for the globe center (0=left, 1=right). Default 0.5. */
+  anchorX?: number;
+  /** Vertical anchor for the globe center (0=top, 1=bottom). Default 0.5. */
+  anchorY?: number;
+  /** Seconds of inactivity before the globe smoothly returns to anchor position and resets zoom. 0=disabled. Default 0. */
+  idleTimeout?: number;
   /** Color for the hovered country. Default: accent at 50% opacity. Set "transparent" to hide. */
   hoverColor?: string;
   /** Color for the selected/active country. Default: accent at 70% opacity. Set "transparent" to hide. */

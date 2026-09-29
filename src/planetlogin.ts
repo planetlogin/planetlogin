@@ -65,6 +65,18 @@ export class PlanetLogin {
   private reduceMotion = false;
   private detected: PlanetLocale | null = null;
 
+  private anchorX: number;
+  private anchorY: number;
+  private idleTimeout: number;
+  private idleTimer = 0;
+  private resetting = false;
+  private resetT0 = 0;
+  private resetFromCx = 0; private resetFromCy = 0;
+  private resetFromZoom = 1;
+  private resetFromLon = 0; private resetFromLat = 0;
+  private anchorLon = 20; private anchorLat = 25;
+  private userInteracted = false;
+
   private raf = 0;
   private ro?: ResizeObserver;
   private lastX = 0; private lastY = 0; private moved = 0;
@@ -89,6 +101,11 @@ export class PlanetLogin {
     this.spinSpeedVal = options.spinSpeed ?? 0.12;
     this.vlon = this.spinSpeedVal;
     if (options.tilt != null) this.lat0 = -options.tilt;
+    this.anchorX = options.anchorX ?? 0.5;
+    this.anchorY = options.anchorY ?? 0.5;
+    this.idleTimeout = (options.idleTimeout ?? 0) * 1000;
+    this.anchorLon = this.lon0;
+    this.anchorLat = this.lat0;
 
     if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
     if (!this.transparent) target.style.overflow = 'hidden';
@@ -156,6 +173,7 @@ export class PlanetLogin {
   /** Stop everything and remove the DOM it created. */
   destroy(): void {
     cancelAnimationFrame(this.raf);
+    clearTimeout(this.idleTimer);
     this.ro?.disconnect();
     this.cv.remove();
     this.input?.parentElement?.remove();
@@ -264,7 +282,7 @@ export class PlanetLogin {
     this.W = this.target.clientWidth; this.H = this.target.clientHeight;
     this.cv.width = this.W * this.DPR; this.cv.height = this.H * this.DPR;
     this.ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
-    this.cx = this.W / 2; this.cy = this.H / 2;
+    this.cx = this.W * this.anchorX; this.cy = this.H * this.anchorY;
     this.baseR = Math.min(this.W, this.H) * 0.34;
     if (this.mode === 'idle') this.R = this.baseR * this.zoomK;
   }
@@ -313,9 +331,28 @@ export class PlanetLogin {
     this.emit();
   }
 
+  private touchIdle(): void {
+    this.userInteracted = true;
+    this.resetting = false;
+    if (!this.idleTimeout) return;
+    clearTimeout(this.idleTimer);
+    this.idleTimer = window.setTimeout(() => this.startReset(), this.idleTimeout);
+  }
+
+  private startReset(): void {
+    this.resetting = true;
+    this.resetT0 = 0;
+    this.resetFromCx = this.cx;
+    this.resetFromCy = this.cy;
+    this.resetFromZoom = this.zoomK;
+    this.resetFromLon = this.lon0;
+    this.resetFromLat = this.lat0;
+  }
+
   private bindEvents(): void {
     const cv = this.cv;
     cv.addEventListener('pointerdown', (e) => {
+      this.touchIdle();
       if (this.mode !== 'idle') { this.mode = 'idle'; this.autoSpin = false; }
       this.dragging = true; this.moved = 0; this.lastX = e.clientX; this.lastY = e.clientY; this.vlon = 0; this.vlat = 0;
       cv.style.cursor = 'grabbing'; cv.setPointerCapture(e.pointerId);
@@ -352,6 +389,7 @@ export class PlanetLogin {
       if (wz === 'never') return;
       if (wz === 'after-drag' && !this.dragging && this.zoomK === 1) return;
       e.preventDefault();
+      this.touchIdle();
       if (this.mode !== 'idle') { this.mode = 'idle'; this.autoSpin = false; }
       this.zoomK = clamp(this.zoomK * Math.exp(-e.deltaY * 0.0012), 0.7, 9);
       this.R = this.baseR * this.zoomK; this.hoverFeat = this.countryAt(e.clientX, e.clientY);
@@ -375,6 +413,7 @@ export class PlanetLogin {
       }
       if (handled) {
         e.preventDefault();
+        this.touchIdle();
         this.autoSpin = false;
         if (this.mode !== 'idle') this.mode = 'idle';
         if (e.key !== 'Enter' && e.key !== ' ') this.hoverFeat = this.countryAtCenter();
@@ -383,7 +422,27 @@ export class PlanetLogin {
   }
 
   private loop(now: number): void {
-    if (this.mode === 'idle') {
+    if (this.resetting) {
+      if (!this.resetT0) this.resetT0 = now;
+      const dur = this.reduceMotion ? 300 : 1200;
+      const k = Math.min(1, (now - this.resetT0) / dur), e = ease(k);
+      const targetCx = this.W * this.anchorX, targetCy = this.H * this.anchorY;
+      this.cx = this.resetFromCx + (targetCx - this.resetFromCx) * e;
+      this.cy = this.resetFromCy + (targetCy - this.resetFromCy) * e;
+      this.zoomK = this.resetFromZoom + (1 - this.resetFromZoom) * e;
+      this.R = this.baseR * this.zoomK;
+      this.lon0 = this.resetFromLon + shortLon(this.resetFromLon, this.anchorLon) * e;
+      this.lat0 = this.resetFromLat + (this.anchorLat - this.resetFromLat) * e;
+      if (k >= 1) {
+        this.resetting = false;
+        this.userInteracted = false;
+        this.autoSpin = this.reduceMotion ? false : this.opts.autoSpin;
+        this.vlon = this.autoSpin ? this.spinSpeedVal : 0;
+        this.vlat = 0;
+        this.selectedFeat = null;
+        this.hoverFeat = null;
+      }
+    } else if (this.mode === 'idle') {
       if (!this.dragging) {
         this.vlon += ((this.autoSpin ? this.spinSpeedVal : 0) - this.vlon) * (this.autoSpin ? 0.035 : 0.08);
         this.vlat += (0 - this.vlat) * 0.06;
