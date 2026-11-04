@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
   if (!pw?.enabled || !pw?.allowRegister)
     return json({ error: { code: 'not_enabled', message: 'Registration disabled' } }, { status: 403 });
 
-  const { email, password, name, locale, rememberMe } = await request.json().catch(() => ({}));
+  const { email, password, name, locale, rememberMe, terms } = await request.json().catch(() => ({}));
   const minLen = pw?.minPasswordLength ?? 8;
   if (!email || !password || String(password).length < minLen)
     return json({ error: { code: 'bad_request', message: 'email and password (8+ chars) required' } }, { status: 400 });
@@ -26,7 +26,9 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
   // Via the core's contract client, so an in-process store (defineStore) works too.
   let user;
   try {
-    user = await tenantDownstream(locals.tenant).createUser({ email, password, name, locale });
+    // `terms` viaja hasta el downstream tal cual: es quien guarda la cuenta y
+    // por tanto quien debe guardar la prueba. El contrato lo reenvia entero.
+    user = await tenantDownstream(locals.tenant).createUser({ email, password, name, locale, ...(terms ? { terms } : {}) });
   } catch (e) {
     if (e instanceof DownstreamConflictError)
       return json({ error: { code: 'email_taken', message: 'That email is already registered' } }, { status: 409 });

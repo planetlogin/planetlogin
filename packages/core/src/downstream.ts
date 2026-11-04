@@ -43,7 +43,7 @@ export interface DownstreamStore {
   /** Self-serve sign-up (spec §3 /auth/password/register). The downstream owns
    *  password storage: it hashes and stores. Throws `DownstreamConflictError`
    *  when the email is already registered. */
-  createUser(data: { email: string; password: string; name?: string; locale?: Locale }): Promise<DownstreamUser>;
+  createUser(data: { email: string; password: string; name?: string; locale?: Locale; terms?: unknown }): Promise<DownstreamUser>;
   upsertUser(data: { provider: string; providerUserId?: string; email?: string; name?: string; profile?: unknown }): Promise<DownstreamUser | null>;
   deliverMagic(data: { identifier: string; link: string; locale?: Locale }): Promise<unknown>;
   passkeysFind(query: { userId?: string; credentialId?: string }): Promise<{ userId: string; credentials: any[] } | null>;
@@ -119,7 +119,7 @@ export class Downstream implements DownstreamStore {
 
   /** Self-serve sign-up: the downstream hashes + stores the password and returns
    *  the new account. A 409 surfaces as `DownstreamConflictError` (email taken). */
-  async createUser(data: { email: string; password: string; name?: string; locale?: Locale }): Promise<DownstreamUser> {
+  async createUser(data: { email: string; password: string; name?: string; locale?: Locale; terms?: unknown }): Promise<DownstreamUser> {
     const user = await this.call<DownstreamUser>('/users/create', data);
     if (!user?.id) throw new Error('downstream /users/create returned no user');
     return user;

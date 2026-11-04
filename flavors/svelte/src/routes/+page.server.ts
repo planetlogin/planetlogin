@@ -14,9 +14,25 @@
 // release.
 import type { ServerLoad } from '@sveltejs/kit';
 
-type ConLayout = { tenant?: { config?: { layout?: { hideWatermark?: boolean } } } };
+type Layout = {
+  hideWatermark?: boolean;
+  globePosition?: 'left' | 'right' | 'full';
+  showSearch?: boolean;
+  autoSpin?: boolean;
+};
+type ConLayout = { tenant?: { config?: { layout?: Layout } } };
 
-export const load: ServerLoad = ({ locals }) => ({
-  appOrigin: process.env.PLANETLOGIN_APP_ORIGIN || '',
-  hideWatermark: (locals as ConLayout).tenant?.config?.layout?.hideWatermark ?? false,
-});
+// `layout` llevaba tiempo en el esquema y el portal no lo miraba: quien
+// escribiera `globePosition: "right"` no veia pasar nada, y nada fallaba.
+// Sale del servidor por lo mismo que la marca: el globo lee `search` y
+// `autospin` al construirse.
+export const load: ServerLoad = ({ locals }) => {
+  const l = (locals as ConLayout).tenant?.config?.layout ?? {};
+  return {
+    appOrigin: process.env.PLANETLOGIN_APP_ORIGIN || '',
+    hideWatermark: l.hideWatermark ?? false,
+    globePosition: l.globePosition ?? 'left',
+    showSearch: l.showSearch ?? true,
+    autoSpin: l.autoSpin ?? true,
+  };
+};

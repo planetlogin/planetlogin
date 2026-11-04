@@ -5,7 +5,7 @@
   import SiteNav from '$lib/SiteNav.svelte';
   import Footer from '$lib/Footer.svelte';
 
-  let { data } = $props(); // { appOrigin, hideWatermark } from +page.server.ts
+  let { data } = $props(); // { appOrigin, hideWatermark, globePosition, showSearch, autoSpin } de +page.server.ts
 
   // i18n — the global-audience angle: the form re-localizes from the globe pick.
   // Human, localized strings. Per-language entries override the English base, so a
@@ -210,7 +210,13 @@
     try {
       const r = await fetch(`${base}/auth/password/register`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password, name, locale, rememberMe }),
+        // Lo que la persona acepto, no solo que lo acepto: la direccion de lo
+        // que se le enseno y la hora. Una casilla sin rastro es una puerta en
+        // el navegador, y «el formulario lo exigia» no es una prueba.
+        body: JSON.stringify({
+          email, password, name, locale, rememberMe,
+          ...(brand.termsUrl ? { terms: { url: brand.termsUrl, privacyUrl: brand.privacyUrl ?? null, at: new Date().toISOString() } } : {}),
+        }),
       });
       const data = await r.json();
       ok = r.ok;
@@ -297,7 +303,7 @@
   };
 </script>
 
-<div class="stage" class:embed>
+<div class="stage" class:embed class:globo-derecha={data.globePosition === 'right'} class:globo-entero={data.globePosition === 'full'}>
   {#if !embed}
   {#snippet back()}
     <a class="snav-back" href={brand.homeUrl}>← {brand.backLabel ?? 'Volver'}</a>
@@ -318,7 +324,7 @@
        retraduce sin perder la rotación ni la selección. -->
   <!-- `hide-watermark` sale del servidor: el globo dibuja la marca al
        construirse, asi que ponerla desde `/auth/config` llegaria tarde. -->
-  <planet-login bind:this={globeEl} lang={locale?.language ?? 'en'} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} hide-watermark={data.hideWatermark ? '' : undefined} remember fly-to-saved></planet-login>
+  <planet-login bind:this={globeEl} lang={locale?.language ?? 'en'} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} hide-watermark={data.hideWatermark ? '' : undefined} search={data.showSearch ? undefined : 'false'} autospin={data.autoSpin ? undefined : 'false'} remember fly-to-saved></planet-login>
   {/if}
 
   <!--
@@ -465,6 +471,13 @@
 <style>
   :global(body) { font-family: var(--pl-font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif); }
   .stage { position: relative; display: flex; height: 100vh; color: var(--pl-text, #eef2fb); animation: pl-fade .45s ease both; }
+  /* `globePosition` de la configuracion. El panel se queda donde esta en el
+     DOM —primero el globo, luego el formulario— y solo cambia el orden visual,
+     asi que el foco y los lectores de pantalla siguen el mismo recorrido. */
+  .stage.globo-derecha { flex-direction: row-reverse; }
+  .stage.globo-derecha .panel { border-left: 0; border-right: 1px solid var(--pl-border, rgba(255,255,255,.12)); }
+  /* `full`: el globo ocupa todo y el formulario flota encima. */
+  .stage.globo-entero .panel { position: absolute; inset: 0 0 0 auto; background: color-mix(in srgb, var(--pl-card-bg, #0d1422) 88%, transparent); backdrop-filter: blur(6px); }
   @keyframes pl-fade { from { opacity: 0; } to { opacity: 1; } }
   planet-login { flex: 1 1 auto; min-width: 0; height: 100vh; display: block; }
   .panel { flex: 0 0 380px; max-width: 42vw; background: var(--pl-card-bg, #0d1422); border-left: 1px solid var(--pl-border, rgba(255,255,255,.12));
