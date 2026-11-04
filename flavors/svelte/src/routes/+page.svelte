@@ -321,7 +321,24 @@
   <planet-login bind:this={globeEl} lang={locale?.language ?? 'en'} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} hide-watermark={data.hideWatermark ? '' : undefined} remember fly-to-saved></planet-login>
   {/if}
 
-  <aside class="panel" class:embed>
+  <!--
+  Los terminos, en un solo sitio.
+  Estaban escritos solo dentro del flujo clasico, asi que un portal con
+  `loginFlow: "email-first"` —como calcat— no los ensenaba nunca. Y `register()`
+  SI bloquea el alta cuando hay `termsUrl`: poner la URL en la configuracion
+  dejaba el registro parado con «debes aceptar los terminos» y sin casilla que
+  marcar. Un fragmento compartido para que no puedan volver a separarse.
+-->
+{#snippet terminos()}
+  {#if brand.termsUrl}
+    <label class="terms">
+      <input type="checkbox" bind:checked={termsAccepted} />
+      {t.terms} <a href={brand.termsUrl} target="_blank" rel="noopener">{t.termsLink}</a>{#if brand.privacyUrl} {t.and} <a href={brand.privacyUrl} target="_blank" rel="noopener">{t.privacyLink}</a>{/if}
+    </label>
+  {/if}
+{/snippet}
+
+<aside class="panel" class:embed>
     {#if loading}
       <div class="skeleton"><div class="sk-title"></div><div class="sk-line"></div><div class="sk-input"></div><div class="sk-input"></div><div class="sk-btn"></div></div>
     {:else}
@@ -369,6 +386,7 @@
           </div>
           <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
         {/if}
+        {@render terminos()}
         <button type="submit" disabled={busy} aria-busy={busy}>{busy ? '…' : t.signup}</button>
       {:else}
         {#if mode === 'register'}
@@ -392,12 +410,7 @@
           <span class="strength-label" style="color: {['#ff4444','#ff8800','#ffbb00','#88cc00','#44bb44'][strength.score]};">{t.strengthLabels?.[strength.label] ?? strength.label}</span>
         {/if}
           <button type="submit" disabled={busy} aria-busy={busy}>{busy ? '…' : mode === 'register' ? t.signup : t.cta}</button>
-          {#if mode === 'register' && brand.termsUrl}
-          <label class="terms">
-            <input type="checkbox" bind:checked={termsAccepted} />
-            {t.terms} <a href={brand.termsUrl} target="_blank" rel="noopener">{t.termsLink}</a>{#if brand.privacyUrl} {t.and} <a href={brand.privacyUrl} target="_blank" rel="noopener">{t.privacyLink}</a>{/if}
-          </label>
-        {/if}
+          {@render terminos()}
         {#if providers.password?.allowRegister}
             <button type="button" class="toggle" onclick={() => { mode = mode === 'register' ? 'login' : 'register'; msg = ''; }}>{mode === 'register' ? t.haveAccount : t.newHere}</button>
           {/if}
