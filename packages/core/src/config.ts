@@ -18,7 +18,19 @@ export interface PlanetLoginConfig {
     anonymous?: { enabled?: boolean; ttlSeconds?: number };
   };
   copy?: Record<string, Record<string, string>>;
-  layout?: { globePosition?: 'left' | 'right' | 'full'; showSearch?: boolean; autoSpin?: boolean };
+  layout?: {
+    globePosition?: 'left' | 'right' | 'full';
+    showSearch?: boolean;
+    autoSpin?: boolean;
+    /**
+     * Oculta la marca «PlanetLogin · by Ricajos» del globo.
+     *
+     * La atribucion viene de la AGPL (§7b) y por eso el valor por defecto es
+     * mostrarla. Esta opcion es para quien tiene derecho a quitarla: el propio
+     * titular del copyright en sus despliegues, o quien tenga otra licencia.
+     */
+    hideWatermark?: boolean;
+  };
   // Account-bound locale memory (Tier 2). Both gates default OFF (privacy-first).
   // Persistence rides the downstream contract (§4 /preferences/*) — PlanetLogin
   // stores nothing itself.

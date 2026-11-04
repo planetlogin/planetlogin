@@ -115,6 +115,14 @@
         "backLabel": {
           "type": "string",
           "description": "Label for the back-to-app link (e.g. 'Back to Acme')."
+        },
+        "accentDark": {
+          "type": "string",
+          "description": "Accent used in dark mode. Falls back to `accent`. Supported by the portal since before this entry existed — el esquema iba por detras."
+        },
+        "font": {
+          "type": "string",
+          "description": "CSS font-family for the portal. Supported by the portal since before this entry existed — el esquema iba por detras."
         }
       }
     },
@@ -236,7 +244,7 @@
         "anonymous": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Guest sessions \u2014 no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
+          "description": "Guest sessions — no account, no downstream. Mints a signed session with anon:true (NOT authentication of a person). The zero-backend entry point.",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -252,11 +260,35 @@
     },
     "copy": {
       "type": "object",
-      "description": "Per-language string overrides. Key = BCP-47 language code; value = a map of copy keys to strings.",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": {
-          "type": "string"
+      "description": "Text overrides for the portal. One language per deployment: the built-in strings are translated, these are not.",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Heading above the form. Default: the translated greeting."
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Line under the heading. Default: the translated hint."
+        },
+        "footer": {
+          "type": "object",
+          "description": "Site footer under the panel. Omit it and no footer is shown.",
+          "additionalProperties": true,
+          "properties": {
+            "tagline": {
+              "type": "string"
+            },
+            "mail": {
+              "type": "string"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
         }
       },
       "default": {}
@@ -281,6 +313,11 @@
         "autoSpin": {
           "type": "boolean",
           "default": true
+        },
+        "hideWatermark": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide the \"PlanetLogin · by Ricajos\" watermark on the globe. Attribution is required by the AGPL (§7b); this is for the copyright holder or anyone under a different licence."
         }
       }
     },
@@ -325,7 +362,7 @@
             "HS256"
           ],
           "default": "EdDSA",
-          "description": "Asymmetric (EdDSA/RS256/ES256) \u2192 multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
+          "description": "Asymmetric (EdDSA/RS256/ES256) → multi-service verification via JWKS. HS256 = symmetric simple mode (single trust domain, no JWKS)."
         },
         "encrypt": {
           "type": "boolean",
@@ -366,7 +403,7 @@
         "cors": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' \u2014 the concrete origin is echoed.",
+          "description": "Exact cross-origin allowlist for the auth API. The portal sets cookies, so credentialed CORS never uses '*' — the concrete origin is echoed.",
           "properties": {
             "origins": {
               "type": "array",

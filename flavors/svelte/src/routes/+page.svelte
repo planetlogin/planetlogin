@@ -5,14 +5,14 @@
   import SiteNav from '$lib/SiteNav.svelte';
   import Footer from '$lib/Footer.svelte';
 
-  let { data } = $props(); // { appOrigin } from +page.server.ts
+  let { data } = $props(); // { appOrigin, hideWatermark } from +page.server.ts
 
   // i18n — the global-audience angle: the form re-localizes from the globe pick.
   // Human, localized strings. Per-language entries override the English base, so a
   // language only needs to translate what it wants — the rest falls back to `en`.
   const T: Record<string, Record<string, string>> = {
     en: {
-      greet: 'Welcome', sub: 'Pick where you are — we greet you in your language.',
+      greet: 'Welcome', sub: 'Enter your email and we take it from there.',
       email: 'Email', pass: 'Password', cta: 'Sign in',
       magic: 'Email me a sign-in link', passkey: 'Sign in with a passkey', or: 'or',
       mfaHint: 'Enter the 6-digit code from your authenticator app.', code: 'Code', verify: 'Verify',
@@ -35,7 +35,7 @@
       ariaTotp: 'Two-factor authentication', ariaStrength: 'Password strength',
     },
     es: {
-      greet: 'Bienvenido', sub: 'Elige dónde estás — te saludamos en tu idioma.',
+      greet: 'Bienvenido', sub: 'Escribe tu correo y seguimos desde ahí.',
       email: 'Email', pass: 'Contraseña', cta: 'Entrar',
       magic: 'Enviarme un enlace de acceso', passkey: 'Entrar con una passkey', or: 'o',
       mfaHint: 'Introduce el código de 6 dígitos de tu app de autenticación.', code: 'Código', verify: 'Verificar',
@@ -55,11 +55,11 @@
       emailPlaceholder: 'tu@correo.com', ariaSignIn: 'Acceder',
       ariaTotp: 'Verificación en dos pasos', ariaStrength: 'Seguridad de la contraseña',
     },
-    fr: { greet: 'Bienvenue', sub: 'Choisissez où vous êtes — nous parlons votre langue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' , continue: 'Continuer', back: '\u2190 Changer d\'e-mail' },
-    de: { greet: 'Willkommen', sub: 'Wähle, wo du bist — wir grüßen in deiner Sprache.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' , continue: 'Weiter', back: '\u2190 E-Mail \u00e4ndern' },
-    pt: { greet: 'Bem-vindo', sub: 'Escolhe onde estás — falamos a tua língua.', email: 'Email', pass: 'Senha', cta: 'Entrar', forgot: 'Esqueceste a palavra-passe?' , continue: 'Continuar', back: '\u2190 Alterar email' },
-    it: { greet: 'Benvenuto', sub: 'Scegli dove sei — ti salutiamo nella tua lingua.', email: 'Email', pass: 'Password', cta: 'Accedi' , continue: 'Continua', back: '\u2190 Cambia email' },
-    ja: { greet: 'ようこそ', sub: '現在地を選んでください。あなたの言語でご案内します。', email: 'メール', pass: 'パスワード', cta: 'ログイン' , continue: '\u7d9a\u884c', back: '\u2190 \u30e1\u30fc\u30eb\u3092\u5909\u66f4' },
+    fr: { greet: 'Bienvenue', sub: 'Saisissez votre e-mail et on continue.', email: 'E-mail', pass: 'Mot de passe', cta: 'Se connecter', forgot: 'Mot de passe oublié ?' , continue: 'Continuer', back: '\u2190 Changer d\'e-mail' },
+    de: { greet: 'Willkommen', sub: 'Gib deine E-Mail ein, den Rest machen wir.', email: 'E-Mail', pass: 'Passwort', cta: 'Anmelden', forgot: 'Passwort vergessen?' , continue: 'Weiter', back: '\u2190 E-Mail \u00e4ndern' },
+    pt: { greet: 'Bem-vindo', sub: 'Escreve o teu email e seguimos a partir daí.', email: 'Email', pass: 'Senha', cta: 'Entrar', forgot: 'Esqueceste a palavra-passe?' , continue: 'Continuar', back: '\u2190 Alterar email' },
+    it: { greet: 'Benvenuto', sub: 'Scrivi la tua email e proseguiamo.', email: 'Email', pass: 'Password', cta: 'Accedi' , continue: 'Continua', back: '\u2190 Cambia email' },
+    ja: { greet: 'ようこそ', sub: 'メールアドレスを入力してください。', email: 'メール', pass: 'パスワード', cta: 'ログイン' , continue: '\u7d9a\u884c', back: '\u2190 \u30e1\u30fc\u30eb\u3092\u5909\u66f4' },
   };
   // Map a downstream error code → a friendly message (localized, en fallback).
   const errMsg = (code: string | undefined) =>
@@ -316,7 +316,9 @@
        city or country…» debajo de un título que decía «Bienvenido». Cambia solo
        cuando eliges país, que es cuando se sabe el idioma, y el componente se
        retraduce sin perder la rotación ni la selección. -->
-  <planet-login bind:this={globeEl} lang={locale?.language ?? 'en'} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} remember fly-to-saved></planet-login>
+  <!-- `hide-watermark` sale del servidor: el globo dibuja la marca al
+       construirse, asi que ponerla desde `/auth/config` llegaria tarde. -->
+  <planet-login bind:this={globeEl} lang={locale?.language ?? 'en'} accent={brand.accent ?? "#f6a13c"} data-url={`${base}/countries-110m.json`} hide-watermark={data.hideWatermark ? '' : undefined} remember fly-to-saved></planet-login>
   {/if}
 
   <aside class="panel" class:embed>
